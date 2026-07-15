@@ -17,9 +17,22 @@ public class SpecialtiesController : AppController
         _service = service;
     }
     
-    //[HttpGet]
-    
-    //[HttpPost]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll([FromQuery] int pageSize, [FromQuery] int pageIndex, [FromQuery] string? name = null)
+    {
+        var specialties = await _service.GetAll(pageSize, pageIndex, name);
+        return Ok(specialties);
+    }
+
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Create([FromBody] SpecialityModel.Request request)
+    {
+        var created = await _service.Create(request);
+        return CreatedAtAction(nameof(GetAll), created);
+    }
 
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
