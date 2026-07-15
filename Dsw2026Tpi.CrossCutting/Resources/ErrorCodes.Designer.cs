@@ -106,6 +106,15 @@ namespace Dsw2026Tpi.CrossCutting.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Ya existe una especialidad con ese nombre.
+        /// </summary>
+        public static string SPECIALITY_NAME_CONFLICT {
+            get {
+                return ResourceManager.GetString("SPECIALITY_NAME_CONFLICT", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Se produjo un error no controlado.
         /// </summary>
         public static string UNHANDLED_ERROR {
