@@ -12,7 +12,7 @@ public interface ISpecialitiesService
     Task<SpecialityModel.Response> Create(SpecialityModel.Request request);
 
     //Put
-    Task UpdateSpecialitiy(Guid id, SpecialityModel.Request request);
+    Task<SpecialityModel.Response> UpdateSpecialitiy(Guid id, SpecialityModel.Request request);
     
     //Delete
     Task DeleteSpecialitiy(Guid id);

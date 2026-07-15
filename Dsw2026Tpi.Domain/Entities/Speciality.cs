@@ -20,11 +20,13 @@ public class Speciality: EntityBase
     public void Deactivate()
     {
         Deleted = true;
+        UpdatedAt = DateTime.Now;
     }
 
     public void UpdateInfo(string name, string description)
     {
         Name = name;
         Description = description;
+        UpdatedAt = DateTime.Now;
     }
 }

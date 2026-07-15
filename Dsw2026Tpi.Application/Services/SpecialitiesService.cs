@@ -54,18 +54,32 @@ public class SpecialitiesService : ISpecialitiesService
         return new SpecialityModel.Response(created.Id, created.Name, created.Description);
     }
 
-    public async Task UpdateSpecialitiy(Guid id, SpecialityModel.Request request)
+    public async Task<SpecialityModel.Response> UpdateSpecialitiy(Guid id, SpecialityModel.Request request)
     {
-        if (request.Name == null || request.Description == null)
-            throw new Exception("Nombre o Descripcion no pueden estar vacios");
-       var speciality = await _persistence.GetById<Speciality>(id);
-       if (speciality != null)
-       {
-           var existenombre = await _persistence.First<Speciality>(s => s.Name == request.Name);
-           if (existenombre.Id != id) throw new Exception("Ya existe una especialidad con ese nombre");
-           speciality.UpdateInfo(request.Name, request.Description);
-           await _persistence.Update(speciality);
-       }
+        var validation = new ValidationException();
+
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length is < 3 or > 100)
+            validation.WithDetail(nameof(request.Name), "El nombre debe tener entre 3 y 100 caracteres");
+
+        if (string.IsNullOrWhiteSpace(request.Description) || request.Description.Length is < 10 or > 100)
+            validation.WithDetail(nameof(request.Description), "La descripción debe tener entre 10 y 100 caracteres");
+
+        if (validation.Error.Details.Any()) throw validation;
+
+        var existing = await _persistence.GetById<Speciality>(id);
+        if (existing is null)
+            throw new KeyNotFoundException($"La especialidad con Id {id} no fue encontrada.");
+        
+        var sameName = await _persistence.First<Speciality>(s => s.Name == request.Name);
+        if (sameName != null && sameName.Id != id)
+        {
+            throw new ConflictException(nameof(ErrorCodes.SPECIALITY_NAME_CONFLICT), "Ya existe otra especialidad con este nombre.");
+        }
+        
+        existing.UpdateInfo(request.Name, request.Description);
+        
+        await _persistence.Update(existing);
+        return new SpecialityModel.Response(existing.Id, existing.Name, existing.Description);
     }
 
     public async Task DeleteSpecialitiy(Guid id)

@@ -38,8 +38,8 @@ public class SpecialtiesController : AppController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateSpeciality([FromRoute] Guid id, [FromBody] SpecialityModel.Request request)
     {
-        await _service.UpdateSpecialitiy(id, request);
-        return Ok();
+        var updated = await _service.UpdateSpecialitiy(id, request);
+        return Ok(updated);
     }
 
     [HttpDelete("{id}")]

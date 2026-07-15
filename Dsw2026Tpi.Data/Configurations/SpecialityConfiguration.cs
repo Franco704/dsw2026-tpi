@@ -16,7 +16,8 @@ public class SpecialityConfiguration : IEntityTypeConfiguration<Speciality>
             .HasColumnType("varchar(100)");
         
         builder.HasIndex(s => s.Name)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("[Deleted] = 0");
         
         builder.Property(s => s.Description)
             .IsRequired()
