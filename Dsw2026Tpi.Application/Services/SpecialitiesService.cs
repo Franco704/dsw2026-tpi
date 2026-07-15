@@ -14,13 +14,28 @@ public class SpecialitiesService : ISpecialitiesService
         _persistence = persistence;
     }
     
-    public Task UpdateSpecialitiy(Guid id, SpecialityModel.Request request)
+    public async Task UpdateSpecialitiy(Guid id, SpecialityModel.Request request)
     {
-        throw new NotImplementedException();
+        if (request.Name == null || request.Description == null)
+            throw new Exception("Nombre o Descripcion no pueden estar vacios");
+       var speciality = await _persistence.GetById<Speciality>(id);
+       if (speciality != null)
+       {
+           var existenombre = await _persistence.First<Speciality>(s => s.Name == request.Name);
+           if (existenombre.Id != id) throw new Exception("Ya existe una especialidad con ese nombre");
+           speciality.UpdateInfo(request.Name, request.Description);
+           await _persistence.Update(speciality);
+       }
     }
 
-    public Task DeleteSpecialitiy(Guid id)
+    public async Task DeleteSpecialitiy(Guid id)
     {
-    throw new NotImplementedException();
+        var speciality = await _persistence.GetById<Speciality>(id);
+
+        if (speciality != null)
+        {
+            speciality.Deactivate();
+            await _persistence.Update(speciality);
+        }
     }
 }
