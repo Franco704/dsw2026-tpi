@@ -33,6 +33,7 @@ public class Program
             builder.Services.AddHealthChecks();
 
             var app = builder.Build();
+            await app.SeedInitialAdminAsync();
 
             app.UseSerilogRequestLogging();
 

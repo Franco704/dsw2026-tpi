@@ -1,5 +1,6 @@
 ﻿using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Interfaces;
+using Dsw2026Tpi.Application.Validators;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Helpers;
 using Dsw2026Tpi.CrossCutting.Identity;
@@ -13,47 +14,69 @@ namespace Dsw2026Tpi.Application.Services;
 public class AuthenticationService : IAuthenticationService
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ISignInService _signInManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly JwtService _jwtService;
     private readonly ILogger<AuthenticationService> _logger;
+    private readonly IIdentityAccessService _identityAccessService;
 
-    public AuthenticationService(UserManager<ApplicationUser> userManager,
-        ISignInService signInManager,
-        RoleManager<IdentityRole> roleManager,
-        JwtService jwtService,
-        ILogger<AuthenticationService> logger)
+    public AuthenticationService(
+    UserManager<ApplicationUser> userManager,
+    IIdentityAccessService identityAccessService,
+    JwtService jwtService,
+    ILogger<AuthenticationService> logger)
     {
+        // Todavía se utiliza para el registro temporal.
         _userManager = userManager;
-        _signInManager = signInManager;
-        _roleManager = roleManager;
+
+        // Encapsula la autenticación y verificación de roles.
+        _identityAccessService = identityAccessService;
+
+        // Genera los tokens JWT.
         _jwtService = jwtService;
+
+        // Registra las operaciones del caso de uso.
         _logger = logger;
     }
 
-    public async Task<LoginAdminModel.Response> LoginAdmin(LoginAdminModel.Request request)
+    public async Task<LoginAdminModel.Response> LoginAdmin(
+    LoginAdminModel.Request request)
     {
-        if (!request.Email.IsEmailValid()) throw new AuthenticationException();
-        var user = await _userManager.FindByEmailAsync(request.Email) ?? throw new AuthenticationException();
-        var result = await _signInManager.CheckPassword(user, request.Password);
+        // Valida los datos recibidos.
+        AuthenticationRequestValidator.ValidateEmail(request.Email);
+        AuthenticationRequestValidator.ValidateLoginPassword(request.Password);
 
-        if (!result)
-        {
-            _logger.LogError("Intento de login fallido para: {Email}", request.Email);
-            throw new AuthenticationException();
-        }
+        // Autentica al usuario mediante Identity.
+        var user = await _identityAccessService.AuthenticateWithPasswordAsync(
+            request.Email,
+            request.Password);
 
-        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+        // Verifica que pueda ingresar como administrador.
+        await _identityAccessService.EnsureRoleAsync(
+            user,
+            Roles.Administrator);
 
-        var token  = _jwtService.GenerateToken(user.UserName!, role);
+        // Comprueba que Identity tenga un UserName configurado.
+        var username = user.UserName
+            ?? throw new InvalidOperationException(
+                "El usuario no tiene UserName configurado.");
 
+        // Genera el JWT con el rol administrativo.
+        var token = _jwtService.GenerateToken(
+            username,
+            Roles.Administrator);
+
+        // Registra el login exitoso.
+        _logger.LogInformation(
+            "Login de administrador exitoso: {Email}",
+            request.Email);
+
+        // Devuelve el formato solicitado.
         return new LoginAdminModel.Response(
             token,
-            role
-        );
+            Roles.Administrator.ToUpperInvariant());
     }
 
-    public async Task<LoginPatientModel.Response> LoginPatient(LoginPatientModel.Response request)
+    public async Task<LoginPatientModel.Response> LoginPatient(LoginPatientModel.Request request) //Primera modificacion, Aqui encontramos el
+                                                                                                   //siguiente fragmento: LoginPatientModel.Response request, modificamos el response (lo cual no tiene sentido) por request.
     {
         throw new NotImplementedException();
     }

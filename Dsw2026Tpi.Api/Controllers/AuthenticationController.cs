@@ -1,5 +1,7 @@
 ﻿using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Interfaces;
+using Dsw2026Tpi.CrossCutting.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dsw2026Tpi.Api.Controllers;
@@ -9,26 +11,44 @@ public class AuthenticationController : AppController
 {
     private readonly IAuthenticationService _authenticationService;
 
-    public AuthenticationController(IAuthenticationService authenticationService) 
+    public AuthenticationController(IAuthenticationService authenticationService)
     {
         _authenticationService = authenticationService;
     }
 
+
+    // Solo un administrador autenticado puede crear otro administrador.
+    [Authorize(Policy = Policies.AdminPolicy)]
     [HttpPost("admin/register")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Register([FromBody] RegisterModel.Request request)
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> Register(
+        [FromBody] RegisterModel.Request request)
     {
-        var result = await _authenticationService.Register(request);
-        return Ok(result.Email); 
+        // Delega la creación del usuario al servicio de autenticación.
+        var result =
+            await _authenticationService.Register(request);
+
+        // Devuelve el email del administrador creado.
+        return Ok(result.Email);
     }
 
+    // Permite iniciar sesión sin tener previamente un JWT.
+    [AllowAnonymous]
     [HttpPost("admin/login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Login([FromBody] LoginAdminModel.Request request)
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Login(
+        [FromBody] LoginAdminModel.Request request)
     {
-        var result = await _authenticationService.LoginAdmin(request);
+        // Delega la autenticación al servicio.
+        var result =
+            await _authenticationService.LoginAdmin(request);
+
+        // Devuelve el JWT y el rol.
         return Ok(result);
     }
 }
