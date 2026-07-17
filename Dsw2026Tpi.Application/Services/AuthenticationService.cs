@@ -17,10 +17,11 @@ public class AuthenticationService : IAuthenticationService
     private readonly JwtService _jwtService;
     private readonly ILogger<AuthenticationService> _logger;
     private readonly IIdentityAccessService _identityAccessService;
-
+    private readonly IPatientAccessService _patientAccessService;
     public AuthenticationService(
     UserManager<ApplicationUser> userManager,
     IIdentityAccessService identityAccessService,
+    IPatientAccessService patientAccessService,
     JwtService jwtService,
     ILogger<AuthenticationService> logger)
     {
@@ -35,6 +36,7 @@ public class AuthenticationService : IAuthenticationService
 
         // Registra las operaciones del caso de uso.
         _logger = logger;
+        _patientAccessService = patientAccessService;
     }
 
     public async Task<LoginAdminModel.Response> LoginAdmin(
@@ -75,10 +77,42 @@ public class AuthenticationService : IAuthenticationService
             Roles.Administrator.ToUpperInvariant());
     }
 
-    public async Task<LoginPatientModel.Response> LoginPatient(LoginPatientModel.Request request) //Primera modificacion, Aqui encontramos el
-                                                                                                   //siguiente fragmento: LoginPatientModel.Response request, modificamos el response (lo cual no tiene sentido) por request.
+    public async Task<LoginPatientModel.Response> LoginPatient(
+        LoginPatientModel.Request request)
     {
-        throw new NotImplementedException();
+        // Valida que el email sea obligatorio y tenga formato válido.
+        AuthenticationRequestValidator.ValidateEmail(
+            request.Email);
+
+        // Valida que el DNI tenga siete u ocho dígitos.
+        AuthenticationRequestValidator.ValidatePatientDni(
+            request.Dni);
+
+        // Normaliza el email para almacenarlo y utilizarlo en el JWT.
+        var normalizedEmail = request.Email
+            .Trim()
+            .ToLowerInvariant();
+
+        // Autentica al paciente o lo crea durante su primer acceso.
+        var patient = await _patientAccessService
+            .AuthenticateOrCreateAsync(
+                normalizedEmail,
+                request.Dni);
+
+        // Genera el JWT con el rol utilizado por PatientPolicy.
+        var token = _jwtService.GenerateToken(
+            normalizedEmail,
+            Roles.Patient);
+
+        // Registra el acceso sin almacenar el DNI ni el token.
+        _logger.LogInformation(
+            "Login de paciente exitoso. PatientId: {PatientId}",
+            patient.Id);
+
+        // Devuelve el formato exigido por la consigna.
+        return new LoginPatientModel.Response(
+            token,
+            Roles.Patient.ToUpperInvariant());
     }
 
     public async Task<RegisterModel.Response> Register(RegisterModel.Request request)

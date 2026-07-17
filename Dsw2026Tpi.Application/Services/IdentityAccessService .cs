@@ -86,4 +86,70 @@ public class IdentityAccessService : IIdentityAccessService
             throw new AuthenticationException();
         }
     }
+    public async Task<ApplicationUser?> FindByEmailAsync(
+    string email)
+    {
+        // Utiliza la búsqueda y normalización de Identity.
+        return await _userManager.FindByEmailAsync(email);
+    }
+
+    public async Task<ApplicationUser> CreateWithoutPasswordAsync(
+        string email,
+        string role)
+    {
+        // Registra la fecha una sola vez para mantener consistencia.
+        var now = DateTime.UtcNow;
+
+        // Construye un usuario que no utiliza contraseña.
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = false,
+            Deleted = false,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Crea el usuario sin ejecutar las políticas de contraseña.
+        var creationResult = await _userManager.CreateAsync(user);
+
+        // Rechaza la operación si Identity no pudo crear al usuario.
+        if (!creationResult.Succeeded)
+        {
+            _logger.LogError(
+                "No se pudo crear el usuario sin contraseña: {Email}. Errores: {Errors}",
+                email,
+                string.Join(
+                    ", ",
+                    creationResult.Errors.Select(error => error.Code)));
+
+            // El middleware convertirá este error inesperado en 500.
+            throw new InvalidOperationException(
+                "No se pudo crear el usuario de Identity.");
+        }
+
+        // Asigna el rol indicado al usuario creado.
+        var roleResult = await _userManager.AddToRoleAsync(
+            user,
+            role);
+
+        // Revierte la creación si no fue posible asignar el rol.
+        if (!roleResult.Succeeded)
+        {
+            // El usuario acaba de crearse dentro de esta operación.
+            await _userManager.DeleteAsync(user);
+
+            _logger.LogError(
+                "No se pudo asignar el rol {Role} al usuario {Email}.",
+                role,
+                email);
+
+            throw new InvalidOperationException(
+                "No se pudo asignar el rol al usuario.");
+        }
+
+        // Retorna el usuario correctamente creado.
+        return user;
+    }
 }

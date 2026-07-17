@@ -27,7 +27,6 @@ namespace Dsw2026Tpi.Api.Configurations;
 // Contiene extensiones utilizadas durante la inicialización de la API.
 public static class IdentitySeedExtensions
 {
-    // Extiende WebApplication para ejecutar el seeding desde Program.cs.
     public static async Task SeedInitialAdminAsync(
         this WebApplication app) //No entendemos.
     {

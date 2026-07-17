@@ -51,4 +51,21 @@ public class AuthenticationController : AppController
         // Devuelve el JWT y el rol.
         return Ok(result);
     }
+    // Permite el primer acceso y el login de pacientes sin JWT previo.
+    [AllowAnonymous]
+    [HttpPost("patient/login")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> LoginPatient(
+        [FromBody] LoginPatientModel.Request request)
+    {
+        // Delega el flujo de autenticación a Application.
+        var result = await _authenticationService
+            .LoginPatient(request);
+
+        // Devuelve el JWT y el rol del paciente.
+        return Ok(result);
+    }
 }

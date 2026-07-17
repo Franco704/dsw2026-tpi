@@ -2,7 +2,6 @@
 
 namespace Dsw2026Tpi.Application.Interfaces;
 
-// Define las operaciones comunes realizadas mediante Identity.
 public interface IIdentityAccessService
 {
     // Autentica un usuario mediante email y contraseña.
@@ -14,4 +13,13 @@ public interface IIdentityAccessService
     Task EnsureRoleAsync(
         ApplicationUser user,
         string requiredRole);
+
+    // Busca un usuario de Identity mediante su email.
+    Task<ApplicationUser?> FindByEmailAsync(
+        string email);
+
+    // Crea un usuario sin contraseña y le asigna un rol.
+    Task<ApplicationUser> CreateWithoutPasswordAsync(
+        string email,
+        string role);
 }

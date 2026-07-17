@@ -16,11 +16,13 @@ public static class DependencyInjectionConfigurationExtensions
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<ISignInService, SignInService>();
 
+
         // IdentityAccessService utiliza servicios scoped de Identity.
         services.AddScoped<IIdentityAccessService, IdentityAccessService>();
-
+        services.AddScoped<IPatientAccessService, PatientAccessService>();
         services.AddSingleton<JwtService>();
 
         return services;
+
     }
 }
