@@ -8,13 +8,22 @@ namespace Dsw2026Tpi.Api.Configurations;
 
 public static class DependencyInjectionConfigurationExtensions
 {
-    public static IServiceCollection AddAppDependencies(this IServiceCollection services)
+    public static IServiceCollection AddAppDependencies(
+      this IServiceCollection services)
     {
         services.AddScoped<IPersistence, PersistenceEf>();
         services.AddScoped<IDoctorService, DoctorService>();
+        services.AddScoped<ISpecialitiesService, SpecialitiesService>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<ISignInService, SignInService>();
+
+
+        // IdentityAccessService utiliza servicios scoped de Identity.
+        services.AddScoped<IIdentityAccessService, IdentityAccessService>();
+        services.AddScoped<IPatientAccessService, PatientAccessService>();
         services.AddSingleton<JwtService>();
+
         return services;
+
     }
 }
