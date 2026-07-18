@@ -1,6 +1,3 @@
 # Trabajo Práctico Integrador
 ## Desarrollo de Software 2026
-## Calliari Fabrizio. 60233
-## Martinez Soria, Franco German. 60224
-## Rusconi Mateo. 56559
-## Ruiz, Gonzalo German. 60467
+## Rama para el modulo de especialidades
