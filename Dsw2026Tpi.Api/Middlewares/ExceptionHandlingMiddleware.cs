@@ -35,12 +35,30 @@ public class ExceptionHandlingMiddleware
         ErrorResponse error = ex is AppException exApp ? 
             exApp.Error : 
             new ErrorResponse(nameof(ErrorCodes.UNHANDLED_ERROR), ErrorCodes.UNHANDLED_ERROR);
+        // Determina el código HTTP según el tipo de excepción.
         var status = ex switch
         {
-            ValidationException => HttpStatusCode.BadRequest,
-            EntityNotFoundException => HttpStatusCode.NotFound,
-            ConflictException or AuthenticationException => HttpStatusCode.Conflict,
-            AuthorizationException => HttpStatusCode.Unauthorized,
+            // Los datos recibidos no cumplen las validaciones.
+            ValidationException
+                => HttpStatusCode.BadRequest,
+
+            // La entidad solicitada no existe.
+            EntityNotFoundException
+                => HttpStatusCode.NotFound,
+
+            // Existe un conflicto con el estado actual del sistema.
+            ConflictException
+                => HttpStatusCode.Conflict,
+
+            // No se pudieron validar las credenciales.
+            AuthenticationException
+                => HttpStatusCode.Unauthorized,
+
+            // El usuario está autenticado, pero no tiene permisos.
+            AuthorizationException
+                => HttpStatusCode.Forbidden,
+
+            // Todo error no controlado devuelve 500.
             _ => HttpStatusCode.InternalServerError,
         };
         var result = JsonSerializer.Serialize(error);

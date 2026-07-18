@@ -89,11 +89,12 @@ public static class SecurityConfigurationExtensions
         {
             options.Password = new PasswordOptions
             {
-                RequiredLength = 6,
+                RequiredLength = 8, //modificamos el minimo de la contraseña que nos da identity (es 6) y lo llevamos a 8. 
                 RequireLowercase = true,
                 RequireUppercase = true,
                 RequireDigit = true
             };
+            options.User.RequireUniqueEmail = true; //Agrego esta restriccion para que el email sea unico. 
 
         }).AddRoles<IdentityRole>()
           .AddEntityFrameworkStores<AuthenticationDbContext>()
