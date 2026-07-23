@@ -1,3 +1,5 @@
+﻿// Permite lanzar errores con el formato común de la API.
+using Dsw2026Tpi.Application.Dtos;
 ﻿// Permite lanzar errores con el formato común de la API
 using Dsw2026Tpi.CrossCutting.Exceptions;
 
@@ -60,5 +62,39 @@ public static class AuthenticationRequestValidator
                     "dni",
                     "must_have_7_or_8_digits");
         }
+    }
+}
+
+public static class DoctorsValidators
+{
+    public static void ValidateDoctorName(string? name)
+    {
+        if (!string.IsNullOrWhiteSpace(name) && name.Length < 3 || name.Length > 100)
+            throw new ValidationException()
+                .WithDetail(
+                    "name",
+                    "El nombre debe tener entre 3 y 100 caracteres"
+                );
+    }
+    public static void ValidateDoctorRequest(DoctorModel.Request request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length < 3 || request.Name.Length > 100)
+            throw new ValidationException()
+                .WithDetail(
+                    "name",
+                    "El nombre debe tener entre 3 y 100 caracteres"
+                );
+        if (string.IsNullOrWhiteSpace(request.LicenseNumber))
+            throw new ValidationException()
+                .WithDetail(
+                    "licenseNumber",
+                    "El número de matrícula no puede estar vacio"
+                );
+        if (request.SpecialityId == Guid.Empty)
+            throw new ValidationException()
+                .WithDetail(
+                    "specialityId",
+                    "La especialidad es obligatoria"
+                );
     }
 }

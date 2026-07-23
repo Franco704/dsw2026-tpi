@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
-[Route("specialties")]
+[Route("/api/specialties")]
 [Authorize(Policy = Policies.AdminPolicy)]
 public class SpecialtiesController : AppController
 {
@@ -36,6 +36,7 @@ public class SpecialtiesController : AppController
 
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateSpeciality([FromRoute] Guid id, [FromBody] SpecialityModel.Request request)
     {
         var updated = await _service.UpdateSpecialitiy(id, request);
