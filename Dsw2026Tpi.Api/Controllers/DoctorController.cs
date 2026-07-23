@@ -1,4 +1,5 @@
-﻿using Dsw2026Tpi.Application.Interfaces;
+﻿using Dsw2026Tpi.Application.Dtos;
+using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,10 +34,18 @@ public class DoctorController : AppController
         return Ok(doctor);
     }
     
-  //  [HttpPost]
-    
-  //  [HttpPut]
-    
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Create([FromBody] DoctorModel.Request request)
+    {
+        var created = await _service.Create(request);
+        return CreatedAtAction(nameof(GetAll), created);
+    }
+
+    //  [HttpPut]  -> pendiente: pero tengo que implementar el método UpdateDoctors en el servicio todavia
+
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteDoctor([FromRoute] Guid id)

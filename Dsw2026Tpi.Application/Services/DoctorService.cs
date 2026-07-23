@@ -5,6 +5,7 @@ using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.CrossCutting.Helpers;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
+using Dsw2026Tpi.CrossCutting.Exceptions;
 
 namespace Dsw2026Tpi.Application.Services;
 
@@ -17,6 +18,26 @@ public class DoctorService : IDoctorService
         _persistence = persistence;
     }
 
+    public async Task<DoctorModel.Response> Create(DoctorModel.Request request)
+    {
+        DoctorsValidators.ValidateDoctorRequest(request);
+        var speciality = await _persistence.GetById<Speciality>(request.SpecialityId);
+        if (speciality == null)
+            throw new EntityNotFoundException(nameof(Speciality));
+        var doctor = new Doctor(request.Name, request.LicenseNumber, speciality)
+        {
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await _persistence.Add(doctor);
+        return new DoctorModel.Response(doctor.Id, doctor.Name, doctor.LicenseNumber, new DoctorModel.SpecialityDto(speciality.Id, speciality.Name));
+    }
+
+    public Task UpdateDoctors(Guid id, DoctorModel.Request request)
+    {
+        // TODO: implementar el PUT de médicos (buscar por id, validar, actualizar y guardar).
+        throw new NotImplementedException();
+    }
     public async Task<Pagination<DoctorModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null)
     {
         DoctorsValidators.ValidateDoctorName(name);
