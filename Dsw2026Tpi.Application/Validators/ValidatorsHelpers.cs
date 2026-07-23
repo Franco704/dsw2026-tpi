@@ -1,4 +1,4 @@
-﻿// Permite lanzar errores con el formato común de la API.
+﻿// Permite lanzar errores con el formato común de la API
 using Dsw2026Tpi.CrossCutting.Exceptions;
 
 // Permite reutilizar IsEmailValid().

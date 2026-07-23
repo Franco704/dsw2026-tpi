@@ -8,4 +8,6 @@ public interface IPatientAccessService
     Task<Patient> AuthenticateOrCreateAsync(
         string email,
         long dni);
+    Task<Patient> GetAuthenticatedPatientAsync(
+        string email);
 }
