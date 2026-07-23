@@ -27,5 +27,6 @@ public class Doctor: EntityBase
     public void Deactivate()
     {
         IsActive = false;
+        Deleted = true;
     }
 }

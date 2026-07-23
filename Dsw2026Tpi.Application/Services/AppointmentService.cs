@@ -29,12 +29,95 @@ public class AppointmentService : IAppointmentService
         AppointmentModel.Request request,
         string authenticatedEmail)
     {
-        /*
-         * Este método queda pendiente hasta integrar
-         * el módulo de Availability.
-         */
-        throw new NotImplementedException(
-            "Pendiente de integrar el módulo de disponibilidades.");
+        AppointmentRequestValidator.ValidateCreate(request);
+
+        var patient = await _patientAccessService
+            .GetAuthenticatedPatientAsync(authenticatedEmail);
+
+        var requestedDni = request.Patient!.Dni.ToString(
+            CultureInfo.InvariantCulture);
+
+        if (patient.Dni != requestedDni)
+        {
+            _logger.LogWarning(
+                "El paciente autenticado intentó crear un turno para otro DNI.");
+
+            throw new AuthorizationException();
+        }
+
+        var doctor = await _persistence.GetById<Doctor>(
+            request.DoctorId);
+
+        if (doctor is null || doctor.Deleted || !doctor.IsActive)
+        {
+            throw new EntityNotFoundException(
+                nameof(Doctor));
+        }
+
+        var availability =
+            await _persistence.GetById<Availability>(
+                request.AvailabilityId);
+
+        if (availability is null)
+        {
+            throw new EntityNotFoundException(
+                nameof(Availability));
+        }
+
+        if (availability.DoctorId != doctor.Id)
+        {
+            throw new ConflictException(
+                "AVAILABILITY_DOCTOR_MISMATCH",
+                "La disponibilidad seleccionada no pertenece al médico indicado.");
+        }
+
+        if (!availability.IsAvailable)
+        {
+            throw new ConflictException(
+                "AVAILABILITY_NOT_AVAILABLE",
+                "La disponibilidad seleccionada ya no se encuentra disponible.");
+        }
+
+        var scheduledAt = availability.Date.Date
+            .Add(availability.StartTime);
+
+        if (scheduledAt <= DateTime.Now)
+        {
+            throw new ConflictException(
+                "AVAILABILITY_EXPIRED",
+                "No se puede reservar una disponibilidad pasada.");
+        }
+
+        var existingAppointment =
+            await _persistence.First<Appointment>(
+                appointment =>
+                    appointment.AvailabilityId == availability.Id &&
+                    appointment.Status == AppointmentStatus.BOOKED);
+
+        if (existingAppointment is not null)
+        {
+            throw new ConflictException(
+                "AVAILABILITY_ALREADY_BOOKED",
+                "La disponibilidad seleccionada ya posee un turno reservado.");
+        }
+
+        var appointment = new Appointment(
+            doctor.Id,
+            availability.Id,
+            patient.Id,
+            scheduledAt,
+            request.Reason!);
+
+        availability.MarkAsUnavailable();
+
+        await _persistence.Add(appointment);
+
+        _logger.LogInformation(
+            "Turno {AppointmentId} creado para el paciente {PatientId}.",
+            appointment.Id,
+            patient.Id);
+
+        return ToResponse(appointment);
     }
 
     public async Task<IReadOnlyCollection<AppointmentModel.Response>>
@@ -108,13 +191,33 @@ public class AppointmentService : IAppointmentService
                 "Solamente se pueden cancelar turnos reservados.");
         }
 
-        appointment.Cancel();
+        var availability =
+            await _persistence.GetById<Availability>(
+                appointment.AvailabilityId);
 
+        if (availability is null)
+        {
+            throw new EntityNotFoundException(
+                nameof(Availability));
+        }
+
+        appointment.Cancel();
+        availability.MarkAsAvailable();
+
+        /*
+
+    Appointment y Availability fueron obtenidas desde
+    el mismo DbContext, por lo tanto ambas están trackeadas.*
+    Update ejecuta un único SaveChangesAsync y persiste:
+    Appointment.Status = CANCELLED
+    Availability.IsAvailable = true
+    */
         await _persistence.Update(appointment);
 
         _logger.LogInformation(
-            "Turno {AppointmentId} cancelado correctamente.",
-            appointment.Id);
+            "Turno {AppointmentId} cancelado correctamente y disponibilidad {AvailabilityId} liberada.",
+            appointment.Id,
+            availability.Id);
     }
 
     private static AppointmentModel.Response ToResponse(

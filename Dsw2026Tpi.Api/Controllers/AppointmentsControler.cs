@@ -1,6 +1,8 @@
 ﻿using Dsw2026Tpi.Application.Interfaces;
+using Dsw2026Tpi.Application.Models;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Identity;
+using Dsw2026Tpi.CrossCutting.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,13 +20,49 @@ public class AppointmentsController : AppController
         _appointmentService = appointmentService;
     }
 
-    [HttpGet("patient/{dni:long}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [HttpPost]
+    [ProducesResponseType(
+        typeof(AppointmentModel.Response),
+        StatusCodes.Status201Created)]
+    [ProducesResponseType(
+        typeof(ErrorResponse),
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+        typeof(ErrorResponse),
+        StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(
+        typeof(ErrorResponse),
+        StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(
+        typeof(ErrorResponse),
+        StatusCodes.Status404NotFound)]
+    //Entra en conflicto con el slot de la cita
+    [ProducesResponseType(
+        typeof(ErrorResponse),
+        StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Create(
+        [FromBody] AppointmentModel.Request request)
+    {
+        var authenticatedEmail = GetAuthenticatedEmail();
+
+        var appointment = await _appointmentService.CreateAsync(
+            request,
+            authenticatedEmail);
+
+        return Created(
+            $"/api/appointments/{appointment.Id}",
+            appointment);
+    }
+
+    [HttpGet("patient")]
+    [ProducesResponseType(
+        typeof(IReadOnlyCollection<AppointmentModel.Response>),
+        StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetActiveByPatientDni(
-        [FromRoute] long dni)
+        [FromQuery] long dni)
     {
         var authenticatedEmail = GetAuthenticatedEmail();
 
@@ -37,7 +75,6 @@ public class AppointmentsController : AppController
     }
 
     [HttpDelete("{appointmentId:guid}")]
-    //ProducesResponseType indica que codigos se debe devolver en cada endpoint donde se lo utilice
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -45,7 +82,7 @@ public class AppointmentsController : AppController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Cancel(
-        [FromRoute] Guid appointmentId)
+        Guid appointmentId)
     {
         var authenticatedEmail = GetAuthenticatedEmail();
 
@@ -55,9 +92,9 @@ public class AppointmentsController : AppController
 
         return NoContent();
     }
-
     private string GetAuthenticatedEmail()
     {
+        //Funcion para obtener el email del usuario autenticado desde el token JWT, si no esta autenticado devuelve una excepcion de autenticacion
         var authenticatedEmail = User.Identity?.Name;
 
         if (string.IsNullOrWhiteSpace(authenticatedEmail))
