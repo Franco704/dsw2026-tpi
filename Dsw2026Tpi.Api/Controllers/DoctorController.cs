@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
-[Route("doctors")]
+[Route("/api/doctors")]
 [Authorize(Policy = Policies.AdminPolicy)]
 public class DoctorController : AppController
 {
@@ -22,5 +22,26 @@ public class DoctorController : AppController
     {
         var doctors = await _service.GetAll(pageSize, pageIndex, name);
         return Ok(doctors);
+    }
+
+    [HttpGet("{id}/availabilities")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById([FromRoute] Guid id)
+    {
+        var doctor = await _service.GetById(id);
+        return Ok(doctor);
+    }
+    
+  //  [HttpPost]
+    
+  //  [HttpPut]
+    
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteDoctor([FromRoute] Guid id)
+    {
+        await _service.DeleteDoctor(id);
+        return NoContent();
     }
 }

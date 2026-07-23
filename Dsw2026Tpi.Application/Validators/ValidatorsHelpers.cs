@@ -62,3 +62,16 @@ public static class AuthenticationRequestValidator
         }
     }
 }
+
+public static class DoctorsValidators
+{
+    public static void ValidateDoctorName(string? name)
+    {
+        if (!string.IsNullOrWhiteSpace(name) && name.Length < 3 || name.Length > 100)
+            throw new ValidationException()
+                .WithDetail(
+                    "name",
+                    "El nombre debe tener entre 3 y 100 caracteres"
+                );
+    }
+}
