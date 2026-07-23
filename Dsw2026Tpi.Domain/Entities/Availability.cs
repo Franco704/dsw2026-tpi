@@ -8,6 +8,7 @@ public class Availability : EntityBase
     public TimeSpan StartTime { get; private set; }
     public TimeSpan EndTime { get; private set; }
     public bool IsAvailable { get; private set; }
+   
     
     
     #region Constructor for EF
