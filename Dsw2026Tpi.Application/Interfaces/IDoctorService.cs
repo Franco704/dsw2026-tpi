@@ -10,6 +10,4 @@ public interface IDoctorService
     Task<Pagination<DoctorModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null);
     Task<List<DoctorModel.AvailiabilityResponse>> GetById(Guid id);
     Task DeleteDoctor(Guid id);
-    
-
 }

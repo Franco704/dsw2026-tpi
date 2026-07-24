@@ -44,7 +44,15 @@ public class DoctorController : AppController
         return CreatedAtAction(nameof(GetAll), created);
     }
 
-    //  [HttpPut]  -> pendiente: pero tengo que implementar el método UpdateDoctors en el servicio todavia
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateDoctors([FromRoute] Guid id, [FromBody] DoctorModel.Request request)
+    {
+        await _service.UpdateDoctors(id, request);
+        return NoContent();
+    }
 
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
