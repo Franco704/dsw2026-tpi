@@ -1,11 +1,12 @@
 ﻿using Dsw2026Tpi.Application.Interfaces;
-using Dsw2026Tpi.Application.Models;
+using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Validators;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
+using static AppointmentModel;
 
 namespace Dsw2026Tpi.Application.Services;
 
@@ -220,6 +221,57 @@ public class AppointmentService : IAppointmentService
             availability.Id);
     }
 
+    public async Task<Pagination<AppointmentModel.SearchResponse>>
+    SearchAsync(
+        AppointmentModel.SearchRequest request)
+    {
+        AppointmentRequestValidator.ValidateSearch(request);
+        var dni = request.Dni?.ToString(
+            CultureInfo.InvariantCulture);
+
+        var dateFrom = request.Date?.Date;
+        var dateTo = dateFrom?.AddDays(1);
+
+        var appointments =
+            await _persistence.Paginate<Appointment, DateTime>(
+                request.PageSize,
+                request.PageIndex,
+                appointment =>
+                    (!request.SpecialtyId.HasValue ||
+                        appointment.Doctor.SpecialityId ==
+                        request.SpecialtyId.Value)
+                    &&
+                    (!request.DoctorId.HasValue ||
+                        appointment.DoctorId ==
+                        request.DoctorId.Value)
+                    &&
+                    (dni == null ||
+                        appointment.Patient.Dni == dni)
+                    &&
+                    (!dateFrom.HasValue ||
+                        appointment.ScheduledAt >= dateFrom.Value &&
+                        appointment.ScheduledAt < dateTo!.Value),
+                appointment => appointment.ScheduledAt,
+                "Doctor",
+                "Doctor.Speciality",
+                "Availability",
+                "Patient");
+
+        return appointments.Map(ToSearchResponse);
+    }
+
+    private static AppointmentModel.SearchResponse ToSearchResponse(
+    Appointment appointment)
+    {
+        return new AppointmentModel.SearchResponse(
+            appointment.Id,
+            appointment.Doctor.SpecialityId,
+            appointment.Doctor.Speciality?.Name ?? string.Empty,
+            appointment.DoctorId,
+            appointment.Doctor.Name,
+            appointment.ScheduledAt,
+            appointment.Status.ToString());
+    }
     private static AppointmentModel.Response ToResponse(
         Appointment appointment)
     {

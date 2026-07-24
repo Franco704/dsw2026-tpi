@@ -14,6 +14,7 @@ public class Appointment : EntityBase
     public DateTime ScheduledAt { get; private set; }
 
     public string Reason { get; private set; } = string.Empty;
+    
 
     public AppointmentStatus Status { get; private set; }
     private Appointment()
