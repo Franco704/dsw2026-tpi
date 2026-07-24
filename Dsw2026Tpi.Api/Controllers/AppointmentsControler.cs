@@ -1,15 +1,16 @@
 ﻿using Dsw2026Tpi.Application.Interfaces;
-using Dsw2026Tpi.Application.Models;
+using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Identity;
 using Dsw2026Tpi.CrossCutting.Models;
+using Dsw2026Tpi.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
 [Route("appointments")]
-[Authorize(Policy = Policies.PatientPolicy)]
+
 public class AppointmentsController : AppController
 {
     private readonly IAppointmentService _appointmentService;
@@ -40,6 +41,7 @@ public class AppointmentsController : AppController
     [ProducesResponseType(
         typeof(ErrorResponse),
         StatusCodes.Status409Conflict)]
+    [Authorize(Policy = Policies.PatientPolicy)]
     public async Task<IActionResult> Create(
         [FromBody] AppointmentModel.Request request)
     {
@@ -61,6 +63,7 @@ public class AppointmentsController : AppController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [Authorize(Policy = Policies.PatientPolicy)]
     public async Task<IActionResult> GetActiveByPatientDni(
         [FromQuery] long dni)
     {
@@ -81,6 +84,7 @@ public class AppointmentsController : AppController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [Authorize(Policy = Policies.PatientPolicy)]
     public async Task<IActionResult> Cancel(
         Guid appointmentId)
     {
@@ -91,6 +95,62 @@ public class AppointmentsController : AppController
             authenticatedEmail);
 
         return NoContent();
+    }
+
+    [HttpGet]
+    [Authorize(Policy = Policies.AdminPolicy)]
+    [ProducesResponseType(
+    typeof(Pagination<AppointmentModel.SearchResponse>),
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetByDate(
+    [FromQuery] DateTime date,
+    [FromQuery] int pageSize = 10,
+    [FromQuery] int pageIndex = 1)
+    {
+        var request = new AppointmentModel.SearchRequest(
+            SpecialtyId: null,
+            DoctorId: null,
+            Dni: null,
+            Date: date,
+            PageSize: pageSize,
+            PageIndex: pageIndex);
+
+        var appointments =
+            await _appointmentService.SearchAsync(request);
+
+        return Ok(appointments);
+    }
+    [HttpGet("search")]
+    [Authorize(Policy = Policies.AdminPolicy)]
+    [ProducesResponseType(
+    typeof(Pagination<AppointmentModel.SearchResponse>),
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> Search(
+    [FromQuery] Guid? specialtyId,
+    [FromQuery] Guid? doctorId,
+    [FromQuery] long? dni,
+    [FromQuery] DateTime? date,
+    [FromQuery] int pageSize = 10,
+    [FromQuery] int pageIndex = 1)
+    {
+        var request = new AppointmentModel.SearchRequest(
+            specialtyId,
+            doctorId,
+            dni,
+            date,
+            pageSize,
+            pageIndex);
+
+        var appointments =
+            await _appointmentService.SearchAsync(request);
+
+        return Ok(appointments);
     }
     private string GetAuthenticatedEmail()
     {

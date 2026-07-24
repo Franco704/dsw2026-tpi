@@ -1,4 +1,5 @@
-﻿using Dsw2026Tpi.Application.Models;
+﻿using Dsw2026Tpi.Application.Dtos;
+using Dsw2026Tpi.Domain.Entities;
 
 namespace Dsw2026Tpi.Application.Interfaces;
 
@@ -16,4 +17,7 @@ public interface IAppointmentService
     Task CancelAsync(
         Guid appointmentId,
         string authenticatedEmail);
+
+    Task<Pagination<AppointmentModel.SearchResponse>> SearchAsync(
+    AppointmentModel.SearchRequest request);
 }
