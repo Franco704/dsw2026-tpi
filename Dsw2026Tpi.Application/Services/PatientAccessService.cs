@@ -130,4 +130,39 @@ public class PatientAccessService : IPatientAccessService
         // Retorna el paciente correctamente autenticado.
         return patientByUser;
     }
+    public async Task<Patient> GetAuthenticatedPatientAsync(
+    string email)
+    {
+        var normalizedEmail = email
+            .Trim()
+            .ToLowerInvariant();
+
+        var user = await _identityAccessService.FindByEmailAsync(
+            normalizedEmail);
+
+        if (user is null || user.Deleted)
+        {
+            _logger.LogWarning(
+                "No se pudo resolver el paciente autenticado.");
+
+            throw new AuthorizationException();
+        }
+
+        await _identityAccessService.EnsureRoleAsync(
+            user,
+            Roles.Patient);
+
+        var patient = await _persistence.First<Patient>(
+            patient => patient.UserId == user.Id);
+
+        if (patient is null || patient.Deleted)
+        {
+            _logger.LogWarning(
+                "El usuario autenticado no posee un paciente activo.");
+
+            throw new AuthorizationException();
+        }
+
+        return patient;
+    }
 }
