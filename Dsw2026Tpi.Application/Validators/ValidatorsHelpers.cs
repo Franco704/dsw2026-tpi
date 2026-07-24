@@ -67,6 +67,7 @@ public static class AuthenticationRequestValidator
 
 public static class DoctorsValidators
 {
+    //esto usa el get
     public static void ValidateDoctorName(string? name)
     {
         if (!string.IsNullOrWhiteSpace(name) && name.Length < 3 || name.Length > 100)
@@ -76,8 +77,10 @@ public static class DoctorsValidators
                     "El nombre debe tener entre 3 y 100 caracteres"
                 );
     }
+    //esto usa el post y el put
     public static void ValidateDoctorRequest(DoctorModel.Request request)
     {
+        // Validacion distinta a la del get, ya que el post y put requieren que el nombre sea obligatorio
         if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length < 3 || request.Name.Length > 100)
             throw new ValidationException()
                 .WithDetail(

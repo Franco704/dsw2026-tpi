@@ -33,10 +33,20 @@ public class DoctorService : IDoctorService
         return new DoctorModel.Response(doctor.Id, doctor.Name, doctor.LicenseNumber, new DoctorModel.SpecialityDto(speciality.Id, speciality.Name));
     }
 
-    public Task UpdateDoctors(Guid id, DoctorModel.Request request)
+    public async Task UpdateDoctors(Guid id, DoctorModel.Request request)
     {
-        // TODO: implementar el PUT de médicos (buscar por id, validar, actualizar y guardar).
-        throw new NotImplementedException();
+       DoctorsValidators.ValidateDoctorRequest(request);
+       var doctor = await _persistence.GetById<Doctor>(id);
+        if (doctor == null)
+        {
+            throw new EntityNotFoundException(nameof(Doctor));
+        }
+        var speciality = await _persistence.GetById<Speciality>(request.SpecialityId);
+        if (speciality == null)
+            throw new EntityNotFoundException(nameof(Speciality));
+
+        doctor.Update(request.Name, request.LicenseNumber, speciality);
+        await _persistence.Update(doctor);
     }
     public async Task<Pagination<DoctorModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null)
     {
