@@ -22,6 +22,8 @@ public class Availability : EntityBase
         StartTime = startTime;
         EndTime = endTime;
         IsAvailable = true;
+        CreatedAt = DateTime.Now;
+        UpdatedAt = DateTime.Now;
     }
     
     public void MarkAsUnavailable()

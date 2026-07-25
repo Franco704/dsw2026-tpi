@@ -1,5 +1,6 @@
 using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Interfaces;
+using Dsw2026Tpi.CrossCutting.Helpers;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
 
@@ -50,6 +51,7 @@ public class AvailabilityService : IAvailabilitiesService
                 if (e.IsAvailable)
                 {
                     e.Deleted = true;
+                    e.UpdatedAt = DateTime.UtcNow;
                     await _persistence.Update(e);
                 }
             }
@@ -62,9 +64,11 @@ public class AvailabilityService : IAvailabilitiesService
         {
             if (dR.StartTime >= dR.EndTime)
                 throw new ArgumentException("La hora de inicio debe ser menor a la hora de fin");
-            if (!Enum.TryParse<DayOfWeek>(dR.Day, true, out var targetDayOfWeek))
-                throw new ArgumentException($"El día {dR.Day} no es valido. Formato esperado: Monday, Tuesday, ...");
-
+            
+            var targetDayOfWeek = DateTimeHelpers.ParseDay(dR.Day);
+            if (targetDayOfWeek == null)
+                throw new ArgumentException($"El día {dR.Day} no es valido.");
+            
             for (var date = fDayOfMonth; date <= lDayOfMonth; date = date.AddDays(1))
             {
                 if (date >= today && date.DayOfWeek == targetDayOfWeek)

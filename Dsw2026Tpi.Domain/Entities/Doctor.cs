@@ -28,6 +28,7 @@ public class Doctor: EntityBase
     {
         IsActive = false;
         Deleted = true;
+        UpdatedAt = DateTime.Now;
     }
 
     public void Update(string name, string licenseNumber, Speciality speciality)

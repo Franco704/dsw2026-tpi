@@ -50,7 +50,7 @@ public class DoctorService : IDoctorService
     }
     public async Task<Pagination<DoctorModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null)
     {
-        DoctorsValidators.ValidateDoctorName(name);
+        
         var doctors = await _persistence.Paginate<Doctor, string>(pageSize, pageIndex, 
             d => d.IsActive && (string.IsNullOrWhiteSpace(name) || d.Name.Contains(name)), 
             x => x.Name, nameof(Doctor.Speciality));

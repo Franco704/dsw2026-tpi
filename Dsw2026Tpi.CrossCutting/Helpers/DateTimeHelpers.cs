@@ -19,11 +19,21 @@ public static class DateTimeHelpers
         return DaysEspaniol.TryGetValue(day, out var dayName) ? dayName : day.ToString();
     }
 
+    
     public static DayOfWeek? ParseSpanish(string day)
     {
         var norm = day.Trim().ToUpperInvariant();
         var e = DaysEspaniol.FirstOrDefault(x => x.Value == norm);
         return e.Value != null ? e.Key : null;
+    }
+
+    
+    public static DayOfWeek? ParseDay(string day)
+    {
+        if (Enum.TryParse<DayOfWeek>(day, true, out var dayOfWeek))
+            return dayOfWeek;
+        
+        return ParseSpanish(day);
     }
 
     public static string ToTimeString(this TimeSpan time)
