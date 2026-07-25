@@ -1,0 +1,30 @@
+[33m30ce238[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/appointments[m[33m, [m[1;31morigin/feature/appointmentstemp[m[33m, [m[1;31morigin/feature/appointments[m[33m, [m[1;32mfeature/appointmentstemp[m[33m)[m Nuevos cambios en el modulo de citas
+[33mdcff71f[m[33m ([m[1;31morigin/development[m[33m)[m Merge pull request #3 from Franco704/QA
+[33m8abc31b[m[33m ([m[1;31morigin/QA[m[33m, [m[1;32mQA[m[33m)[m Arreglado el problema de las migraciones entre los objetos del dominio e Identity
+[33m8d3764f[m Merge pull request #2 from Franco704/feature/auth
+[33mf78d325[m[33m ([m[1;31morigin/feature/auth[m[33m)[m Merge branch 'QA' into feature/auth
+[33m0b5cd0f[m Merge pull request #1 from Franco704/feature/specialties
+[33m1e68741[m Endpoint Login paciente terminado y pruebas realizadas
+[33med29d0d[m Correcion de Merge Conflict
+[33mdae2c6a[m Primer Avance Modulo Auth.
+[33m96af42e[m[33m ([m[1;31morigin/feature/specialties[m[33m)[m Migraciones realizadas hasta la versión final del módulo Specialities
+[33m153b13f[m Corregido endpoint PUT y Delete Test manuales realizados, los 4 endpoints funcionan correctamente
+[33m43a3af1[m Resuelto conflicto de merge en SpecialitiesService
+[33m3e52011[m Añadido metodos en Speciality.cs para manejar los endpoints de DELETE y PUT Añadidos métodos en SpecialitiesService.cs para los endpoints DELETE y PUT
+[33mc7086d9[m Update README to reflect new module structure
+[33m3b3296a[m Implementados endpoints GET y POST de Specialties con validaciones y paginado
+[33me1b3617[m Actualizado EntityBase.cs para manejar el campo "Deleted"
+[33m6efb1b7[m Creadas entidades relacionadas a los endpoints de Speciality, implementación pendiente
+[33m9d68f93[m Update README to reflect authentication module
+[33m2ee5d57[m Add section for authentication model branch
+[33m095e598[m Add Ruiz, Gonzalo German to the README
+[33m5342298[m update del readme
+[33mad2e6b1[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Add admin user registration endpoint information
+[33m998b27b[m Update README.md
+[33m7fd4599[m Ajustes de configuración. Detalles en controladores.
+[33m4df9f22[m Cambios de librerías de Identity. Ajustes finales.
+[33mc79729a[m Se completan políticas de seguridad.
+[33m76aa498[m Se completa ejemplo de controlador con paginación.
+[33mac9fcd3[m Se completan configuraciones. Entidades de muestra. Nueva capa transversal.
+[33mdf1cde0[m Add project files.
+[33mb511399[m Add .gitattributes and .gitignore.

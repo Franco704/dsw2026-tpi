@@ -14,9 +14,10 @@ public static class DependencyInjectionConfigurationExtensions
         services.AddScoped<IPersistence, PersistenceEf>();
         services.AddScoped<IDoctorService, DoctorService>();
         services.AddScoped<ISpecialitiesService, SpecialitiesService>();
+        services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<ISignInService, SignInService>();
-
+        services.AddScoped<IAvailabilitiesService, AvailabilityService>();
 
         // IdentityAccessService utiliza servicios scoped de Identity.
         services.AddScoped<IIdentityAccessService, IdentityAccessService>();
