@@ -25,7 +25,7 @@ public class DoctorService : IDoctorService
         DoctorsValidators.ValidateDoctorRequest(request);
 
         //validacion de existencia del doctor (matricula)
-        var existing = await _persistence.First<Doctor>(d =>(d.LicenseNumber == request.LicenseNumber) && !d.Deleted );
+        var existing = await _persistence.First<Doctor>(d =>(d.LicenseNumber == request.LicenseNumber));
         if (existing != null) {
             throw new ConflictException(nameof(ErrorCodes.DOCTOR_LICENSE_CONFLICT), nameof(ErrorCodes.DOCTOR_LICENSE_CONFLICT));
         }
@@ -47,7 +47,7 @@ public class DoctorService : IDoctorService
     {
        DoctorsValidators.ValidateDoctorRequest(request);
        var doctor = await _persistence.GetById<Doctor>(id);
-        if (doctor == null || doctor.Deleted)
+        if (doctor == null)
         {
             throw new EntityNotFoundException(nameof(Doctor));
         }
@@ -62,7 +62,7 @@ public class DoctorService : IDoctorService
     {
         
         var doctors = await _persistence.Paginate<Doctor, string>(pageSize, pageIndex, 
-            d => d.IsActive && (string.IsNullOrWhiteSpace(name) || d.Name.Contains(name)), 
+            d => (string.IsNullOrWhiteSpace(name) || d.Name.Contains(name)), 
             x => x.Name, nameof(Doctor.Speciality));
 
         return doctors.Map(d => new DoctorModel.Response(d.Id, d.Name, d.LicenseNumber,
