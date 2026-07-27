@@ -56,37 +56,61 @@ public class PersistenceEf: IPersistence
         return entity;
     }
 
-    public async Task<Pagination<T>> Paginate<T, TKey>(int pageSize, int pageIndex, Expression<Func<T, bool>> predicate, Expression<Func<T, TKey>> sortOrder, params string[] includes) where T : EntityBase
+    public async Task<Pagination<T>> Paginate<T, TKey>(
+    int pageSize,
+    int pageIndex,
+    Expression<Func<T, bool>> predicate,
+    Expression<Func<T, TKey>> sortOrder,
+    params string[] includes)
+    where T : EntityBase
     {
         pageSize = Math.Abs(pageSize);
-        pageIndex = Math.Abs(pageIndex) == 0 ? 0 : Math.Abs(pageIndex) - 1;
+
+        var originalPageIndex = Math.Abs(pageIndex);
+        pageIndex = originalPageIndex == 0
+            ? 0
+            : originalPageIndex - 1;
 
         var filtered = Include(_context.Set<T>(), includes)
-                 .Where(predicate)
-                 .OrderBy(sortOrder);
+            .Where(predicate)
+            .OrderBy(sortOrder);
 
         var total = await filtered.CountAsync();
 
-        
-        async Task<Pagination<T>> GetPage(int skip, int take)
+        async Task<Pagination<T>> GetPage(
+            int skip,
+            int take,
+            int responsePageIndex)
         {
-            var data = await filtered.Skip(skip)
-                    .Take(take)
-                    .ToListAsync();
+            var data = await filtered
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
 
-            return new Pagination<T>(pageSize, pageIndex, total, data);
+            return new Pagination<T>(
+                pageSize,
+                responsePageIndex,
+                total,
+                data);
         }
-        
-        //la pagina existe
+
+        // La página solicitada existe.
         if (total > pageSize * pageIndex)
         {
-            return await GetPage(pageIndex * pageSize, pageSize);
+            return await GetPage(
+                pageIndex * pageSize,
+                pageSize,
+                originalPageIndex);
         }
 
-        //solo hay una pagina
+        // Solo hay una página.
         if (total < pageSize)
         {
-            return new Pagination<T>(pageSize, pageIndex, total, await filtered.ToListAsync());
+            return new Pagination<T>(
+                pageSize,
+                originalPageIndex,
+                total,
+                await filtered.ToListAsync());
         }
 
         var targetPageIndex = pageIndex - 1;
@@ -95,15 +119,24 @@ public class PersistenceEf: IPersistence
         {
             if (total > targetPageIndex * pageSize)
             {
-                return await GetPage(targetPageIndex * pageSize, pageSize);
+                return await GetPage(
+                    targetPageIndex * pageSize,
+                    pageSize,
+                    targetPageIndex + 1);
             }
 
             targetPageIndex--;
 
-            if (targetPageIndex < 0) return new Pagination<T>(pageSize, 0, 0, []);
+            if (targetPageIndex < 0)
+            {
+                return new Pagination<T>(
+                    pageSize,
+                    originalPageIndex,
+                    0,
+                    []);
+            }
         }
     }
-
     private static IQueryable<T> Include<T>(IQueryable<T> query, string[] includes) where T : EntityBase
     {
         var includedQuery = query;
