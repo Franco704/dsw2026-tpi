@@ -37,7 +37,7 @@ public class DoctorService : IDoctorService
     {
        DoctorsValidators.ValidateDoctorRequest(request);
        var doctor = await _persistence.GetById<Doctor>(id);
-        if (doctor == null)
+        if (doctor == null || doctor.Deleted)
         {
             throw new EntityNotFoundException(nameof(Doctor));
         }
