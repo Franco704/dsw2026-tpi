@@ -123,7 +123,7 @@
   <data name="AUTHORIZATION_FAILED" xml:space="preserve">
     <value>Se requieren permisos para la operación solicitada</value>
   </data>
-  <data name="DOCTOR_LICENCE_CONFLICT" xml:space="preserve">
+  <data name="DOCTOR_LICENSE_CONFLICT" xml:space="preserve">
     <value>Ya existe un médico con esa matrícula</value>
   </data>
   <data name="ENTITY_NOTFOUND" xml:space="preserve">

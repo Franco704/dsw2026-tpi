@@ -81,9 +81,9 @@ namespace Dsw2026Tpi.CrossCutting.Resources {
         /// <summary>
         ///   Busca una cadena traducida similar a Ya existe un médico con esa matrícula.
         /// </summary>
-        public static string DOCTOR_LICENCE_CONFLICT {
+        public static string DOCTOR_LICENSE_CONFLICT {
             get {
-                return ResourceManager.GetString("DOCTOR_LICENCE_CONFLICT", resourceCulture);
+                return ResourceManager.GetString("DOCTOR_LICENSE_CONFLICT", resourceCulture);
             }
         }
         

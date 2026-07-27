@@ -25,9 +25,9 @@ public class DoctorService : IDoctorService
         DoctorsValidators.ValidateDoctorRequest(request);
 
         //validacion de existencia del doctor (matricula)
-        var existing = await _persistence.First<Doctor>(d =>(d.LicenseNumber == request.LicenseNumber) && d.Deleted );
+        var existing = await _persistence.First<Doctor>(d =>(d.LicenseNumber == request.LicenseNumber) && !d.Deleted );
         if (existing != null) {
-            throw new ConflictException(nameof(ErrorCodes.DOCTOR_LICENCE_CONFLICT), nameof(ErrorCodes.DOCTOR_LICENCE_CONFLICT));
+            throw new ConflictException(nameof(ErrorCodes.DOCTOR_LICENSE_CONFLICT), nameof(ErrorCodes.DOCTOR_LICENSE_CONFLICT));
         }
 
         //validacion de la especialidad
