@@ -68,13 +68,12 @@ public class AuthenticationService : IAuthenticationService
 
         // Registra el login exitoso.
         _logger.LogInformation(
-            "Login de administrador exitoso: {Email}",
-            request.Email);
+        "Login de administrador exitoso. UserId: {UserId}",user.Id);
 
         // Devuelve el formato solicitado.
         return new LoginAdminModel.Response(
-            token,
-            Roles.Administrator.ToUpperInvariant());
+                token,
+                Roles.Administrator.ToUpperInvariant());
     }
 
     public async Task<LoginPatientModel.Response> LoginPatient(
@@ -133,10 +132,9 @@ public class AuthenticationService : IAuthenticationService
         if (!result.Succeeded) throw new ConflictException(nameof(ErrorCodes.REGISTER_USER_CONFLICT),
             ErrorCodes.REGISTER_USER_CONFLICT)
                 .WithDetail(result.Errors.Select(e => (e.Code, e.Description)));
-       
+
         _ = await _userManager.AddToRoleAsync(user, Roles.Administrator);
 
-        _logger.LogInformation("Usuario registrado: {Email}", request.Email);
 
         return new RegisterModel.Response(request.Email);
     }

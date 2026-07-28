@@ -117,6 +117,15 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="APPOINTMENT_CONFLICT" xml:space="preserve">
+    <value>El turno no puede reservarse debido a un conflicto con la disponibilidad</value>
+  </data>
+  <data name="APPOINTMENT_INVALID_STATE" xml:space="preserve">
+    <value>El turno no se encuentra en un estado válido para realizar la operación</value>
+  </data>
+  <data name="APPOINTMENT_PAST_DATE" xml:space="preserve">
+    <value>No se pueden reservar turnos en fechas pasadas</value>
+  </data>
   <data name="AUTHENTICATION_FAILED" xml:space="preserve">
     <value>Usuario o contraseña incorrectos</value>
   </data>

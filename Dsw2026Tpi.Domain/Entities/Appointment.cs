@@ -37,8 +37,8 @@ public class Appointment : EntityBase
         Reason = reason.Trim();
         Status = AppointmentStatus.BOOKED;
 
-        CreatedAt = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
+        CreatedAt = DateTime.Now;
+        UpdatedAt = DateTime.Now;
     }
 
     public void Cancel()

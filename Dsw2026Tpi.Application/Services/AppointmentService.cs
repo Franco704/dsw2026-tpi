@@ -2,11 +2,11 @@
 using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Validators;
 using Dsw2026Tpi.CrossCutting.Exceptions;
+using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
-using static AppointmentModel;
 
 namespace Dsw2026Tpi.Application.Services;
 
@@ -41,7 +41,8 @@ public class AppointmentService : IAppointmentService
         if (patient.Dni != requestedDni)
         {
             _logger.LogWarning(
-                "El paciente autenticado intentó crear un turno para otro DNI.");
+                "El paciente {PatientId} intentó crear un turno para un DNI diferente al propio.",
+                patient.Id);
 
             throw new AuthorizationException();
         }
@@ -68,15 +69,15 @@ public class AppointmentService : IAppointmentService
         if (availability.DoctorId != doctor.Id)
         {
             throw new ConflictException(
-                "AVAILABILITY_DOCTOR_MISMATCH",
-                "La disponibilidad seleccionada no pertenece al médico indicado.");
+                nameof(ErrorCodes.APPOINTMENT_CONFLICT),
+                ErrorCodes.APPOINTMENT_CONFLICT);
         }
 
         if (!availability.IsAvailable)
         {
             throw new ConflictException(
-                "AVAILABILITY_NOT_AVAILABLE",
-                "La disponibilidad seleccionada ya no se encuentra disponible.");
+                nameof(ErrorCodes.APPOINTMENT_CONFLICT),
+                ErrorCodes.APPOINTMENT_CONFLICT);
         }
 
         var scheduledAt = availability.Date.Date
@@ -85,8 +86,8 @@ public class AppointmentService : IAppointmentService
         if (scheduledAt <= DateTime.Now)
         {
             throw new ConflictException(
-                "AVAILABILITY_EXPIRED",
-                "No se puede reservar una disponibilidad pasada.");
+                nameof(ErrorCodes.APPOINTMENT_PAST_DATE),
+                ErrorCodes.APPOINTMENT_PAST_DATE);
         }
 
         var existingAppointment =
@@ -98,8 +99,8 @@ public class AppointmentService : IAppointmentService
         if (existingAppointment is not null)
         {
             throw new ConflictException(
-                "AVAILABILITY_ALREADY_BOOKED",
-                "La disponibilidad seleccionada ya posee un turno reservado.");
+                nameof(ErrorCodes.APPOINTMENT_CONFLICT),
+                ErrorCodes.APPOINTMENT_CONFLICT);
         }
 
         var appointment = new Appointment(
@@ -114,10 +115,10 @@ public class AppointmentService : IAppointmentService
         await _persistence.Add(appointment);
 
         _logger.LogInformation(
-            "Turno {AppointmentId} creado para el paciente {PatientId}.",
-            appointment.Id,
-            patient.Id);
-
+     "Reserva confirmada. Turno {AppointmentId}, paciente {PatientId}, disponibilidad {AvailabilityId}.",
+     appointment.Id,
+     patient.Id,
+     availability.Id);
         return ToResponse(appointment);
     }
 
@@ -188,8 +189,8 @@ public class AppointmentService : IAppointmentService
         if (appointment.Status != AppointmentStatus.BOOKED)
         {
             throw new ConflictException(
-                "APPOINTMENT_CANNOT_BE_CANCELLED",
-                "Solamente se pueden cancelar turnos reservados.");
+                nameof(ErrorCodes.APPOINTMENT_INVALID_STATE),
+                ErrorCodes.APPOINTMENT_INVALID_STATE);
         }
 
         var availability =
@@ -206,13 +207,13 @@ public class AppointmentService : IAppointmentService
         availability.MarkAsAvailable();
 
         /*
-
-    Appointment y Availability fueron obtenidas desde
-    el mismo DbContext, por lo tanto ambas están trackeadas.*
-    Update ejecuta un único SaveChangesAsync y persiste:
-    Appointment.Status = CANCELLED
-    Availability.IsAvailable = true
-    */
+         * Appointment y Availability fueron obtenidas desde
+         * el mismo DbContext, por lo tanto ambas están trackeadas.
+         *
+         * Update ejecuta un único SaveChangesAsync y persiste:
+         * Appointment.Status = CANCELLED
+         * Availability.IsAvailable = true
+         */
         await _persistence.Update(appointment);
 
         _logger.LogInformation(
@@ -222,10 +223,11 @@ public class AppointmentService : IAppointmentService
     }
 
     public async Task<Pagination<AppointmentModel.SearchResponse>>
-    SearchAsync(
-        AppointmentModel.SearchRequest request)
+        SearchAsync(
+            AppointmentModel.SearchRequest request)
     {
         AppointmentRequestValidator.ValidateSearch(request);
+
         var dni = request.Dni?.ToString(
             CultureInfo.InvariantCulture);
 
@@ -261,7 +263,7 @@ public class AppointmentService : IAppointmentService
     }
 
     private static AppointmentModel.SearchResponse ToSearchResponse(
-    Appointment appointment)
+        Appointment appointment)
     {
         return new AppointmentModel.SearchResponse(
             appointment.Id,
@@ -272,6 +274,7 @@ public class AppointmentService : IAppointmentService
             appointment.ScheduledAt,
             appointment.Status.ToString());
     }
+
     private static AppointmentModel.Response ToResponse(
         Appointment appointment)
     {

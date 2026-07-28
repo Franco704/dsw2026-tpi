@@ -20,7 +20,7 @@ public class Speciality: EntityBase
     public void Deactivate()
     {
         Deleted = true;
-        UpdatedAt = DateTime.Now;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void UpdateInfo(string name, string description)
