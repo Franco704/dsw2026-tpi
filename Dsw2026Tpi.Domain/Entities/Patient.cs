@@ -4,7 +4,7 @@
 /// Representa el perfil de paciente asociado
 /// a un usuario de ASP.NET Core Identity.
 /// </summary>
-public class Patient : EntityBase
+public class Patient : DeletedEntity
 {
     /// <summary>
     /// Identificador del usuario asociado en Identity.

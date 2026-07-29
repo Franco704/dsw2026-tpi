@@ -3,7 +3,7 @@ namespace Dsw2026Tpi.Domain.Entities;
 /// <summary>
 /// Representa un bloque horario disponible de un médico.
 /// </summary>
-public class Availability : EntityBase
+public class Availability : DeletedEntity
 {
     /// <summary>
     /// Identificador del médico propietario de la disponibilidad.

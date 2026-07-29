@@ -86,14 +86,6 @@ public class AppointmentConfiguration
             .HasConversion<string>()
             .HasMaxLength(20);
 
-        /*
-         * Configura la marca de eliminación lógica heredada
-         * de EntityBase.
-         */
-        builder.Property(appointment => appointment.Deleted)
-            .IsRequired()
-            .HasColumnType("bit")
-            .HasDefaultValue(false);
 
         /*
          * Configura la fecha de creación heredada de EntityBase.
@@ -188,11 +180,11 @@ public class AppointmentConfiguration
          * Esta restricción es especialmente importante ante
          * intentos concurrentes de reserva.
          */
-        builder.HasIndex(appointment => appointment.AvailabilityId)
+        builder.HasIndex(
+                appointment => appointment.AvailabilityId)
             .IsUnique()
             .HasFilter(
-                "[Status] = 'BOOKED' AND [Deleted] = 0");
-
+                "[Status] = 'BOOKED'");
         /*
          * Índice compuesto para optimizar la consulta de turnos
          * de un paciente ordenados o filtrados por fecha.
@@ -225,8 +217,6 @@ public class AppointmentConfiguration
          * Los registros eliminados solo podrán consultarse
          * utilizando IgnoreQueryFilters().
          */
-        builder.HasQueryFilter(
-            appointment => !appointment.Deleted);
     }
 }
 

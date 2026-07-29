@@ -6,64 +6,124 @@ using System.Text.Json;
 
 namespace Dsw2026Tpi.Api.Middlewares;
 
+/// <summary>
+/// Intercepta las excepciones producidas durante una solicitud
+/// y las transforma en respuestas HTTP uniformes.
+/// </summary>
 public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
-    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    /// <summary>
+    /// Inicializa la middleware con el siguiente componente
+    /// del pipeline y el servicio de logging.
+    /// </summary>
+    public ExceptionHandlingMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionHandlingMiddleware> logger)
     {
         _next = next;
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context)
+    /// <summary>
+    /// Ejecuta el siguiente componente del pipeline
+    /// y controla cualquier excepción producida.
+    /// </summary>
+    public async Task InvokeAsync(
+        HttpContext context)
     {
         try
         {
             await _next(context);
         }
-        catch (Exception ex)
+        catch (AppException exception)
         {
-            _logger.LogError(ex, "Se produjo un error durante el procesamiento de la solicitud");
-            await HandleExceptionAsync(context, ex);
+            /*
+             * Las AppException representan situaciones controladas:
+             * validaciones, conflictos, autenticación, autorización
+             * o entidades inexistentes.
+             */
+            _logger.LogWarning(
+                exception,
+                "La solicitud fue rechazada por una condición controlada. " +
+                "Path: {Path}",
+                context.Request.Path);
+
+            await HandleExceptionAsync(
+                context,
+                exception);
+        }
+        catch (Exception exception)
+        {
+            /*
+             * Toda excepción que no sea AppException representa
+             * un error inesperado del servidor.
+             */
+            _logger.LogError(
+                exception,
+                "Se produjo un error no controlado. Path: {Path}",
+                context.Request.Path);
+
+            await HandleExceptionAsync(
+                context,
+                exception);
         }
     }
 
-    private async Task HandleExceptionAsync(HttpContext context, Exception ex)
+    /// <summary>
+    /// Determina el estado HTTP correspondiente y escribe
+    /// la respuesta utilizando el formato común de errores.
+    /// </summary>
+    private static async Task HandleExceptionAsync(
+        HttpContext context,
+        Exception exception)
     {
-        ErrorResponse error = ex is AppException exApp ? 
-            exApp.Error : 
-            new ErrorResponse(nameof(ErrorCodes.UNHANDLED_ERROR), ErrorCodes.UNHANDLED_ERROR);
-        // Determina el código HTTP según el tipo de excepción.
-        var status = ex switch
+        /*
+         * Las excepciones de aplicación ya contienen su
+         * ErrorResponse específico.
+         *
+         * Las excepciones inesperadas se reemplazan por un
+         * mensaje genérico para no revelar información interna.
+         */
+        var error = exception is AppException appException
+            ? appException.Error
+            : new ErrorResponse(
+                nameof(ErrorCodes.UNHANDLED_ERROR),
+                ErrorCodes.UNHANDLED_ERROR);
+
+        var status = exception switch
         {
-            // Los datos recibidos no cumplen las validaciones.
             ValidationException
                 => HttpStatusCode.BadRequest,
 
-            // La entidad solicitada no existe.
             EntityNotFoundException
                 => HttpStatusCode.NotFound,
 
-            // Existe un conflicto con el estado actual del sistema.
             ConflictException
                 => HttpStatusCode.Conflict,
 
-            // No se pudieron validar las credenciales.
             AuthenticationException
                 => HttpStatusCode.Unauthorized,
 
-            // El usuario está autenticado, pero no tiene permisos.
             AuthorizationException
                 => HttpStatusCode.Forbidden,
 
-            // Todo error no controlado devuelve 500.
-            _ => HttpStatusCode.InternalServerError,
+            _
+                => HttpStatusCode.InternalServerError
         };
-        var result = JsonSerializer.Serialize(error);
-        context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)status;
-        await context.Response.WriteAsync(result);
+
+        var result = JsonSerializer.Serialize(
+            error);
+
+        context.Response.ContentType =
+            "application/json";
+
+        context.Response.StatusCode =
+            (int)status;
+
+        await context.Response.WriteAsync(
+            result);
     }
 }

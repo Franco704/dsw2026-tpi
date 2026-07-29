@@ -3,7 +3,7 @@
 /// <summary>
 /// Representa a un médico registrado en el sistema.
 /// </summary>
-public class Doctor : EntityBase
+public class Doctor : DeletedEntity
 {
     /// <summary>
     /// Nombre completo del médico.

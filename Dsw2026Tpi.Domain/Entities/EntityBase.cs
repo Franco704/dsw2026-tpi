@@ -22,11 +22,6 @@ public abstract class EntityBase
     public DateTime UpdatedAt { get; private set; }
 
     /// <summary>
-    /// Indica si la entidad fue eliminada lógicamente.
-    /// </summary>
-    public bool Deleted { get; private set; }
-
-    /// <summary>
     /// Constructor requerido por Entity Framework Core.
     /// </summary>
     protected EntityBase()
@@ -46,7 +41,7 @@ public abstract class EntityBase
 
         CreatedAt = DateTime.Now;
         UpdatedAt = CreatedAt;
-        Deleted = false;
+
     }
 
     /// <summary>
@@ -57,35 +52,10 @@ public abstract class EntityBase
     {
         UpdatedAt = DateTime.Now;
     }
-
-    /// <summary>
-    /// Marca la entidad como eliminada lógicamente.
-    /// </summary>
-    public void Delete()
-    {
-        if (Deleted)
-        {
-            return;
-        }
-
-        Deleted = true;
-        MarkAsUpdated();
-    }
-
-    /// <summary>
-    /// Restaura una entidad eliminada lógicamente. No se usa pero la dejamos aqui a futuro.
-    /// </summary>
-    public void Restore()
-    {
-        if (!Deleted)
-        {
-            return;
-        }
-
-        Deleted = false;
-        MarkAsUpdated();
-    }
 }
+   
+
+
 
 /*
  * DECISIONES:

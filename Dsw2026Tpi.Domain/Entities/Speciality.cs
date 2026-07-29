@@ -3,7 +3,7 @@
 /// <summary>
 /// Representa una especialidad médica.
 /// </summary>
-public class Speciality : EntityBase
+public class Speciality : DeletedEntity
 {
     /// <summary>
     /// Nombre de la especialidad.

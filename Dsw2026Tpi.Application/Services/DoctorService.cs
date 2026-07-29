@@ -239,7 +239,7 @@ public class DoctorService : IDoctorService
 /*
  * DECISIONES TOMADAS:
  *
- * - Se mantuvo la estructura original de DoctorService.
+ * - Se mantuvo la estructura original de DoctorService.    
  *
  * - No se extrajeron métodos privados ni nuevas clases.
  *
