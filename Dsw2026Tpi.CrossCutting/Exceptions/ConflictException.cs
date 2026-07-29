@@ -5,7 +5,7 @@ namespace Dsw2026Tpi.CrossCutting.Exceptions;
 /// </summary>
 public class ConflictException : AppException
 {
-    public ConflictException(string errorCode, string message)
+    public ConflictException(string message, string errorCode)
         : base(message, errorCode)
     {
 

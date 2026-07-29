@@ -1,32 +1,66 @@
 ﻿namespace Dsw2026Tpi.Domain.Entities;
 
-public class Speciality: EntityBase
+/// <summary>
+/// Representa una especialidad médica.
+/// </summary>
+public class Speciality : EntityBase
 {
+    /// <summary>
+    /// Nombre de la especialidad.
+    /// </summary>
     public string Name { get; private set; }
+
+    /// <summary>
+    /// Descripción de la especialidad.
+    /// </summary>
     public string Description { get; private set; }
 
     #region Constructor for EF
+
 #pragma warning disable CS8618
-    private Speciality() { }
+
+    /// <summary>
+    /// Constructor requerido por Entity Framework Core.
+    /// </summary>
+    private Speciality()
+    {
+    }
+
 #pragma warning restore CS8618
+
     #endregion
 
-    public Speciality(string name, string description, Guid? id = null) : base(id)
+    /// <summary>
+    /// Crea una nueva especialidad.
+    /// </summary>
+    public Speciality(
+        string name,
+        string description,
+        Guid? id = null)
+        : base(id)
     {
-        Name = name;
-        Description = description;
+        Name = name.Trim();
+        Description = description.Trim();
     }
 
+    /// <summary>
+    /// Desactiva la especialidad mediante eliminación lógica.
+    /// </summary>
     public void Deactivate()
     {
-        Deleted = true;
-        UpdatedAt = DateTime.UtcNow;
+        Delete();
     }
 
-    public void UpdateInfo(string name, string description)
+    /// <summary>
+    /// Actualiza la información principal de la especialidad.
+    /// </summary>
+    public void UpdateInfo(
+        string name,
+        string description)
     {
-        Name = name;
-        Description = description;
-        UpdatedAt = DateTime.Now;
+        Name = name.Trim();
+        Description = description.Trim();
+
+        MarkAsUpdated();
     }
 }
