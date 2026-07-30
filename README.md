@@ -1,5 +1,4 @@
 # Trabajo Práctico Integrador
 ## Desarrollo de Software 2026
 
-Rama testeo development
-Implementacion modulo auth y modulo specialities.
+Rama de integración. Acá se juntan y prueban todas las `feature/*` antes de pasar a QA/main.
