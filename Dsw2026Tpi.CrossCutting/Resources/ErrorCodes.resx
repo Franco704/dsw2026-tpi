@@ -117,31 +117,51 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="APPOINTMENT_CONFLICT" xml:space="preserve">
+    <value>El turno no puede reservarse debido a un conflicto con la disponibilidad</value>
+  </data>
+  <data name="APPOINTMENT_INVALID_STATE" xml:space="preserve">
+    <value>El turno no se encuentra en un estado válido para realizar la operación</value>
+  </data>
+  <data name="APPOINTMENT_PAST_DATE" xml:space="preserve">
+    <value>No se pueden reservar turnos en fechas pasadas</value>
+  </data>
   <data name="AUTHENTICATION_FAILED" xml:space="preserve">
     <value>Usuario o contraseña incorrectos</value>
   </data>
-  <data name="AUTHORIZATION_FAILED" xml:space="preserve">
-    <value>Se requieren permisos para la operación solicitada</value>
-  </data>
-  <data name="DOCTOR_LICENSE_CONFLICT" xml:space="preserve">
-    <value>Ya existe un médico con esa matrícula</value>
-  </data>
-  <data name="ENTITY_NOTFOUND" xml:space="preserve">
-    <value>La entidad {0} no se encontró</value>
-  </data>
-  <data name="REGISTER_USER_CONFLICT" xml:space="preserve">
-    <value>Se produjo un error al registrar el usuario</value>
-  </data>
-  <data name="REGISTER_USER_INVALID" xml:space="preserve">
-    <value>Datos de registración de usuario no válidos</value>
-  </data>
-  <data name="SPECIALITY_NAME_CONFLICT" xml:space="preserve">
-    <value>Ya existe una especialidad con ese nombre</value>
-  </data>
-  <data name="UNHANDLED_ERROR" xml:space="preserve">
-    <value>Se produjo un error no controlado</value>
-  </data>
-  <data name="VALIDATION_ERROR" xml:space="preserve">
-    <value>Uno o más errores de validación ocurrieron</value>
-  </data>
+	<data name="AUTHORIZATION_FAILED" xml:space="preserve">
+  <value>Se requieren permisos para la operación solicitada</value>
+</data>
+
+	<data name="AVAILABILITY_CONFLICT" xml:space="preserve">
+  <value>Se detectó una superposición con una disponibilidad existente</value>
+</data>
+
+	<data name="DOCTOR_LICENSE_CONFLICT" xml:space="preserve">
+  <value>Ya existe un médico con esa matrícula</value>
+</data>
+
+	<data name="ENTITY_NOTFOUND" xml:space="preserve">
+  <value>La entidad {0} no se encontró</value>
+</data>
+
+	<data name="REGISTER_USER_CONFLICT" xml:space="preserve">
+  <value>Se produjo un error al registrar el usuario</value>
+</data>
+
+	<data name="REGISTER_USER_INVALID" xml:space="preserve">
+  <value>Datos de registración de usuario no válidos</value>
+</data>
+
+	<data name="SPECIALITY_NAME_CONFLICT" xml:space="preserve">
+  <value>Ya existe una especialidad con ese nombre</value>
+</data>
+
+	<data name="UNHANDLED_ERROR" xml:space="preserve">
+  <value>Se produjo un error no controlado</value>
+</data>
+
+	<data name="VALIDATION_ERROR" xml:space="preserve">
+  <value>Uno o más errores de validación ocurrieron</value>
+</data>
 </root>

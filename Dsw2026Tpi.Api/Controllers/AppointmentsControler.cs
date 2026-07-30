@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
-[Route("appointments")]
+[Route("api/appointments")]
 
 public class AppointmentsController : AppController
 {

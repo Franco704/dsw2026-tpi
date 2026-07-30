@@ -61,6 +61,33 @@ namespace Dsw2026Tpi.CrossCutting.Resources {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a El turno no puede reservarse debido a un conflicto con la disponibilidad.
+        /// </summary>
+        public static string APPOINTMENT_CONFLICT {
+            get {
+                return ResourceManager.GetString("APPOINTMENT_CONFLICT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a El turno no se encuentra en un estado válido para realizar la operación.
+        /// </summary>
+        public static string APPOINTMENT_INVALID_STATE {
+            get {
+                return ResourceManager.GetString("APPOINTMENT_INVALID_STATE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a No se pueden reservar turnos en fechas pasadas.
+        /// </summary>
+        public static string APPOINTMENT_PAST_DATE {
+            get {
+                return ResourceManager.GetString("APPOINTMENT_PAST_DATE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Usuario o contraseña incorrectos.
         /// </summary>
         public static string AUTHENTICATION_FAILED {
@@ -75,6 +102,15 @@ namespace Dsw2026Tpi.CrossCutting.Resources {
         public static string AUTHORIZATION_FAILED {
             get {
                 return ResourceManager.GetString("AUTHORIZATION_FAILED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Se detectó una superposición con una disponibilidad existente.
+        /// </summary>
+        public static string AVAILABILITY_CONFLICT {
+            get {
+                return ResourceManager.GetString("AVAILABILITY_CONFLICT", resourceCulture);
             }
         }
         

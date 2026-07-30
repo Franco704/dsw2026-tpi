@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Dsw2026Tpi.Data.Migrations
 {
     [DbContext(typeof(Dsw2026TpiDbContext))]
-    [Migration("20260724220129_InitialDomainModel")]
+    [Migration("20260730141136_InitialDomainModel")]
     partial class InitialDomainModel
     {
         /// <inheritdoc />
@@ -37,11 +37,6 @@ namespace Dsw2026Tpi.Data.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
-                    b.Property<bool>("Deleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
                     b.Property<Guid>("DoctorId")
                         .HasColumnType("uniqueidentifier");
 
@@ -50,8 +45,8 @@ namespace Dsw2026Tpi.Data.Migrations
 
                     b.Property<string>("Reason")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<DateTime>("ScheduledAt")
                         .HasColumnType("datetime2");
@@ -69,7 +64,7 @@ namespace Dsw2026Tpi.Data.Migrations
 
                     b.HasIndex("AvailabilityId")
                         .IsUnique()
-                        .HasFilter("[Status] = 'BOOKED' AND [Deleted] = 0");
+                        .HasFilter("[Status] = 'BOOKED'");
 
                     b.HasIndex("DoctorId", "ScheduledAt");
 
@@ -81,7 +76,6 @@ namespace Dsw2026Tpi.Data.Migrations
             modelBuilder.Entity("Dsw2026Tpi.Domain.Entities.Availability", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
@@ -89,26 +83,32 @@ namespace Dsw2026Tpi.Data.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("date");
+                        .HasColumnType("date")
+                        .HasColumnName("slot_date");
 
                     b.Property<bool>("Deleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(false)
+                        .HasColumnName("deleted");
 
                     b.Property<Guid>("DoctorId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("doctor_id");
 
                     b.Property<TimeSpan>("EndTime")
-                        .HasColumnType("time");
+                        .HasColumnType("time")
+                        .HasColumnName("end_time");
 
                     b.Property<bool>("IsAvailable")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
-                        .HasDefaultValue(true);
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_available");
 
                     b.Property<TimeSpan>("StartTime")
-                        .HasColumnType("time");
+                        .HasColumnType("time")
+                        .HasColumnName("start_time");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2")
@@ -116,41 +116,61 @@ namespace Dsw2026Tpi.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DoctorId");
+                    b.HasIndex("DoctorId", "Date", "StartTime")
+                        .IsUnique()
+                        .HasFilter("[deleted] = 0");
 
-                    b.ToTable("Availabilities", (string)null);
+                    b.HasIndex("DoctorId", "Date", "StartTime", "EndTime");
+
+                    b.ToTable("Availabilities", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Availabilities_EndTimeAfterStartTime", "[end_time] > [start_time]");
+                        });
                 });
 
             modelBuilder.Entity("Dsw2026Tpi.Domain.Entities.Doctor", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
 
                     b.Property<bool>("Deleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("deleted");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
 
                     b.Property<string>("LicenseNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("license_number");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("name");
 
-                    b.Property<Guid?>("SpecialityId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("SpecialityId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("speciality_id");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LicenseNumber")
+                        .IsUnique();
 
                     b.HasIndex("SpecialityId");
 
@@ -163,27 +183,33 @@ namespace Dsw2026Tpi.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
 
                     b.Property<bool>("Deleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(false)
+                        .HasColumnName("deleted");
 
                     b.Property<string>("Dni")
                         .IsRequired()
-                        .HasColumnType("varchar(10)");
+                        .HasColumnType("varchar(10)")
+                        .HasColumnName("dni");
 
                     b.Property<string>("FullName")
-                        .HasColumnType("varchar(150)");
+                        .HasColumnType("varchar(150)")
+                        .HasColumnName("full_name");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
@@ -199,7 +225,6 @@ namespace Dsw2026Tpi.Data.Migrations
             modelBuilder.Entity("Dsw2026Tpi.Domain.Entities.Speciality", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
@@ -274,7 +299,9 @@ namespace Dsw2026Tpi.Data.Migrations
                 {
                     b.HasOne("Dsw2026Tpi.Domain.Entities.Speciality", "Speciality")
                         .WithMany()
-                        .HasForeignKey("SpecialityId");
+                        .HasForeignKey("SpecialityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Speciality");
                 });

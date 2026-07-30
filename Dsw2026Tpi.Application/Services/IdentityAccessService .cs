@@ -1,18 +1,26 @@
 ﻿using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Exceptions;
+using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Data.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
 namespace Dsw2026Tpi.Application.Services;
 
-// Encapsula las operaciones de autenticación realizadas con Identity.
+/// <summary>
+/// Encapsula las operaciones de autenticación y administración
+/// de usuarios realizadas mediante ASP.NET Core Identity.
+/// </summary>
 public class IdentityAccessService : IIdentityAccessService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ISignInService _signInService;
     private readonly ILogger<IdentityAccessService> _logger;
 
+    /// <summary>
+    /// Inicializa el servicio con los componentes necesarios
+    /// para consultar usuarios, verificar contraseñas y registrar eventos.
+    /// </summary>
     public IdentityAccessService(
         UserManager<ApplicationUser> userManager,
         ISignInService signInService,
@@ -28,53 +36,71 @@ public class IdentityAccessService : IIdentityAccessService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Autentica un usuario mediante email y contraseña.
+    /// </summary>
     public async Task<ApplicationUser> AuthenticateWithPasswordAsync(
         string email,
         string password)
     {
-        // Busca al usuario por email utilizando Identity.
-        var user = await _userManager.FindByEmailAsync(email);
+        // Normaliza el email utilizado durante la autenticación.
+        var normalizedEmail = email
+            .Trim()
+            .ToLowerInvariant();
 
-        // Rechaza usuarios inexistentes o eliminados.
-        if (user is null || user.Deleted)
+        // Busca al usuario por email utilizando Identity.
+        var user = await _userManager.FindByEmailAsync(
+            normalizedEmail);
+
+        /*
+         * Rechaza usuarios inexistentes o eliminados utilizando
+         * un mensaje genérico para no revelar información.
+         */
+        if (user is null ||
+            user.Deleted)
         {
             _logger.LogWarning(
                 "Intento de login con credenciales inválidas: {Email}",
-                email);
+                normalizedEmail);
 
-            // No informa si el usuario existe o está eliminado.
             throw new AuthenticationException();
         }
 
         // Compara la contraseña con el hash almacenado.
-        var passwordIsCorrect = await _signInService.CheckPassword(
-            user,
-            password);
+        var passwordIsCorrect =
+            await _signInService.CheckPassword(
+                user,
+                password);
 
-        // Rechaza una contraseña incorrecta.
         if (!passwordIsCorrect)
         {
             _logger.LogWarning(
                 "Intento de login con credenciales inválidas: {Email}",
-                email);
+                normalizedEmail);
 
             throw new AuthenticationException();
         }
 
-        // Retorna el usuario correctamente autenticado.
         return user;
     }
 
+    /// <summary>
+    /// Verifica que el usuario posea el rol requerido.
+    /// </summary>
     public async Task EnsureRoleAsync(
         ApplicationUser user,
         string requiredRole)
     {
-        // Consulta si el usuario tiene el rol requerido.
-        var hasRequiredRole = await _userManager.IsInRoleAsync(
-            user,
-            requiredRole);
+        // Consulta si el usuario tiene el rol solicitado.
+        var hasRequiredRole =
+            await _userManager.IsInRoleAsync(
+                user,
+                requiredRole);
 
-        // Rechaza el acceso cuando el rol no corresponde.
+        /*
+         * Mantiene AuthenticationException porque este método
+         * se utiliza principalmente dentro del flujo de login.
+         */
         if (!hasRequiredRole)
         {
             _logger.LogWarning(
@@ -82,74 +108,177 @@ public class IdentityAccessService : IIdentityAccessService
                 requiredRole,
                 user.Email);
 
-            // Mantiene un error genérico dentro del flujo de login.
             throw new AuthenticationException();
         }
     }
+
+    /// <summary>
+    /// Busca un usuario de Identity mediante su email.
+    /// </summary>
+    /// <returns>
+    /// El usuario encontrado o null cuando no existe.
+    /// </returns>
     public async Task<ApplicationUser?> FindByEmailAsync(
-    string email)
+        string email)
     {
-        // Utiliza la búsqueda y normalización de Identity.
-        return await _userManager.FindByEmailAsync(email);
+        // Normaliza el email antes de consultar Identity.
+        var normalizedEmail = email
+            .Trim()
+            .ToLowerInvariant();
+
+        return await _userManager.FindByEmailAsync(
+            normalizedEmail);
     }
 
+    /// <summary>
+    /// Crea un usuario de Identity sin contraseña
+    /// y le asigna el rol indicado.
+    /// </summary>
     public async Task<ApplicationUser> CreateWithoutPasswordAsync(
         string email,
         string role)
     {
+        // Normaliza el email antes de almacenarlo.
+        var normalizedEmail = email
+            .Trim()
+            .ToLowerInvariant();
+
         // Registra la fecha una sola vez para mantener consistencia.
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
 
         // Construye un usuario que no utiliza contraseña.
         var user = new ApplicationUser
         {
-            UserName = email,
-            Email = email,
+            UserName = normalizedEmail,
+            Email = normalizedEmail,
             EmailConfirmed = false,
             Deleted = false,
             CreatedAt = now,
             UpdatedAt = now
         };
 
-        // Crea el usuario sin ejecutar las políticas de contraseña.
-        var creationResult = await _userManager.CreateAsync(user);
+        // Crea el usuario sin ejecutar políticas de contraseña.
+        var creationResult =
+            await _userManager.CreateAsync(user);
 
-        // Rechaza la operación si Identity no pudo crear al usuario.
         if (!creationResult.Succeeded)
         {
             _logger.LogError(
-                "No se pudo crear el usuario sin contraseña: {Email}. Errores: {Errors}",
-                email,
+                "No se pudo crear el usuario sin contraseña: {Email}. " +
+                "Errores: {Errors}",
+                normalizedEmail,
                 string.Join(
                     ", ",
-                    creationResult.Errors.Select(error => error.Code)));
+                    creationResult.Errors.Select(
+                        error => error.Code)));
 
-            // El middleware convertirá este error inesperado en 500.
-            throw new InvalidOperationException(
-                "No se pudo crear el usuario de Identity.");
+            throw new ConflictException(
+                ErrorCodes.REGISTER_USER_CONFLICT,
+                nameof(ErrorCodes.REGISTER_USER_CONFLICT))
+                .WithDetail(
+                    creationResult.Errors.Select(
+                        error =>
+                            (
+                                error.Code,
+                                error.Description
+                            )));
         }
 
         // Asigna el rol indicado al usuario creado.
-        var roleResult = await _userManager.AddToRoleAsync(
-            user,
-            role);
+        var roleResult =
+            await _userManager.AddToRoleAsync(
+                user,
+                role);
 
-        // Revierte la creación si no fue posible asignar el rol.
         if (!roleResult.Succeeded)
         {
-            // El usuario acaba de crearse dentro de esta operación.
-            await _userManager.DeleteAsync(user);
+            /*
+             * Intenta revertir la creación para evitar dejar
+             * un usuario sin el rol requerido.
+             */
+            var rollbackResult =
+                await _userManager.DeleteAsync(user);
 
             _logger.LogError(
-                "No se pudo asignar el rol {Role} al usuario {Email}.",
+                "No se pudo asignar el rol {Role} al usuario {Email}. " +
+                "Reversión exitosa: {RollbackSucceeded}. " +
+                "Errores: {Errors}",
                 role,
-                email);
+                normalizedEmail,
+                rollbackResult.Succeeded,
+                string.Join(
+                    ", ",
+                    roleResult.Errors.Select(
+                        error => error.Code)));
 
-            throw new InvalidOperationException(
-                "No se pudo asignar el rol al usuario.");
+            throw new ConflictException(
+                ErrorCodes.REGISTER_USER_CONFLICT,
+                nameof(ErrorCodes.REGISTER_USER_CONFLICT))
+                .WithDetail(
+                    roleResult.Errors.Select(
+                        error =>
+                            (
+                                error.Code,
+                                error.Description
+                            )));
         }
 
-        // Retorna el usuario correctamente creado.
         return user;
     }
 }
+
+/*
+ * DECISIONES TOMADAS:
+ *
+ * - Se mantuvo la estructura original de IdentityAccessService.
+ *
+ * - No se extrajeron métodos privados ni nuevos servicios.
+ *
+ * - AuthenticationException se utiliza para credenciales
+ *   inválidas, usuarios eliminados y roles incorrectos
+ *   dentro del flujo de login.
+ *
+ * - AuthenticationException utiliza internamente
+ *   AUTHENTICATION_FAILED.
+ *
+ * - REGISTER_USER_CONFLICT se utiliza cuando Identity no puede
+ *   crear el usuario o asignarle el rol solicitado.
+ *
+ * - ConflictException recibe primero el mensaje
+ *   y luego el código de error.
+ *
+ * - Los errores concretos de Identity se registran mediante
+ *   ILogger y se agregan mediante WithDetail.
+ *
+ * - El email se normaliza antes de buscarlo o almacenarlo.
+ *
+ * - Se utiliza DateTime.Now para mantener el criterio temporal
+ *   adoptado en el proyecto.
+ *
+ * CONSIDERACIONES PARA REVISAR:
+ *
+ * - EnsureRoleAsync siempre lanza AuthenticationException.
+ *   Cuando se utiliza fuera del login, puede ser necesario
+ *   traducirla a AuthorizationException.
+ *
+ * - La creación del usuario y la asignación del rol no forman
+ *   una transacción atómica.
+ *
+ * - DeleteAsync funciona como una reversión compensatoria,
+ *   pero la reversión también podría fallar.
+ *
+ * - Exponer las descripciones completas de Identity mediante
+ *   WithDetail puede revelar reglas internas de seguridad.
+ *   Conviene decidir si esos detalles llegan al cliente
+ *   o solamente quedan en los logs.
+ *
+ * - CreateWithoutPasswordAsync no comprueba previamente
+ *   si el rol existe. Identity rechazará la operación,
+ *   que se tratará como REGISTER_USER_CONFLICT.
+ *
+ * - ApplicationUser no hereda de EntityBase, por lo que
+ *   CreatedAt, UpdatedAt y Deleted se asignan manualmente.
+ *
+ * - FindByEmailAsync y AuthenticateWithPasswordAsync presuponen
+ *   que el email ya fue validado por el servicio llamador.
+ */
