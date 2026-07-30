@@ -111,6 +111,10 @@ namespace Dsw2026Tpi.CrossCutting.Resources {
         public static string AVAILABILITY_CONFLICT {
             get {
                 return ResourceManager.GetString("AVAILABILITY_CONFLICT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Ya existe un médico con esa matrícula.
         /// </summary>
         public static string DOCTOR_LICENSE_CONFLICT {
