@@ -5,6 +5,8 @@ using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Helpers;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
+using Dsw2026Tpi.CrossCutting.Exceptions;
+using System.Data;
 
 namespace Dsw2026Tpi.Application.Services;
 
@@ -31,15 +33,20 @@ public class DoctorService : IDoctorService
     public async Task<DoctorModel.Response> Create(
         DoctorModel.Request request)
     {
-        // Valida los datos recibidos en la request.
+        //validacion de la request
         DoctorsValidators.ValidateDoctorRequest(request);
 
-        // Verifica que la especialidad exista.
-        var speciality =
-            await _persistence.GetById<Speciality>(
-                request.SpecialityId);
+        //validacion de existencia del doctor (matricula)
+        var existing = await _persistence.First<Doctor>(d =>(d.LicenseNumber == request.LicenseNumber) && !d.Deleted );
+        if (existing != null) {
+            throw new ConflictException(nameof(ErrorCodes.DOCTOR_LICENSE_CONFLICT), nameof(ErrorCodes.DOCTOR_LICENSE_CONFLICT));
+        }
 
-        if (speciality is null)
+        //validacion de la especialidad
+        var speciality = await _persistence.GetById<Speciality>(request.SpecialityId);
+        if (speciality == null)
+            throw new EntityNotFoundException(nameof(Speciality));
+        var doctor = new Doctor(request.Name, request.LicenseNumber, speciality)
         {
             throw new EntityNotFoundException(
                 nameof(Speciality));
@@ -80,7 +87,7 @@ public class DoctorService : IDoctorService
         var doctor =
             await _persistence.GetById<Doctor>(id);
 
-        if (doctor is null)
+        if (doctor is null || doctor.Deleted)
         {
             throw new EntityNotFoundException(
                 nameof(Doctor));
