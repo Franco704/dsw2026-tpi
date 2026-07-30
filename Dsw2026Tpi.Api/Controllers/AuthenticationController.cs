@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
-[Route("auth")]
+[Route("api/auth")]
 public class AuthenticationController : AppController
 {
     private readonly IAuthenticationService _authenticationService;
@@ -35,7 +35,7 @@ public class AuthenticationController : AppController
         return Ok(result.Email);
     }
 
-    // Permite iniciar sesión sin tener previamente un JWT.
+    
     [AllowAnonymous]
     [HttpPost("admin/login")]
     [ProducesResponseType(StatusCodes.Status200OK)]

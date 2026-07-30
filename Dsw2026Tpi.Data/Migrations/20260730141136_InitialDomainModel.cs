@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Dsw2026Tpi.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialDomain : Migration
+    public partial class InitialDomainModel : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
