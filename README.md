@@ -1,5 +1,4 @@
 # Trabajo Práctico Integrador
 ## Desarrollo de Software 2026
 
-Rama testeo development
-Implementacion modulo auth y modulo specialities.
+Rama temporal de trabajo del módulo de turnos. Su contenido ya se mergeó
