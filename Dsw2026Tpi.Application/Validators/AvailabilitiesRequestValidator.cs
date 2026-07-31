@@ -239,23 +239,35 @@ public static class AvailabilityRequestValidator
         IReadOnlyCollection<ValidatedSchedule> schedules,
         ValidationException validation)
     {
-        foreach (var dayGroup in schedules.GroupBy(schedule => schedule.Day))
+        foreach (var dayGroup in schedules.GroupBy(
+            schedule => schedule.Day))
         {
             var orderedRanges = dayGroup
                 .OrderBy(schedule => schedule.StartTime)
                 .ThenBy(schedule => schedule.EndTime)
                 .ToList();
 
+            if (orderedRanges.Count == 0)
+            {
+                continue;
+            }
+
+            var latestEndTime = orderedRanges[0].EndTime;
+
             for (var index = 1; index < orderedRanges.Count; index++)
             {
-                var previousRange = orderedRanges[index - 1];
                 var currentRange = orderedRanges[index];
 
-                if (currentRange.StartTime < previousRange.EndTime)
+                if (currentRange.StartTime < latestEndTime)
                 {
                     validation.WithDetail(
                         $"days[{currentRange.Index}].startTime",
                         "overlapping_time_range");
+                }
+
+                if (currentRange.EndTime > latestEndTime)
+                {
+                    latestEndTime = currentRange.EndTime;
                 }
             }
         }

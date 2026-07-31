@@ -1,7 +1,8 @@
 using Dsw2026Tpi.Application.Dtos;
+using Dsw2026Tpi.Application.Generators;
 using Dsw2026Tpi.Application.Interfaces;
+using Dsw2026Tpi.Application.Validators;
 using Dsw2026Tpi.CrossCutting.Exceptions;
-using Dsw2026Tpi.CrossCutting.Helpers;
 using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
@@ -26,7 +27,8 @@ public class AvailabilityService : IAvailabilitiesService
     }
 
     /// <summary>
-    /// Crea las disponibilidades del médico para el mes actual.
+    /// Crea las disponibilidades del médico desde la fecha actual
+    /// hasta el último día del mismo mes.
     /// </summary>
     public async Task<IEnumerable<AvailabilityModel.Response>> Create(
         AvailabilityModel.Request request)
@@ -37,7 +39,11 @@ public class AvailabilityService : IAvailabilitiesService
     }
 
     /// <summary>
-    /// Actualiza las disponibilidades del médico para el mes actual.
+    /// Reemplaza las disponibilidades libres del médico desde
+    /// la fecha actual hasta el último día del mismo mes.
+    ///
+    /// Las disponibilidades ocupadas se conservan y no pueden
+    /// ser reemplazadas.
     /// </summary>
     public async Task<IEnumerable<AvailabilityModel.Response>>
         UpdateAvailability(
@@ -49,198 +55,196 @@ public class AvailabilityService : IAvailabilitiesService
     }
 
     /// <summary>
-    /// Ejecuta el proceso común de creación o actualización
-    /// de disponibilidades.
+    /// Ejecuta el flujo compartido por la creación
+    /// y la actualización de disponibilidades.
     /// </summary>
     private async Task<IEnumerable<AvailabilityModel.Response>>
         ProcessAvailabilitiesAsync(
             AvailabilityModel.Request request,
             bool isUpdate)
     {
-        // Verifica que el médico exista.
-        var doctor = await _persistence.GetById<Doctor>(
+        /*
+         * La request se valida completamente antes de consultar
+         * o modificar información almacenada.
+         */
+        AvailabilityRequestValidator.Validate(
+            request);
+
+        await EnsureDoctorExistsAsync(
             request.DoctorId);
+
+        var today = DateTime.Today;
+
+        /*
+         * El generador se ocupa de calcular fechas y dividir
+         * los rangos validados en bloques de treinta minutos.
+         *
+         * Por el momento no se proporciona la colección
+         * de feriados nacionales.
+         */
+        var generatedAvailabilities =
+            AvailabilitySlotGenerator.Generate(
+                    request.DoctorId,
+                    request.Days,
+                    today)
+                .ToList();
+
+        var existingAvailabilities =
+            await GetExistingAvailabilitiesAsync(
+                request.DoctorId,
+                today);
+
+        /*
+         * Durante una actualización, las disponibilidades libres
+         * serán reemplazadas. Por eso solamente los bloques ocupados
+         * deben impedir la generación del nuevo calendario.
+         *
+         * Durante una creación, cualquier bloque existente
+         * representa un conflicto.
+         */
+        var protectedAvailabilities = isUpdate
+            ? existingAvailabilities
+                .Where(availability =>
+                    !availability.IsAvailable)
+                .ToList()
+            : existingAvailabilities;
+
+        EnsureNoStoredConflicts(
+            generatedAvailabilities,
+            protectedAvailabilities);
+
+        /*
+         * La eliminación se realiza después de validar y generar
+         * todo el nuevo calendario para evitar modificaciones
+         * ante una request inválida o un conflicto conocido.
+         */
+        if (isUpdate)
+        {
+            await SoftDeleteAvailableSlotsAsync(
+                existingAvailabilities);
+        }
+
+        await PersistGeneratedAvailabilitiesAsync(
+            generatedAvailabilities);
+
+        return MapResponses(
+            generatedAvailabilities);
+    }
+
+    /// <summary>
+    /// Comprueba que el médico exista y se encuentre visible
+    /// para las consultas normales de persistencia.
+    /// </summary>
+    private async Task EnsureDoctorExistsAsync(
+        Guid doctorId)
+    {
+        var doctor = await _persistence.GetById<Doctor>(
+            doctorId);
 
         if (doctor is null)
         {
             throw new EntityNotFoundException(
                 nameof(Doctor));
         }
+    }
 
-        // Valida que se haya informado al menos un día.
-        if (request.Days is null ||
-            !request.Days.Any())
-        {
-            var validation = new ValidationException();
-
-            validation.WithDetail(
-                nameof(request.Days),
-                "Debe especificarse al menos un día con sus horarios.");
-
-            throw validation;
-        }
-
-        // Determina los límites del mes actual.
-        var today = DateTime.Today;
-
-        var firstDayOfMonth = new DateTime(
-            today.Year,
-            today.Month,
-            1);
-
-        var lastDayOfMonth = new DateTime(
-            today.Year,
-            today.Month,
-            DateTime.DaysInMonth(
+    /// <summary>
+    /// Obtiene las disponibilidades activas comprendidas entre
+    /// la fecha actual y el comienzo del mes siguiente.
+    ///
+    /// No se incluyen fechas anteriores del mismo mes porque
+    /// ya no pueden ser modificadas ni generadas nuevamente.
+    /// </summary>
+    private async Task<List<Availability>>
+        GetExistingAvailabilitiesAsync(
+            Guid doctorId,
+            DateTime today)
+    {
+        var firstDayOfNextMonth = new DateTime(
                 today.Year,
-                today.Month));
+                today.Month,
+                1)
+            .AddMonths(1);
 
-        // Obtiene las disponibilidades existentes del médico.
-        var existingAvailabilities =
-            (await _persistence.GetFiltered<Availability>(
+        var availabilities =
+            await _persistence.GetFiltered<Availability>(
                 availability =>
-                    availability.DoctorId == request.DoctorId &&
-                    availability.Date >= firstDayOfMonth &&
-                    availability.Date <= lastDayOfMonth))
-            ?.ToList()
-            ?? [];
+                    availability.DoctorId == doctorId &&
+                    availability.Date >= today &&
+                    availability.Date < firstDayOfNextMonth);
 
-        /*
-         * En una actualización, elimina lógicamente los bloques
-         * que todavía se encuentran disponibles.
-         */
-        if (isUpdate)
+        return availabilities?.ToList() ?? [];
+    }
+
+    /// <summary>
+    /// Verifica que los bloques generados no se solapen
+    /// con disponibilidades almacenadas que deben conservarse.
+    /// </summary>
+    private static void EnsureNoStoredConflicts(
+        IReadOnlyCollection<Availability> generatedAvailabilities,
+        IReadOnlyCollection<Availability> storedAvailabilities)
+    {
+        var hasConflict = generatedAvailabilities.Any(
+            generated =>
+                storedAvailabilities.Any(
+                    stored =>
+                        generated.Date == stored.Date &&
+                        generated.StartTime < stored.EndTime &&
+                        generated.EndTime > stored.StartTime));
+
+        if (hasConflict)
         {
-            foreach (var availability in existingAvailabilities)
-            {
-                if (availability.IsAvailable)
-                {
-                    availability.Delete();
-
-                    await _persistence.Update(
-                        availability);
-                }
-            }
-
-            /*
-             * Conserva en memoria únicamente los bloques ocupados,
-             * ya que no deben reemplazarse.
-             */
-            existingAvailabilities = existingAvailabilities
-                .Where(availability =>
-                    !availability.IsAvailable)
-                .ToList();
+            throw new ConflictException(
+                ErrorCodes.AVAILABILITY_CONFLICT,
+                nameof(ErrorCodes.AVAILABILITY_CONFLICT));
         }
+    }
 
-        var newAvailabilities =
-            new List<Availability>();
-
-        foreach (var dayRequest in request.Days)
+    /// <summary>
+    /// Elimina lógicamente las disponibilidades que continúan libres.
+    ///
+    /// Los bloques ocupados se conservan porque pueden estar
+    /// relacionados con turnos existentes.
+    /// </summary>
+    private async Task SoftDeleteAvailableSlotsAsync(
+        IEnumerable<Availability> existingAvailabilities)
+    {
+        foreach (var availability in existingAvailabilities)
         {
-            // Valida el rango horario informado.
-            if (dayRequest.StartTime >= dayRequest.EndTime)
+            if (!availability.IsAvailable)
             {
-                var validation = new ValidationException();
-
-                validation.WithDetail(
-                    nameof(dayRequest.EndTime),
-                    "La hora de finalización debe ser posterior " +
-                    "a la hora de inicio.");
-
-                throw validation;
+                continue;
             }
 
-            // Convierte el nombre del día a DayOfWeek.
-            var targetDayOfWeek =
-                DateTimeHelpers.ParseDay(
-                    dayRequest.Day);
+            availability.Delete();
 
-            if (targetDayOfWeek is null)
-            {
-                var validation = new ValidationException();
-
-                validation.WithDetail(
-                    nameof(dayRequest.Day),
-                    $"El día '{dayRequest.Day}' no es válido.");
-
-                throw validation;
-            }
-
-            /*
-             * Recorre todas las fechas del mes y procesa
-             * únicamente las que coinciden con el día solicitado.
-             */
-            for (
-                var date = firstDayOfMonth;
-                date <= lastDayOfMonth;
-                date = date.AddDays(1))
-            {
-                if (date < today ||
-                    date.DayOfWeek != targetDayOfWeek)
-                {
-                    continue;
-                }
-
-                var currentStart =
-                    dayRequest.StartTime;
-
-                /*
-                 * Divide el rango horario en bloques
-                 * de treinta minutos.
-                 */
-                while (currentStart < dayRequest.EndTime)
-                {
-                    var currentEnd = currentStart.Add(
-                        TimeSpan.FromMinutes(30));
-
-                    if (currentEnd > dayRequest.EndTime)
-                    {
-                        currentEnd =
-                            dayRequest.EndTime;
-                    }
-
-                    // Comprueba que el bloque no se superponga.
-                    var isOccupied =
-                        existingAvailabilities.Any(
-                            availability =>
-                                availability.Date == date &&
-                                currentStart <
-                                    availability.EndTime &&
-                                currentEnd >
-                                    availability.StartTime);
-
-                    if (isOccupied)
-                    {
-                        throw new ConflictException(
-                            ErrorCodes.AVAILABILITY_CONFLICT,
-                            nameof(ErrorCodes.AVAILABILITY_CONFLICT));
-                    }
-
-                    // Crea el nuevo bloque disponible.
-                    var availability =
-                        new Availability(
-                            request.DoctorId,
-                            date,
-                            currentStart,
-                            currentEnd);
-
-                    newAvailabilities.Add(
-                        availability);
-
-                    currentStart = currentEnd;
-                }
-            }
+            await _persistence.Update(
+                availability);
         }
+    }
 
-        // Persiste las disponibilidades generadas.
-        foreach (var availability in newAvailabilities)
+    /// <summary>
+    /// Persiste los bloques generados para el nuevo calendario.
+    /// </summary>
+    private async Task PersistGeneratedAvailabilitiesAsync(
+        IEnumerable<Availability> generatedAvailabilities)
+    {
+        foreach (var availability in generatedAvailabilities)
         {
             await _persistence.Add(
                 availability);
         }
+    }
 
-        // Convierte las entidades en DTOs de respuesta.
-        return newAvailabilities.Select(
+    /// <summary>
+    /// Convierte las entidades generadas al contrato
+    /// de respuesta de la API.
+    /// </summary>
+    private static IEnumerable<AvailabilityModel.Response>
+        MapResponses(
+            IEnumerable<Availability> availabilities)
+    {
+        return availabilities.Select(
             availability =>
                 new AvailabilityModel.Response(
                     availability.Id,
@@ -250,42 +254,3 @@ public class AvailabilityService : IAvailabilitiesService
                     availability.EndTime));
     }
 }
-
-/*
- * DECISIONES TOMADAS:
- *
- * - Se mantuvo la estructura original del servicio.
- * - No se extrajeron métodos ni nuevas clases auxiliares.
- * - EntityNotFoundException reemplaza KeyNotFoundException.
- * - ValidationException reemplaza ArgumentException.
- * - ConflictException reemplaza InvalidOperationException.
- * - El conflicto utiliza ErrorCodes.AVAILABILITY_CONFLICT.
- * - La entidad Availability sigue validando internamente
- *   que EndTime sea posterior a StartTime.
- *
- * CONSIDERACIONES PARA REVISAR:
- *
- * - Durante una actualización se eliminan disponibilidades
- *   antes de terminar de validar toda la request.
- *
- * - Add y Update ejecutan SaveChangesAsync en cada llamada,
- *   por lo que se realizan múltiples operaciones en la base.
- *
- * - No existe una transacción que garantice que toda la
- *   actualización se confirme o revierta como una unidad.
- *
- * - El control de solapamiento solo compara contra los bloques
- *   previamente existentes, no contra los nuevos bloques ya
- *   generados dentro de la misma request.
- *
- * - Si la request contiene dos reglas superpuestas entre sí,
- *   podrían generarse bloques duplicados o conflictivos.
- *
- * - La duración de treinta minutos está escrita directamente
- *   en el método y podría centralizarse en una constante.
- *
- * - El método ProcessAvailabilitiesAsync concentra validación,
- *   generación, actualización, persistencia y mapeo. Por ahora
- *   se mantiene para no alterar significativamente el código
- *   realizado por el equipo.
- */
