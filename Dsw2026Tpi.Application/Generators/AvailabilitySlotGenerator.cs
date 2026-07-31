@@ -15,14 +15,12 @@ namespace Dsw2026Tpi.Application.Generators;
 /// </summary>
 public static class AvailabilitySlotGenerator
 {
- 
-
     /// <summary>
-    /// Genera las disponibilidades comprendidas entre la fecha actual
-    /// y el último día de ese mismo mes.
+    /// Genera las disponibilidades comprendidas entre el momento actual
+    /// y el último día del mismo mes.
     ///
-    /// Los días anteriores a la fecha recibida y los meses posteriores
-    /// no forman parte de la generación.
+    /// No genera bloques para días anteriores, meses posteriores
+    /// ni horarios cuyo comienzo ya haya pasado.
     /// </summary>
     /// <param name="doctorId">
     /// Identificador del médico propietario de las disponibilidades.
@@ -31,25 +29,19 @@ public static class AvailabilitySlotGenerator
     /// Reglas semanales previamente validadas.
     /// Puede contener varios rangos para un mismo día.
     /// </param>
-    /// <param name="currentDate">
-    /// Fecha desde la cual comienza la generación.
-    /// Recibirla como parámetro permite probar el generador
-    /// sin depender directamente del reloj del sistema.
-    /// </param>
-    /// <param name="nonWorkingDates">
-    /// Fechas que deben excluirse de la generación.
-    /// Por el momento puede omitirse. Posteriormente serán
-    /// obtenidas desde el archivo JSON de feriados nacionales.
+    /// <param name="currentDateTime">
+    /// Fecha y hora desde las cuales comienza la generación.
+    /// Se recibe como parámetro para no depender directamente
+    /// del reloj del sistema dentro del generador.
     /// </param>
     public static IReadOnlyCollection<Availability> Generate(
         Guid doctorId,
         IReadOnlyCollection<AvailabilityModel.DaySchedule> schedules,
-        DateTime currentDate,
-        IReadOnlySet<DateOnly>? nonWorkingDates = null)
+        DateTime currentDateTime)
     {
         ArgumentNullException.ThrowIfNull(schedules);
 
-        var today = currentDate.Date;
+        var today = currentDateTime.Date;
 
         var lastDayOfMonth = new DateTime(
             today.Year,
@@ -58,14 +50,15 @@ public static class AvailabilitySlotGenerator
                 today.Year,
                 today.Month));
 
-        var generatedAvailabilities = new List<Availability>();
-        var slotDuration= AvailabilityRules.SlotDuration;
+        var generatedAvailabilities =
+            new List<Availability>();
+
         foreach (var schedule in schedules)
         {
             /*
-             * La validez del nombre ya fue comprobada por el validador.
-             * Aquí se convierte nuevamente porque el generador necesita
-             * el DayOfWeek para encontrar las fechas correspondientes.
+             * El nombre del día ya fue validado.
+             * La conversión es necesaria para localizar las fechas
+             * correspondientes dentro del mes actual.
              */
             var targetDayOfWeek = DateTimeHelpers.ParseDay(
                 schedule.Day);
@@ -82,17 +75,19 @@ public static class AvailabilitySlotGenerator
                 targetDayOfWeek.Value,
                 today,
                 lastDayOfMonth,
-                nonWorkingDates,
+                currentDateTime,
                 generatedAvailabilities);
         }
 
         /*
          * Las reglas pueden llegar en cualquier orden.
-         * Se ordena el resultado para devolver un calendario predecible.
+         * Se devuelve un calendario ordenado por fecha y hora.
          */
         return generatedAvailabilities
-            .OrderBy(availability => availability.Date)
-            .ThenBy(availability => availability.StartTime)
+            .OrderBy(availability =>
+                availability.Date)
+            .ThenBy(availability =>
+                availability.StartTime)
             .ToList();
     }
 
@@ -106,7 +101,7 @@ public static class AvailabilitySlotGenerator
         DayOfWeek targetDayOfWeek,
         DateTime firstDate,
         DateTime lastDate,
-        IReadOnlySet<DateOnly>? nonWorkingDates,
+        DateTime currentDateTime,
         ICollection<Availability> generatedAvailabilities)
     {
         for (
@@ -119,18 +114,12 @@ public static class AvailabilitySlotGenerator
                 continue;
             }
 
-            if (IsNonWorkingDate(
-                date,
-                nonWorkingDates))
-            {
-                continue;
-            }
-
             GenerateDailySlots(
                 doctorId,
                 date,
                 schedule.StartTime,
                 schedule.EndTime,
+                currentDateTime,
                 generatedAvailabilities);
         }
     }
@@ -138,15 +127,20 @@ public static class AvailabilitySlotGenerator
     /// <summary>
     /// Divide un rango diario en bloques consecutivos
     /// de treinta minutos.
+    ///
+    /// Si la fecha corresponde al día actual, descarta los bloques
+    /// cuyo horario de inicio sea anterior al momento recibido.
     /// </summary>
     private static void GenerateDailySlots(
         Guid doctorId,
         DateTime date,
         TimeSpan startTime,
         TimeSpan endTime,
+        DateTime currentDateTime,
         ICollection<Availability> generatedAvailabilities)
     {
-        var slotDuration = AvailabilityRules.SlotDuration;
+        var slotDuration =
+            AvailabilityRules.SlotDuration;
 
         for (
             var currentStart = startTime;
@@ -156,6 +150,19 @@ public static class AvailabilitySlotGenerator
             var currentEnd = currentStart.Add(
                 slotDuration);
 
+            var slotStartDateTime = date.Date.Add(
+                currentStart);
+
+            /*
+             * Se controla el inicio, no el final.
+             * Un bloque parcialmente transcurrido tampoco puede
+             * publicarse como una disponibilidad nueva.
+             */
+            if (slotStartDateTime < currentDateTime)
+            {
+                continue;
+            }
+
             generatedAvailabilities.Add(
                 new Availability(
                     doctorId,
@@ -163,28 +170,5 @@ public static class AvailabilitySlotGenerator
                     currentStart,
                     currentEnd));
         }
-    }
-     
-    /// <summary>
-    /// Indica si una fecha debe excluirse por ser feriado
-    /// o día no laborable.
-    ///
-    /// En una etapa posterior, Application recibirá estas fechas
-    /// desde un componente encargado de leer el JSON de feriados
-    /// nacionales. El generador solo utiliza la colección resultante
-    /// y no conoce el origen de los datos.
-    /// </summary>
-    private static bool IsNonWorkingDate(
-        DateTime date,
-        IReadOnlySet<DateOnly>? nonWorkingDates)
-    {
-        if (nonWorkingDates is null ||
-            nonWorkingDates.Count == 0)
-        {
-            return false;
-        }
-
-        return nonWorkingDates.Contains(
-            DateOnly.FromDateTime(date));
     }
 }

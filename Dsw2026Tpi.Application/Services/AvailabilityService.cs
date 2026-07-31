@@ -73,7 +73,8 @@ public class AvailabilityService : IAvailabilitiesService
         await EnsureDoctorExistsAsync(
             request.DoctorId);
 
-        var today = DateTime.Today;
+        var currentDateTime = DateTime.Now;
+        var today = currentDateTime.Date;
 
         /*
          * El generador se ocupa de calcular fechas y dividir
@@ -86,7 +87,7 @@ public class AvailabilityService : IAvailabilitiesService
             AvailabilitySlotGenerator.Generate(
                     request.DoctorId,
                     request.Days,
-                    today)
+                    currentDateTime)
                 .ToList();
 
         var existingAvailabilities =

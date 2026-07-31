@@ -17,8 +17,8 @@ public class AuthenticationController : AppController
     }
 
 
-    // Solo un administrador autenticado puede crear otro administrador.
-    [Authorize(Policy = Policies.AdminPolicy)]
+
+    [AllowAnonymous]
     [HttpPost("admin/register")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

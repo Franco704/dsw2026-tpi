@@ -34,7 +34,6 @@ public static class AvailabilityRequestValidator
     /// </summary>
     public static void Validate(AvailabilityModel.Request? request)
     {
-        var slotDuration= AvailabilityRules.SlotDuration;
         var validation = new ValidationException();
 
         if (request is null)
