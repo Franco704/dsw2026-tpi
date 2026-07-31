@@ -28,7 +28,7 @@ namespace Dsw2026Tpi.Api.Configurations;
 public static class IdentitySeedExtensions
 {
     public static async Task SeedInitialAdminAsync(
-        this WebApplication app) //No entendemos.
+        this WebApplication app) 
     {
         // Lee el email inicial desde la configuración.
         var email = app.Configuration["InitialAdmin:Email"]
