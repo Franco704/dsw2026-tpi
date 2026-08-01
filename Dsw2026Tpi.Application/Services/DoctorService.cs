@@ -3,16 +3,15 @@ using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Application.Validators;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Helpers;
+using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
-using System.Data;
-using Dsw2026Tpi.CrossCutting.Resources;
 
 namespace Dsw2026Tpi.Application.Services;
 
 /// <summary>
 /// Gestiona los casos de uso relacionados con médicos,
-/// incluyendo creación, actualización, consulta y desactivación.
+/// incluyendo creación, actualización, consulta y eliminación lógica.
 /// </summary>
 public class DoctorService : IDoctorService
 {
@@ -33,82 +32,75 @@ public class DoctorService : IDoctorService
     public async Task<DoctorModel.Response> Create(
         DoctorModel.Request request)
     {
-        //validacion de la request
         DoctorRequestValidator.Validate(request);
 
-        //validacion de existencia del doctor (matricula)
-        var existing = await _persistence.First<Doctor>(d => (d.LicenseNumber == request.LicenseNumber) && !d.Deleted);
-        if (existing != null)
-        {
-            throw new ConflictException(nameof(ErrorCodes.DOCTOR_LICENSE_CONFLICT), nameof(ErrorCodes.DOCTOR_LICENSE_CONFLICT));
-        }
+        var normalizedLicenseNumber =
+            request.LicenseNumber.Trim();
 
-        //validacion de la especialidad
-        var speciality = await _persistence.GetById<Specialty>(request.SpecialtyId);
-        if (speciality == null)
-            throw new EntityNotFoundException(nameof(Specialty));
-        /*
-        * La entidad Doctor inicializa Id, CreatedAt,
-        * UpdatedAt y Deleted mediante EntityBase.
-        */
+        await EnsureLicenseNumberIsAvailableAsync(
+            normalizedLicenseNumber);
+
+        var specialty =
+            await GetSpecialtyAsync(
+                request.SpecialtyId);
+
         var doctor = new Doctor(
             request.Name,
-            request.LicenseNumber,
-            speciality);
+            normalizedLicenseNumber,
+            specialty);
 
-        await _persistence.Add(doctor);
+        var createdDoctor =
+            await _persistence.Add(doctor);
 
-        return new DoctorModel.Response(
-            doctor.Id,
-            doctor.Name,
-            doctor.LicenseNumber,
-            new DoctorModel.SpecialtyDto(
-                speciality.Id,
-                speciality.Name));
+        return MapResponse(
+            createdDoctor);
     }
 
     /// <summary>
     /// Actualiza los datos principales y la especialidad
     /// de un médico existente.
     /// </summary>
-    public async Task UpdateDoctors(
+    public async Task<DoctorModel.Response> UpdateDoctors(
         Guid id,
         DoctorModel.Request request)
     {
-        // Valida los datos recibidos en la request.
         DoctorRequestValidator.Validate(request);
 
-        // Obtiene el médico que se desea modificar.
         var doctor =
-            await _persistence.GetById<Doctor>(id);
+            await _persistence.GetById<Doctor>(
+                id);
 
-        if (doctor is null || doctor.Deleted)
+        if (doctor is null)
         {
             throw new EntityNotFoundException(
                 nameof(Doctor));
         }
 
-        // Verifica que la nueva especialidad exista.
-        var speciality =
-            await _persistence.GetById<Specialty>(
-                request.SpecialtyId);
-
-        if (speciality is null)
-        {
-            throw new EntityNotFoundException(
-                nameof(Specialty));
-        }
+        var normalizedLicenseNumber =
+            request.LicenseNumber.Trim();
 
         /*
-         * La entidad actualiza sus datos y UpdatedAt
-         * mediante su propio comportamiento.
+         * La matrícula puede conservarse durante la actualización.
+         * Solamente debe rechazarse cuando pertenece a otro médico.
          */
+        await EnsureLicenseNumberIsAvailableAsync(
+            normalizedLicenseNumber,
+            id);
+
+        var specialty =
+            await GetSpecialtyAsync(
+                request.SpecialtyId);
+
         doctor.Update(
             request.Name,
-            request.LicenseNumber,
-            speciality);
+            normalizedLicenseNumber,
+            specialty);
 
-        await _persistence.Update(doctor);
+        var updatedDoctor =
+            await _persistence.Update(doctor);
+
+        return MapResponse(
+            updatedDoctor);
     }
 
     /// <summary>
@@ -134,26 +126,22 @@ public class DoctorService : IDoctorService
                 nameof(Doctor.Speciality));
 
         return doctors.Map(
-            doctor =>
-                new DoctorModel.Response(
-                    doctor.Id,
-                    doctor.Name,
-                    doctor.LicenseNumber,
-                    new DoctorModel.SpecialtyDto(
-                        doctor.Speciality?.Id,
-                        doctor.Speciality?.Name)));
+            MapResponse);
     }
 
     /// <summary>
     /// Obtiene la disponibilidad mensual agrupada
     /// por día de la semana para un médico.
+    ///
+    /// Esta agrupación se corregirá posteriormente para incluir
+    /// el identificador y conservar los horarios partidos.
     /// </summary>
     public async Task<List<DoctorModel.AvailiabilityResponse>> GetById(
         Guid id)
     {
-        // Verifica que el médico exista.
         var doctor =
-            await _persistence.GetById<Doctor>(id);
+            await _persistence.GetById<Doctor>(
+                id);
 
         if (doctor is null)
         {
@@ -161,7 +149,6 @@ public class DoctorService : IDoctorService
                 nameof(Doctor));
         }
 
-        // Determina los límites del mes actual.
         var today = DateTime.Today;
 
         var firstDayOfMonth = new DateTime(
@@ -176,7 +163,6 @@ public class DoctorService : IDoctorService
                 today.Year,
                 today.Month));
 
-        // Obtiene las disponibilidades del médico durante el mes.
         var availabilities =
             await _persistence.GetFiltered<Availability>(
                 availability =>
@@ -184,17 +170,12 @@ public class DoctorService : IDoctorService
                     availability.Date >= firstDayOfMonth &&
                     availability.Date <= lastDayOfMonth);
 
-        // Devuelve una lista vacía cuando no existen horarios.
         if (availabilities is null ||
             !availabilities.Any())
         {
             return [];
         }
 
-        /*
-         * Agrupa los bloques por día de la semana y obtiene
-         * el rango horario mínimo y máximo de cada día.
-         */
         var schedule = availabilities
             .GroupBy(
                 availability =>
@@ -217,9 +198,6 @@ public class DoctorService : IDoctorService
     }
 
     /// <summary>
-    /// Desactiva lógicamente un médico existente.
-    /// </summary>
-    /// <summary>
     /// Elimina lógicamente un médico existente.
     /// </summary>
     public async Task DeleteDoctor(
@@ -235,13 +213,70 @@ public class DoctorService : IDoctorService
                 nameof(Doctor));
         }
 
-        /*
-         * Deactivate cambia IsActive y Deleted,
-         * además de actualizar la fecha de modificación.
-         */
         doctor.Deactivate();
 
         await _persistence.Update(
             doctor);
+    }
+
+    /// <summary>
+    /// Comprueba que la matrícula no pertenezca
+    /// a otro médico registrado.
+    /// </summary>
+    private async Task EnsureLicenseNumberIsAvailableAsync(
+        string licenseNumber,
+        Guid? excludedDoctorId = null)
+    {
+        var existingDoctor =
+            await _persistence.First<Doctor>(
+                doctor =>
+                    doctor.LicenseNumber == licenseNumber &&
+                    (
+                        !excludedDoctorId.HasValue ||
+                        doctor.Id != excludedDoctorId.Value
+                    ));
+
+        if (existingDoctor is not null)
+        {
+            throw new ConflictException(
+                ErrorCodes.DOCTOR_LICENSE_CONFLICT,
+                nameof(ErrorCodes.DOCTOR_LICENSE_CONFLICT));
+        }
+    }
+
+    /// <summary>
+    /// Obtiene la especialidad solicitada o informa
+    /// que no existe.
+    /// </summary>
+    private async Task<Specialty> GetSpecialtyAsync(
+        Guid specialtyId)
+    {
+        var specialty =
+            await _persistence.GetById<Specialty>(
+                specialtyId);
+
+        if (specialty is null)
+        {
+            throw new EntityNotFoundException(
+                nameof(Specialty));
+        }
+
+        return specialty;
+    }
+
+    /// <summary>
+    /// Convierte una entidad Doctor al contrato
+    /// público de respuesta.
+    /// </summary>
+    private static DoctorModel.Response MapResponse(
+        Doctor doctor)
+    {
+        return new DoctorModel.Response(
+            doctor.Id,
+            doctor.Name,
+            doctor.LicenseNumber,
+            new DoctorModel.SpecialtyDto(
+                doctor.Speciality?.Id,
+                doctor.Speciality?.Name));
     }
 }
