@@ -45,14 +45,24 @@ public class DoctorController : AppController
     }
 
     [HttpPut("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(
+    typeof(DoctorModel.Response),
+    StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateDoctors([FromRoute] Guid id, [FromBody] DoctorModel.Request request)
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateDoctors(
+    [FromRoute] Guid id,
+    [FromBody] DoctorModel.Request request)
     {
-        await _service.UpdateDoctors(id, request);
-        return NoContent();
+        var updatedDoctor =
+            await _service.UpdateDoctors(
+                id,
+                request);
+
+        return Ok(updatedDoctor);
     }
+
 
     [HttpDelete("{id}")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
