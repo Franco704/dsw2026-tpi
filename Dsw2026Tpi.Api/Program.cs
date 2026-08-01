@@ -1,7 +1,5 @@
 using Dsw2026Tpi.Api.Configurations;
 using Dsw2026Tpi.Api.Middlewares;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Serilog;
 
 namespace Dsw2026Tpi.Api;
@@ -10,30 +8,41 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
-        // Inicializar con un logger simple antes de construir el host
+        // Inicializa un logger básico antes de construir la aplicación.
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
             .CreateBootstrapLogger();
 
         try
         {
-            Log.Information("Iniciando aplicación Dsw2026Tpi.Api");
+            Log.Information(
+                "Iniciando aplicación Dsw2026Tpi.Api");
 
-            var builder = WebApplication.CreateBuilder(args);
+            var builder =
+                WebApplication.CreateBuilder(args);
 
-            //Configuraciones personalizadas
+            // Configuraciones personalizadas de la aplicación.
             builder.AddSerilogConfiguration();
+
             builder.Services.AddAppIdentity();
-            builder.Services.AddAppAuthentication(builder.Configuration);
+            builder.Services.AddAppAuthentication(
+                builder.Configuration);
+
             builder.Services.AddSwaggerConfiguration();
-            builder.Services.AddApplicationPersistence(builder.Configuration);
-            builder.Services.AddAppCors(builder.Configuration);
+
+            builder.Services.AddApplicationPersistence(
+                builder.Configuration);
+
+            builder.Services.AddAppCors(
+                builder.Configuration);
+
             builder.Services.AddAppDependencies();
             builder.Services.AddControllers();
             builder.Services.AddHealthChecks();
             builder.Services.AddAppRateLimiting();
 
             var app = builder.Build();
+
             await app.SeedInitialAdminAsync();
 
             app.UseSerilogRequestLogging();
@@ -42,40 +51,67 @@ public class Program
             {
                 app.UseHttpsRedirection();
             }
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
-            app.UseAuthentication();
-            app.UseAuthorization();
-            app.UseCors();
+            /*
+             * El middleware de excepciones se registra antes
+             * de los componentes que ejecutan los endpoints.
+             */
             app.UseMiddleware<ExceptionHandlingMiddleware>();
-            //aplico el ratelimiter
-            app.UseRateLimiter();
-            //aqui lo enciendo
-            app.MapControllers().RequireRateLimiting("fixed");
-            app.MapHealthChecks("/health-check");
 
-            Log.Information("Aplicación iniciada correctamente");
+            app.UseCors();
+
+            /*
+             * La autenticación debe ejecutarse antes del rate limiter
+             * para que posteriormente puedan aplicarse límites
+             * utilizando la identidad del usuario.
+             */
+            app.UseAuthentication();
+
+            app.UseRateLimiter();
+
+            app.UseAuthorization();
+
+            /*
+             * Aplica temporalmente la política general de
+             * cien solicitudes por minuto a los controladores.
+             */
+            app.MapControllers()
+                .RequireRateLimiting("fixed");
+
+            app.MapHealthChecks(
+                "/health-check");
+
+            Log.Information(
+                "Aplicación iniciada correctamente");
 
             await app.RunAsync();
         }
         catch (HostAbortedException)
         {
-            Log.Information("El host fue abortado (normal durante migraciones de EF Core)");
+            Log.Information(
+                "El host fue abortado " +
+                "(normal durante migraciones de EF Core)");
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            Log.Fatal(ex, "La aplicación falló al iniciar");
+            Log.Fatal(
+                exception,
+                "La aplicación falló al iniciar");
+
             throw;
         }
         finally
         {
-            Log.Information("Cerrando aplicación");
+            Log.Information(
+                "Cerrando aplicación");
+
             await Log.CloseAndFlushAsync();
         }
     }
 }
-
