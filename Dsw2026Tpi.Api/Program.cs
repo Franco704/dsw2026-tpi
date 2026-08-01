@@ -36,14 +36,22 @@ public class Program
             builder.Services.AddAppCors(
                 builder.Configuration);
 
+            builder.Services.AddAppForwardedHeaders();
+
             builder.Services.AddAppDependencies();
             builder.Services.AddControllers();
             builder.Services.AddHealthChecks();
-            builder.Services.AddAppRateLimiting();
-
+            builder.Services.AddAppRateLimiting(
+                builder.Configuration);
             var app = builder.Build();
 
             await app.SeedInitialAdminAsync();
+
+            /*
+             * Procesa primero la IP y el esquema originales
+             * enviados por proxies confiables como ngrok.
+             */
+            app.UseForwardedHeaders();
 
             app.UseSerilogRequestLogging();
 
@@ -64,6 +72,12 @@ public class Program
              */
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 
+            /*
+             * Resuelve el endpoint antes de aplicar CORS,
+             * autenticación y políticas específicas de rate limiting.
+             */
+            app.UseRouting();
+
             app.UseCors();
 
             /*
@@ -82,10 +96,13 @@ public class Program
              * cien solicitudes por minuto a los controladores.
              */
             app.MapControllers()
-                .RequireRateLimiting("fixed");
+                .RequireRateLimiting(
+                    RateLimitPolicies.General);
 
             app.MapHealthChecks(
-                "/health-check");
+                    "/health-check")
+                .RequireRateLimiting(
+                    RateLimitPolicies.General);
 
             Log.Information(
                 "Aplicación iniciada correctamente");

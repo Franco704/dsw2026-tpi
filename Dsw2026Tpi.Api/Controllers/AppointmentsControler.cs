@@ -1,11 +1,13 @@
-﻿using Dsw2026Tpi.Application.Interfaces;
+﻿using Dsw2026Tpi.Api.Configurations;
 using Dsw2026Tpi.Application.Dtos;
+using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Identity;
 using Dsw2026Tpi.CrossCutting.Models;
 using Dsw2026Tpi.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
@@ -22,6 +24,8 @@ public class AppointmentsController : AppController
     }
 
     [HttpPost]
+    [EnableRateLimiting(
+        RateLimitPolicies.AppointmentBooking)]
     [ProducesResponseType(
         typeof(AppointmentModel.Response),
         StatusCodes.Status201Created)]
@@ -78,23 +82,31 @@ public class AppointmentsController : AppController
     }
 
     [HttpDelete("{appointmentId:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(
+        typeof(string),
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+        StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(
+        StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(
+        StatusCodes.Status404NotFound)]
+    [ProducesResponseType(
+        StatusCodes.Status409Conflict)]
     [Authorize(Policy = Policies.PatientPolicy)]
     public async Task<IActionResult> Cancel(
         Guid appointmentId)
     {
-        var authenticatedEmail = GetAuthenticatedEmail();
+        var authenticatedEmail =
+            GetAuthenticatedEmail();
 
         await _appointmentService.CancelAsync(
             appointmentId,
             authenticatedEmail);
 
-        return NoContent();
+        return Ok("ok");
     }
 
     [HttpGet]

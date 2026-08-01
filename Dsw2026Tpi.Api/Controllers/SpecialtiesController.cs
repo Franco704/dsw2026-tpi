@@ -11,12 +11,12 @@ namespace Dsw2026Tpi.Api.Controllers;
 public class SpecialtiesController : AppController
 {
     private readonly ISpecialitiesService _service;
-    
+
     public SpecialtiesController(ISpecialitiesService service)
     {
         _service = service;
     }
-    
+
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int pageSize, [FromQuery] int pageIndex, [FromQuery] string? name = null)
@@ -44,10 +44,17 @@ public class SpecialtiesController : AppController
     }
 
     [HttpDelete("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteSpeciality([FromRoute] Guid id)
+    [ProducesResponseType(
+        typeof(string),
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteSpeciality(
+        [FromRoute] Guid id)
     {
-        await _service.DeleteSpecialitiy(id);
-        return NoContent();
+        await _service.DeleteSpecialitiy(
+            id);
+
+        return Ok("ok"); //Antes era un 204 no content, corrijo eso segun las responses actuales. 
     }
 }

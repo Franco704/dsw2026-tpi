@@ -1,8 +1,10 @@
-﻿using Dsw2026Tpi.Application.Dtos;
+﻿using Dsw2026Tpi.Api.Configurations;
+using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
@@ -35,8 +37,9 @@ public class AuthenticationController : AppController
         return Ok(result.Email);
     }
 
-    
+
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.AdminLogin)]
     [HttpPost("admin/login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -53,6 +56,7 @@ public class AuthenticationController : AppController
     }
     // Permite el primer acceso y el login de pacientes sin JWT previo.
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.PatientLogin)]
     [HttpPost("patient/login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

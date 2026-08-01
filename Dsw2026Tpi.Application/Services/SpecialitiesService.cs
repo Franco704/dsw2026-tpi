@@ -144,69 +144,25 @@ public class SpecialitiesService : ISpecialitiesService
     /// <summary>
     /// Desactiva lógicamente una especialidad existente.
     /// </summary>
+    /// <summary>
+    /// Elimina lógicamente una especialidad existente.
+    /// </summary>
     public async Task DeleteSpecialitiy(
         Guid id)
     {
         var speciality =
-            await _persistence.GetById<Speciality>(id);
+            await _persistence.GetById<Speciality>(
+                id);
 
-        if (speciality is not null)
+        if (speciality is null)
         {
-            /*
-             * Deactivate modifica Deleted y UpdatedAt
-             * dentro de la entidad.
-             */
-            speciality.Deactivate();
-
-            await _persistence.Update(speciality);
+            throw new EntityNotFoundException(
+                nameof(Speciality));
         }
+
+        speciality.Deactivate();
+
+        await _persistence.Update(
+            speciality);
     }
 }
-
-/*
- * DECISIONES TOMADAS:
- *
- * - Se mantuvo la estructura original de SpecialitiesService.
- *
- * - No se extrajeron métodos privados ni validadores nuevos.
- *
- * - ValidationException continúa acumulando los errores
- *   de nombre y descripción mediante WithDetail.
- *
- * - EntityNotFoundException reemplaza KeyNotFoundException
- *   para utilizar el código centralizado ENTITY_NOTFOUND.
- *
- * - ConflictException recibe primero el mensaje y luego
- *   el código de error.
- *
- * - SPECIALITY_NAME_CONFLICT se utiliza tanto en Create
- *   como en UpdateSpecialitiy.
- *
- * - No se asignan CreatedAt ni UpdatedAt desde Application,
- *   porque la entidad administra su auditoría.
- *
- * CONSIDERACIONES PARA REVISAR:
- *
- * - La validación de nombre y descripción está repetida en
- *   Create y UpdateSpecialitiy. Podría centralizarse más adelante
- *   en un validador específico, pero se mantiene para respetar
- *   la estructura original.
- *
- * - La comparación de nombres es exacta y sensible al criterio
- *   de comparación de la base. Valores como "Cardiología" y
- *   " cardiología " podrían requerir normalización.
- *
- * - Aunque se valida previamente la duplicación, la base debe
- *   conservar un índice único para proteger la concurrencia.
- *
- * - DeleteSpecialitiy finaliza silenciosamente cuando la entidad
- *   no existe. Se mantiene el comportamiento original.
- *
- * - Los nombres UpdateSpecialitiy y DeleteSpecialitiy contienen
- *   un error ortográfico. El término correcto sería Speciality,
- *   por ejemplo UpdateSpeciality y DeleteSpeciality.
- *
- * - Cambiar esos nombres implica actualizar la interfaz,
- *   el controller y cualquier llamada existente, por lo que
- *   no se modificaron en esta revisión.
- */

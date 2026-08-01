@@ -38,18 +38,19 @@ public class DoctorService : IDoctorService
 
         //validacion de existencia del doctor (matricula)
         var existing = await _persistence.First<Doctor>(d => (d.LicenseNumber == request.LicenseNumber) && !d.Deleted);
-        if (existing != null) {
+        if (existing != null)
+        {
             throw new ConflictException(nameof(ErrorCodes.DOCTOR_LICENSE_CONFLICT), nameof(ErrorCodes.DOCTOR_LICENSE_CONFLICT));
         }
 
         //validacion de la especialidad
         var speciality = await _persistence.GetById<Speciality>(request.SpecialityId);
         if (speciality == null)
-         throw new EntityNotFoundException(nameof(Speciality));
-         /*
-         * La entidad Doctor inicializa Id, CreatedAt,
-         * UpdatedAt y Deleted mediante EntityBase.
-         */
+            throw new EntityNotFoundException(nameof(Speciality));
+        /*
+        * La entidad Doctor inicializa Id, CreatedAt,
+        * UpdatedAt y Deleted mediante EntityBase.
+        */
         var doctor = new Doctor(
             request.Name,
             request.LicenseNumber,
@@ -218,74 +219,29 @@ public class DoctorService : IDoctorService
     /// <summary>
     /// Desactiva lógicamente un médico existente.
     /// </summary>
+    /// <summary>
+    /// Elimina lógicamente un médico existente.
+    /// </summary>
     public async Task DeleteDoctor(
         Guid id)
     {
         var doctor =
-            await _persistence.GetById<Doctor>(id);
+            await _persistence.GetById<Doctor>(
+                id);
 
-        if (doctor is not null)
+        if (doctor is null)
         {
-            /*
-             * Deactivate modifica IsActive, Deleted
-             * y UpdatedAt dentro de la entidad.
-             */
-            doctor.Deactivate();
-
-            await _persistence.Update(doctor);
+            throw new EntityNotFoundException(
+                nameof(Doctor));
         }
+
+        /*
+         * Deactivate cambia IsActive y Deleted,
+         * además de actualizar la fecha de modificación.
+         */
+        doctor.Deactivate();
+
+        await _persistence.Update(
+            doctor);
     }
 }
-
-/*
- * DECISIONES TOMADAS:
- *
- * - Se mantuvo la estructura original de DoctorService.    
- *
- * - No se extrajeron métodos privados ni nuevas clases.
- *
- * - EntityNotFoundException reemplaza KeyNotFoundException
- *   para mantener el tratamiento uniforme de errores.
- *
- * - No se asignan CreatedAt ni UpdatedAt desde Application,
- *   porque EntityBase y Doctor administran la auditoría.
- *
- * - DoctorsValidators continúa validando el contrato de entrada.
- *
- * - No se utiliza ErrorCodes directamente porque
- *   EntityNotFoundException centraliza ENTITY_NOTFOUND.
- *
- * - Se utiliza DateTime.Today para mantener el criterio
- *   temporal local definido en el proyecto.
- *
- * CONSIDERACIONES PARA REVISAR:
- *
- * - Create y UpdateDoctors no verifican explícitamente si
- *   ya existe otro médico con la misma matrícula.
- *
- * - Si la base posee un índice único para LicenseNumber,
- *   una duplicación podría producir una excepción de
- *   persistencia no traducida.
- *
- * - Antes de agregar un código nuevo, debe revisarse si alguno
- *   de los ErrorCodes existentes representa adecuadamente
- *   el conflicto.
- *
- * - DeleteDoctor no informa error si el médico no existe;
- *   conserva el comportamiento original y finaliza silenciosamente.
- *
- * - GetById realmente devuelve los horarios del médico,
- *   no los datos del médico. El nombre podría ser más específico,
- *   por ejemplo GetMonthlyAvailability.
- *
- * - GetById agrupa por DayOfWeek y toma el mínimo StartTime
- *   y máximo EndTime. Si existen intervalos separados durante
- *   un día, la respuesta puede aparentar un horario continuo.
- *
- * - GetFiltered devuelve una colección vacía y no null en la
- *   implementación actual; la comprobación de null es redundante,
- *   pero se mantiene por la firma nullable de IPersistence.
- *
- * - IsActive y Deleted representan estados relacionados.
- *   Deberá revisarse si ambos son realmente necesarios.
- */
