@@ -95,10 +95,7 @@ public class Program
              * Aplica temporalmente la política general de
              * cien solicitudes por minuto a los controladores.
              */
-            app.MapControllers()
-                .RequireRateLimiting(
-                    RateLimitPolicies.General);
-
+            app.MapControllers();
             app.MapHealthChecks(
                     "/health-check")
                 .RequireRateLimiting(
