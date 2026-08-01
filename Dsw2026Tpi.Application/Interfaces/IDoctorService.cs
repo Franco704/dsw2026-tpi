@@ -17,7 +17,7 @@ public interface IDoctorService
         int pageIndex,
         string? name = null);
 
-    Task<List<DoctorModel.AvailiabilityResponse>> GetById(
+    Task<List<DoctorModel.AvailabilityResponse>> GetById(
         Guid id);
 
     Task DeleteDoctor(

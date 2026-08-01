@@ -15,12 +15,27 @@ public static class AppointmentRequestValidator
     /// Acumula todos los errores detectados antes de lanzar
     /// una ValidationException.
     /// </summary>
+    /// <summary>
+    /// Valida los datos necesarios para reservar un turno.
+    /// Acumula todos los errores antes de lanzar
+    /// una ValidationException.
+    /// </summary>
+    /// <summary>
+    /// Valida los datos necesarios para reservar un turno.
+    /// Acumula todos los errores antes de lanzar
+    /// una ValidationException.
+    /// </summary>
+    /// <summary>
+    /// Valida los datos necesarios para reservar un turno.
+    /// Acumula todos los errores antes de lanzar
+    /// una ValidationException.
+    /// </summary>
     public static void ValidateCreate(
         AppointmentModel.Request? request)
     {
-        var validation = new ValidationException();
+        var validation =
+            new ValidationException();
 
-        // La request completa es obligatoria.
         if (request is null)
         {
             validation.WithDetail(
@@ -30,49 +45,51 @@ public static class AppointmentRequestValidator
             throw validation;
         }
 
-        // El médico debe estar identificado.
         if (request.DoctorId == Guid.Empty)
         {
             validation.WithDetail(
-                nameof(request.DoctorId),
+                "doctorId",
                 "required");
         }
 
-        // La disponibilidad debe estar identificada.
-        if (request.AvailabilityId == Guid.Empty)
+        if (request.AvailabilitySlotId == Guid.Empty)
         {
             validation.WithDetail(
-                nameof(request.AvailabilityId),
+                "availabilitySlotId",
                 "required");
         }
 
-        // Los datos básicos del paciente son obligatorios.
         if (request.Patient is null)
         {
             validation.WithDetail(
-                nameof(request.Patient),
+                "patient",
                 "required");
         }
-        else if (
-            request.Patient.Dni < 1_000_000L ||
-            request.Patient.Dni > 99_999_999L)
+        else
         {
-            validation.WithDetail(
-                "patient.dni",
-                "must_have_between_7_and_8_digits");
+            var dniLength = request.Patient.Dni
+                .ToString(CultureInfo.InvariantCulture)
+                .Length;
+
+            if (request.Patient.Dni <= 0 ||
+                dniLength is < 7 or > 10)
+            {
+                validation.WithDetail(
+                    "patient.dni",
+                    "must_have_between_7_and_10_digits");
+            }
         }
 
-        // El motivo del turno es obligatorio.
         if (string.IsNullOrWhiteSpace(request.Reason))
         {
             validation.WithDetail(
-                nameof(request.Reason),
+                "reason",
                 "required");
         }
         else if (request.Reason.Trim().Length < 5)
         {
             validation.WithDetail(
-                nameof(request.Reason),
+                "reason",
                 "minimum_length_5");
         }
 
@@ -81,7 +98,6 @@ public static class AppointmentRequestValidator
             throw validation;
         }
     }
-
     /// <summary>
     /// Valida los filtros y parámetros de paginación
     /// utilizados en la búsqueda de turnos.

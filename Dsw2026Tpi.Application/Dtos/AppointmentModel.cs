@@ -2,7 +2,7 @@
 {
     public record Request(
         Guid DoctorId,
-        Guid AvailabilityId,
+        Guid AvailabilitySlotId,
         PatientRequest? Patient,
         string? Reason);
 
@@ -12,7 +12,7 @@
     public record Response(
         Guid Id,
         Guid DoctorId,
-        Guid AvailabilityId,
+        Guid AvailabilitySlotId,
         Guid PatientId,
         DateTime ScheduledAt,
         string Reason,
@@ -22,16 +22,12 @@
         Guid? SpecialtyId,
         Guid? DoctorId,
         long? Dni,
-        DateTime? Date, 
+        DateTime? Date,
         int PageSize = 10,
-        int PageIndex = 1); //Cual seria el tamaño de pagina Ideal? 
+        int PageIndex = 1);
 
     public record SearchResponse(
-        Guid AppointmentId,
-        Guid? SpecialtyId,
         string Specialty,
-        Guid DoctorId,
         string Doctor,
-        DateTime AvailableTime,
-        string Status);
+        DateTime AvailableTime);
 }
