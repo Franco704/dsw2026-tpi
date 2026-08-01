@@ -7,6 +7,7 @@ using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 
 namespace Dsw2026Tpi.Application.Services;
 
@@ -148,13 +149,36 @@ public class AppointmentService : IAppointmentService
         // Marca el bloque como ocupado.
         availability.MarkAsUnavailable();
 
+        
+        //Control de Concurrencia
+        /* Si el índice único filtrado en BD salta por
+         dos peticiones simultáneas atrapamos DbUpdateException*/
+
+        try
+        {
+            await _persistence.Add(appointment);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogWarning(ex,
+                "Conflicto de concurrencia, turno {AvailabilityID} ya fue reservado",
+                availability.Id);
+            
+            throw new ConflictException(
+                ErrorCodes.APPOINTMENT_CONFLICT,
+                nameof(ErrorCodes.APPOINTMENT_CONFLICT));
+        }
+        _logger.LogInformation(
+            "Reserva confirmada. Turno {AppointmentId}, paciente {PatientId}, disponibilidad {AvailabilityId}.",
+            appointment.Id,
+            patient.Id,
+            availability.Id);
+        
         /*
          * Appointment se agrega y Availability ya está trackeada.
          * SaveChangesAsync persiste ambas modificaciones.
          */
-        await _persistence.Add(
-            appointment);
-
+        
         _logger.LogInformation(
             "Reserva confirmada. Turno {AppointmentId}, paciente {PatientId}, disponibilidad {AvailabilityId}.",
             appointment.Id,

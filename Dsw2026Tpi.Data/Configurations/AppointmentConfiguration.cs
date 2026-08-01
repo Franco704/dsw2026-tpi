@@ -217,6 +217,11 @@ public class AppointmentConfiguration
          * Los registros eliminados solo podrán consultarse
          * utilizando IgnoreQueryFilters().
          */
+        
+        //Índice para evitar la doble reserva
+        builder.HasIndex(a => a.AvailabilityId)
+            .IsUnique()
+            .HasFilter("[Status] = 'BOOKED'");
     }
 }
 
