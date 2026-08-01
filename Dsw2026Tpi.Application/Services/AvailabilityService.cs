@@ -16,14 +16,15 @@ namespace Dsw2026Tpi.Application.Services;
 public class AvailabilityService : IAvailabilitiesService
 {
     private readonly IPersistence _persistence;
-
+    private readonly IFeriadoProvider _feriado;
     /// <summary>
     /// Inicializa el servicio con la abstracción de persistencia.
     /// </summary>
     public AvailabilityService(
-        IPersistence persistence)
+        IPersistence persistence, IFeriadoProvider feriadoProvider)
     {
         _persistence = persistence;
+        _feriado = feriadoProvider;
     }
 
     /// <summary>
@@ -88,6 +89,7 @@ public class AvailabilityService : IAvailabilitiesService
                     request.DoctorId,
                     request.Days,
                     currentDateTime)
+                    .Where(a => !_feriado.EsFeriado(a.Date))
                 .ToList();
 
         var existingAvailabilities =

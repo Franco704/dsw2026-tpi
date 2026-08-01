@@ -10,7 +10,7 @@ using Microsoft.Identity.Client;
 
 namespace Dsw2026Tpi.Data
 {
-    internal class FeriadoProvider : IFeriadoProvider
+    public class FeriadoProvider : IFeriadoProvider
     {
         private readonly HashSet<DateTime> _feriados;
 

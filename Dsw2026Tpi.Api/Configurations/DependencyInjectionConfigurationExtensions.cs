@@ -18,7 +18,7 @@ public static class DependencyInjectionConfigurationExtensions
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<ISignInService, SignInService>();
         services.AddScoped<IAvailabilitiesService, AvailabilityService>();
-
+        services.AddSingleton<IFeriadoProvider, FeriadoProvider>();
         // IdentityAccessService utiliza servicios scoped de Identity.
         services.AddScoped<IIdentityAccessService, IdentityAccessService>();
         services.AddScoped<IPatientAccessService, PatientAccessService>();
