@@ -89,6 +89,7 @@ public class AvailabilityService : IAvailabilitiesService
                     request.Days,
                     currentDateTime)
                 .ToList();
+        EnsureFutureSlotsWereGenerated (generatedAvailabilities);
 
         var existingAvailabilities =
             await GetExistingAvailabilitiesAsync(
@@ -253,5 +254,26 @@ public class AvailabilityService : IAvailabilitiesService
                     availability.Date,
                     availability.StartTime,
                     availability.EndTime));
+    }
+
+    /// <summary>
+    /// Comprueba que las reglas recibidas produzcan al menos
+    /// una disponibilidad futura dentro del mes actual.
+    /// </summary>
+    private static void EnsureFutureSlotsWereGenerated(
+        IReadOnlyCollection<Availability> generatedAvailabilities)
+    {
+        if (generatedAvailabilities.Count > 0)
+        {
+            return;
+        }
+
+        var validation = new ValidationException();
+
+        validation.WithDetail(
+            "days",
+            "no_future_slots_available_in_current_month");
+
+        throw validation;
     }
 }

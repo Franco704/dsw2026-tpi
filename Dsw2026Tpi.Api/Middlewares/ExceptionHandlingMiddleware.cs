@@ -104,10 +104,6 @@ public class ExceptionHandlingMiddleware
                     StatusCodes.Status400BadRequest,
                     validationException.Error),
 
-            BusinessRuleException businessRuleException =>
-                new ErrorResult(
-                    StatusCodes.Status400BadRequest,
-                    businessRuleException.Error),
 
             AuthenticationException authenticationException =>
                 new ErrorResult(
