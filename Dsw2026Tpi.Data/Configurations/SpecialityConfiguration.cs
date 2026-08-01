@@ -9,14 +9,14 @@ namespace Dsw2026Tpi.Data.Configurations;
 /// y la tabla Specialities de la base de datos.
 /// </summary>
 public class SpecialityConfiguration
-    : IEntityTypeConfiguration<Speciality>
+    : IEntityTypeConfiguration<Specialty>
 {
     /// <summary>
     /// Define las columnas, restricciones, índices
     /// y filtros globales de la entidad Speciality.
     /// </summary>
     public void Configure(
-        EntityTypeBuilder<Speciality> builder)
+        EntityTypeBuilder<Specialty> builder)
     {
         // Asocia la entidad con la tabla física Specialities.
         builder.ToTable("Specialities");

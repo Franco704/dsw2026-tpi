@@ -2,8 +2,23 @@
 
 public record DoctorModel
 {
-    public record Request(string Name, string LicenseNumber, Guid SpecialityId);
-    public record Response(Guid Id, string Name, string LicenseNumber, SpecialityDto? Speciality);
-    public record SpecialityDto(Guid? SpecialityId, string? Name);
-    public record AvailiabilityResponse(string Day, string StartTime, string EndTime);
+    public record Request(
+        string Name,
+        string LicenseNumber,
+        Guid SpecialtyId);
+
+    public record Response(
+        Guid Id,
+        string Name,
+        string LicenseNumber,
+        SpecialtyDto? Specialty);
+
+    public record SpecialtyDto(
+        Guid? Id,
+        string? Name);
+
+    public record AvailiabilityResponse(
+        string Day,
+        string StartTime,
+        string EndTime);
 }

@@ -34,7 +34,7 @@ public class DoctorService : IDoctorService
         DoctorModel.Request request)
     {
         //validacion de la request
-        DoctorsValidators.ValidateDoctorRequest(request);
+        DoctorRequestValidator.Validate(request);
 
         //validacion de existencia del doctor (matricula)
         var existing = await _persistence.First<Doctor>(d => (d.LicenseNumber == request.LicenseNumber) && !d.Deleted);
@@ -44,9 +44,9 @@ public class DoctorService : IDoctorService
         }
 
         //validacion de la especialidad
-        var speciality = await _persistence.GetById<Speciality>(request.SpecialityId);
+        var speciality = await _persistence.GetById<Specialty>(request.SpecialtyId);
         if (speciality == null)
-            throw new EntityNotFoundException(nameof(Speciality));
+            throw new EntityNotFoundException(nameof(Specialty));
         /*
         * La entidad Doctor inicializa Id, CreatedAt,
         * UpdatedAt y Deleted mediante EntityBase.
@@ -62,7 +62,7 @@ public class DoctorService : IDoctorService
             doctor.Id,
             doctor.Name,
             doctor.LicenseNumber,
-            new DoctorModel.SpecialityDto(
+            new DoctorModel.SpecialtyDto(
                 speciality.Id,
                 speciality.Name));
     }
@@ -76,7 +76,7 @@ public class DoctorService : IDoctorService
         DoctorModel.Request request)
     {
         // Valida los datos recibidos en la request.
-        DoctorsValidators.ValidateDoctorRequest(request);
+        DoctorRequestValidator.Validate(request);
 
         // Obtiene el médico que se desea modificar.
         var doctor =
@@ -90,13 +90,13 @@ public class DoctorService : IDoctorService
 
         // Verifica que la nueva especialidad exista.
         var speciality =
-            await _persistence.GetById<Speciality>(
-                request.SpecialityId);
+            await _persistence.GetById<Specialty>(
+                request.SpecialtyId);
 
         if (speciality is null)
         {
             throw new EntityNotFoundException(
-                nameof(Speciality));
+                nameof(Specialty));
         }
 
         /*
@@ -139,7 +139,7 @@ public class DoctorService : IDoctorService
                     doctor.Id,
                     doctor.Name,
                     doctor.LicenseNumber,
-                    new DoctorModel.SpecialityDto(
+                    new DoctorModel.SpecialtyDto(
                         doctor.Speciality?.Id,
                         doctor.Speciality?.Name)));
     }

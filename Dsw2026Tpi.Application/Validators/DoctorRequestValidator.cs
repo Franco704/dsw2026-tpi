@@ -1,46 +1,90 @@
 ﻿using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 
-public static class DoctorsValidators
+namespace Dsw2026Tpi.Application.Validators;
+
+/// <summary>
+/// Valida los datos recibidos al crear o actualizar un mÃ©dico.
+/// Solo controla el contenido de la request; la existencia de la
+/// especialidad y los conflictos se comprueban en el servicio.
+/// </summary>
+public static class DoctorRequestValidator
 {
-    /// <summary>
-    /// Valida los datos requeridos para crear
-    /// o actualizar un médico.
-    /// </summary>
-    public static void ValidateDoctorRequest(
-        DoctorModel.Request request)
+    public static void Validate(
+        DoctorModel.Request? request)
     {
         var validation = new ValidationException();
 
-        // El nombre es obligatorio y debe respetar su longitud.
-        if (string.IsNullOrWhiteSpace(request.Name) ||
-            request.Name.Length is < 3 or > 100)
+        if (request is null)
         {
             validation.WithDetail(
-                "name",
-                "El nombre debe tener entre 3 y 100 caracteres.");
+                "request",
+                "required");
+
+            throw validation;
         }
 
-        // La matrícula es obligatoria.
-        if (string.IsNullOrWhiteSpace(
-                request.LicenseNumber))
-        {
-            validation.WithDetail(
-                "licenseNumber",
-                "El número de matrícula no puede estar vacío.");
-        }
+        ValidateName(
+            request.Name,
+            validation);
 
-        // La especialidad debe estar identificada.
-        if (request.SpecialityId == Guid.Empty)
-        {
-            validation.WithDetail(
-                "specialityId",
-                "La especialidad es obligatoria.");
-        }
+        ValidateLicenseNumber(
+            request.LicenseNumber,
+            validation);
+
+        ValidateSpecialtyId(
+            request.SpecialtyId,
+            validation);
 
         if (validation.Error.Details.Any())
         {
             throw validation;
+        }
+    }
+
+    private static void ValidateName(
+        string? name,
+        ValidationException validation)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            validation.WithDetail(
+                "name",
+                "required");
+
+            return;
+        }
+
+        if (name.Trim().Length is < 3 or > 100)
+        {
+            validation.WithDetail(
+                "name",
+                "length_must_be_between_3_and_100");
+        }
+    }
+
+    private static void ValidateLicenseNumber(
+        string? licenseNumber,
+        ValidationException validation)
+    {
+        if (string.IsNullOrWhiteSpace(
+                licenseNumber))
+        {
+            validation.WithDetail(
+                "licenseNumber",
+                "required");
+        }
+    }
+
+    private static void ValidateSpecialtyId(
+        Guid specialtyId,
+        ValidationException validation)
+    {
+        if (specialtyId == Guid.Empty)
+        {
+            validation.WithDetail(
+                "specialtyId",
+                "required");
         }
     }
 }

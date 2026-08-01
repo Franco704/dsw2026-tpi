@@ -6,13 +6,13 @@ namespace Dsw2026Tpi.Application.Interfaces;
 public interface ISpecialitiesService
 {
     //Get
-    Task<Pagination<SpecialityModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null);
+    Task<Pagination<SpecialtyModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null);
 
     //Post
-    Task<SpecialityModel.Response> Create(SpecialityModel.Request request);
+    Task<SpecialtyModel.Response> Create(SpecialtyModel.Request request);
 
     //Put
-    Task<SpecialityModel.Response> UpdateSpecialitiy(Guid id, SpecialityModel.Request request);
+    Task<SpecialtyModel.Response> UpdateSpecialitiy(Guid id, SpecialtyModel.Request request);
     
     //Delete
     Task DeleteSpecialitiy(Guid id);

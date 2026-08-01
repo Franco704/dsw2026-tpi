@@ -3,7 +3,7 @@
 /// <summary>
 /// Representa una especialidad médica.
 /// </summary>
-public class Speciality : DeletedEntity
+public class Specialty : DeletedEntity
 {
     /// <summary>
     /// Nombre de la especialidad.
@@ -22,7 +22,7 @@ public class Speciality : DeletedEntity
     /// <summary>
     /// Constructor requerido por Entity Framework Core.
     /// </summary>
-    private Speciality()
+    private Specialty()
     {
     }
 
@@ -33,7 +33,7 @@ public class Speciality : DeletedEntity
     /// <summary>
     /// Crea una nueva especialidad.
     /// </summary>
-    public Speciality(
+    public Specialty(
         string name,
         string description,
         Guid? id = null)

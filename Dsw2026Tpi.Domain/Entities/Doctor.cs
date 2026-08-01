@@ -28,7 +28,7 @@ public class Doctor : DeletedEntity
     /// <summary>
     /// Especialidad asociada al médico.
     /// </summary>
-    public Speciality Speciality { get; private set; } = null!;
+    public Specialty Speciality { get; private set; } = null!;
 
     #region Constructor for EF
 
@@ -51,7 +51,7 @@ public class Doctor : DeletedEntity
     public Doctor(
         string name,
         string licenseNumber,
-        Speciality speciality,
+        Specialty speciality,
         Guid? id = null)
         : base(id)
     {
@@ -65,7 +65,7 @@ public class Doctor : DeletedEntity
     public void Update(
         string name,
         string licenseNumber,
-        Speciality speciality)
+        Specialty speciality)
     {
         SetInformation(name, licenseNumber, speciality);
         MarkAsUpdated();
@@ -91,7 +91,7 @@ public class Doctor : DeletedEntity
     private void SetInformation(
         string name,
         string licenseNumber,
-        Speciality speciality)
+        Specialty speciality)
     {
         if (string.IsNullOrWhiteSpace(name))
         {

@@ -28,7 +28,7 @@ public class SpecialtiesController : AppController
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] SpecialityModel.Request request)
+    public async Task<IActionResult> Create([FromBody] SpecialtyModel.Request request)
     {
         var created = await _service.Create(request);
         return CreatedAtAction(nameof(GetAll), created);
@@ -37,7 +37,7 @@ public class SpecialtiesController : AppController
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> UpdateSpeciality([FromRoute] Guid id, [FromBody] SpecialityModel.Request request)
+    public async Task<IActionResult> UpdateSpeciality([FromRoute] Guid id, [FromBody] SpecialtyModel.Request request)
     {
         var updated = await _service.UpdateSpecialitiy(id, request);
         return Ok(updated);

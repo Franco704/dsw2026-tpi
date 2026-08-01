@@ -15,7 +15,7 @@ public static class SpecialityRequestValidator
     /// una ValidationException.
     /// </summary>
     public static void Validate(
-        SpecialityModel.Request? request)
+        SpecialtyModel.Request? request)
     {
         var validation = new ValidationException();
 

@@ -29,13 +29,13 @@ public class SpecialitiesService : ISpecialitiesService
     /// Obtiene una página de especialidades,
     /// con filtro opcional por nombre.
     /// </summary>
-    public async Task<Pagination<SpecialityModel.Response>> GetAll(
+    public async Task<Pagination<SpecialtyModel.Response>> GetAll(
         int pageSize,
         int pageIndex,
         string? name = null)
     {
         var page =
-            await _persistence.Paginate<Speciality, string>(
+            await _persistence.Paginate<Specialty, string>(
                 pageSize,
                 pageIndex,
                 speciality =>
@@ -45,7 +45,7 @@ public class SpecialitiesService : ISpecialitiesService
 
         return page.Map(
             speciality =>
-                new SpecialityModel.Response(
+                new SpecialtyModel.Response(
                     speciality.Id,
                     speciality.Name,
                     speciality.Description));
@@ -55,14 +55,14 @@ public class SpecialitiesService : ISpecialitiesService
     /// Crea una nueva especialidad cuando los datos son válidos
     /// y no existe otra con el mismo nombre.
     /// </summary>
-    public async Task<SpecialityModel.Response> Create(
-        SpecialityModel.Request request)
+    public async Task<SpecialtyModel.Response> Create(
+        SpecialtyModel.Request request)
     {
         SpecialityRequestValidator.Validate(request);
 
         // Comprueba que no exista otra especialidad con el mismo nombre.
         var existing =
-            await _persistence.First<Speciality>(
+            await _persistence.First<Specialty>(
                 speciality =>
                     speciality.Name == request.Name);
 
@@ -77,14 +77,14 @@ public class SpecialitiesService : ISpecialitiesService
          * La entidad inicializa Id, CreatedAt,
          * UpdatedAt y Deleted mediante EntityBase.
          */
-        var speciality = new Speciality(
+        var speciality = new Specialty(
             request.Name,
             request.Description);
 
         var created =
             await _persistence.Add(speciality);
 
-        return new SpecialityModel.Response(
+        return new SpecialtyModel.Response(
             created.Id,
             created.Name,
             created.Description);
@@ -94,26 +94,26 @@ public class SpecialitiesService : ISpecialitiesService
     /// Actualiza los datos de una especialidad existente,
     /// verificando que el nuevo nombre no esté repetido.
     /// </summary>
-    public async Task<SpecialityModel.Response> UpdateSpecialitiy(
+    public async Task<SpecialtyModel.Response> UpdateSpecialitiy(
         Guid id,
-        SpecialityModel.Request request)
+        SpecialtyModel.Request request)
     {
         // Valida los datos requeridos para actualizar la especialidad.
         SpecialityRequestValidator.Validate(request);
 
         // Obtiene la especialidad que se desea modificar.
         var existing =
-            await _persistence.GetById<Speciality>(id);
+            await _persistence.GetById<Specialty>(id);
 
         if (existing is null)
         {
             throw new EntityNotFoundException(
-                nameof(Speciality));
+                nameof(Specialty));
         }
 
         // Comprueba que el nombre no pertenezca a otra especialidad.
         var sameName =
-            await _persistence.First<Speciality>(
+            await _persistence.First<Specialty>(
                 speciality =>
                     speciality.Name == request.Name);
 
@@ -135,7 +135,7 @@ public class SpecialitiesService : ISpecialitiesService
 
         await _persistence.Update(existing);
 
-        return new SpecialityModel.Response(
+        return new SpecialtyModel.Response(
             existing.Id,
             existing.Name,
             existing.Description);
@@ -151,13 +151,13 @@ public class SpecialitiesService : ISpecialitiesService
         Guid id)
     {
         var speciality =
-            await _persistence.GetById<Speciality>(
+            await _persistence.GetById<Specialty>(
                 id);
 
         if (speciality is null)
         {
             throw new EntityNotFoundException(
-                nameof(Speciality));
+                nameof(Specialty));
         }
 
         speciality.Deactivate();
