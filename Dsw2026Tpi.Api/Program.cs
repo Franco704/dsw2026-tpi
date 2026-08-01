@@ -31,6 +31,7 @@ public class Program
             builder.Services.AddAppDependencies();
             builder.Services.AddControllers();
             builder.Services.AddHealthChecks();
+            builder.Services.AddAppRateLimiting();
 
             var app = builder.Build();
             await app.SeedInitialAdminAsync();
@@ -51,8 +52,10 @@ public class Program
             app.UseAuthorization();
             app.UseCors();
             app.UseMiddleware<ExceptionHandlingMiddleware>();
-
-            app.MapControllers();
+            //aplico el ratelimiter
+            app.UseRateLimiter();
+            //aqui lo enciendo
+            app.MapControllers().RequireRateLimiting("fixed");
             app.MapHealthChecks("/health-check");
 
             Log.Information("Aplicación iniciada correctamente");
