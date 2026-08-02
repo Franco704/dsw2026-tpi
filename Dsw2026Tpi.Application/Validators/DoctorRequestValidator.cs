@@ -4,16 +4,20 @@ using Dsw2026Tpi.CrossCutting.Exceptions;
 namespace Dsw2026Tpi.Application.Validators;
 
 /// <summary>
-/// Valida los datos recibidos al crear o actualizar un mÃ©dico.
-/// Solo controla el contenido de la request; la existencia de la
-/// especialidad y los conflictos se comprueban en el servicio.
+/// Valida los datos utilizados en las operaciones
+/// relacionadas con médicos.
 /// </summary>
 public static class DoctorRequestValidator
 {
+    /// <summary>
+    /// Valida el body utilizado para crear
+    /// o actualizar un médico.
+    /// </summary>
     public static void Validate(
         DoctorModel.Request? request)
     {
-        var validation = new ValidationException();
+        var validation =
+            new ValidationException();
 
         if (request is null)
         {
@@ -26,7 +30,8 @@ public static class DoctorRequestValidator
 
         ValidateName(
             request.Name,
-            validation);
+            validation,
+            isRequired: true);
 
         ValidateLicenseNumber(
             request.LicenseNumber,
@@ -36,21 +41,73 @@ public static class DoctorRequestValidator
             request.SpecialtyId,
             validation);
 
-        if (validation.Error.Details.Any())
-        {
-            throw validation;
-        }
+        ThrowIfInvalid(
+            validation);
     }
 
+    /// <summary>
+    /// Valida los parámetros utilizados para consultar
+    /// la lista paginada de médicos.
+    /// </summary>
+    public static void ValidateGetAll(
+        int pageSize,
+        int pageIndex,
+        string? name)
+    {
+        var validation =
+            new ValidationException();
+
+        if (pageSize is < 1 or > 100)
+        {
+            validation.WithDetail(
+                "pageSize",
+                "must_be_between_1_and_100");
+        }
+
+        if (pageIndex < 1)
+        {
+            validation.WithDetail(
+                "pageIndex",
+                "must_be_greater_than_zero");
+        }
+
+        ValidateName(
+            name,
+            validation,
+            isRequired: false);
+
+        ThrowIfInvalid(
+            validation);
+    }
+
+    /// <summary>
+    /// Valida el nombre según sea obligatorio
+    /// o corresponda a un filtro opcional.
+    /// </summary>
     private static void ValidateName(
         string? name,
-        ValidationException validation)
+        ValidationException validation,
+        bool isRequired)
     {
+        if (name is null)
+        {
+            if (isRequired)
+            {
+                validation.WithDetail(
+                    "name",
+                    "required");
+            }
+
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(name))
         {
             validation.WithDetail(
                 "name",
-                "required");
+                isRequired
+                    ? "required"
+                    : "length_must_be_between_3_and_100");
 
             return;
         }
@@ -85,6 +142,19 @@ public static class DoctorRequestValidator
             validation.WithDetail(
                 "specialtyId",
                 "required");
+        }
+    }
+
+    /// <summary>
+    /// Lanza la excepción acumulada solamente
+    /// cuando se detectaron errores.
+    /// </summary>
+    private static void ThrowIfInvalid(
+        ValidationException validation)
+    {
+        if (validation.Error.Details.Any())
+        {
+            throw validation;
         }
     }
 }

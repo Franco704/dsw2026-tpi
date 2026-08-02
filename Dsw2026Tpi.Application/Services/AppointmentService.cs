@@ -82,7 +82,7 @@ public class AppointmentService : IAppointmentService
         // Obtiene la disponibilidad seleccionada.
         var availability =
             await _persistence.GetById<Availability>(
-                request.AvailabilityId);
+                request.AvailabilitySlotId);
 
         if (availability is null)
         {
@@ -380,36 +380,40 @@ public class AppointmentService : IAppointmentService
     }
 
     /// <summary>
-    /// Convierte un turno en el DTO utilizado por la búsqueda.
+    /// Convierte un turno al formato contractual
+    /// utilizado por las búsquedas administrativas.
     /// </summary>
     private static AppointmentModel.SearchResponse ToSearchResponse(
         Appointment appointment)
     {
         return new AppointmentModel.SearchResponse(
-            appointment.Id,
-            appointment.Doctor.SpecialityId,
-            appointment.Doctor.Speciality?.Name ??
-            string.Empty,
-            appointment.DoctorId,
-            appointment.Doctor.Name,
-            appointment.ScheduledAt,
-            appointment.Status.ToString());
+            Specialty:
+                appointment.Doctor.Speciality?.Name ??
+                string.Empty,
+            Doctor:
+                appointment.Doctor.Name,
+            AvailableTime:
+                appointment.ScheduledAt);
     }
 
     /// <summary>
     /// Convierte un turno en el DTO general de respuesta.
     /// </summary>
+    /// <summary>
+    /// Convierte una entidad Appointment al contrato
+    /// público de respuesta.
+    /// </summary>
     private static AppointmentModel.Response ToResponse(
         Appointment appointment)
     {
         return new AppointmentModel.Response(
-            appointment.Id,
-            appointment.DoctorId,
-            appointment.AvailabilityId,
-            appointment.PatientId,
-            appointment.ScheduledAt,
-            appointment.Reason,
-            appointment.Status.ToString());
+            Id: appointment.Id,
+            DoctorId: appointment.DoctorId,
+            AvailabilitySlotId: appointment.AvailabilityId,
+            PatientId: appointment.PatientId,
+            ScheduledAt: appointment.ScheduledAt,
+            Reason: appointment.Reason,
+            Status: appointment.Status.ToString());
     }
 }
 

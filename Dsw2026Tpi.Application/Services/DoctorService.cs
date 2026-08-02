@@ -107,11 +107,23 @@ public class DoctorService : IDoctorService
     /// Obtiene una página de médicos activos,
     /// con filtro opcional por nombre.
     /// </summary>
+    /// <summary>
+    /// Obtiene una página de médicos activos,
+    /// con filtro opcional por nombre.
+    /// </summary>
     public async Task<Pagination<DoctorModel.Response>> GetAll(
         int pageSize,
         int pageIndex,
         string? name = null)
     {
+        DoctorRequestValidator.ValidateGetAll(
+            pageSize,
+            pageIndex,
+            name);
+
+        var normalizedName =
+            name?.Trim();
+
         var doctors =
             await _persistence.Paginate<Doctor, string>(
                 pageSize,
@@ -119,8 +131,8 @@ public class DoctorService : IDoctorService
                 doctor =>
                     doctor.IsActive &&
                     (
-                        string.IsNullOrWhiteSpace(name) ||
-                        doctor.Name.Contains(name)
+                        string.IsNullOrWhiteSpace(normalizedName) ||
+                        doctor.Name.Contains(normalizedName)
                     ),
                 doctor => doctor.Name,
                 nameof(Doctor.Speciality));
@@ -130,13 +142,13 @@ public class DoctorService : IDoctorService
     }
 
     /// <summary>
-    /// Obtiene la disponibilidad mensual agrupada
-    /// por día de la semana para un médico.
-    ///
-    /// Esta agrupación se corregirá posteriormente para incluir
-    /// el identificador y conservar los horarios partidos.
+    /// Obtiene los bloques de disponibilidad del médico
+    /// correspondientes al mes actual.
+    /// 
+    /// Cada elemento representa un slot real almacenado,
+    /// con su propio identificador y duración de treinta minutos.
     /// </summary>
-    public async Task<List<DoctorModel.AvailiabilityResponse>> GetById(
+    public async Task<List<DoctorModel.AvailabilityResponse>> GetById(
         Guid id)
     {
         var doctor =
@@ -156,45 +168,34 @@ public class DoctorService : IDoctorService
             today.Month,
             1);
 
-        var lastDayOfMonth = new DateTime(
-            today.Year,
-            today.Month,
-            DateTime.DaysInMonth(
-                today.Year,
-                today.Month));
+        var firstDayOfNextMonth =
+            firstDayOfMonth.AddMonths(1);
 
         var availabilities =
             await _persistence.GetFiltered<Availability>(
                 availability =>
                     availability.DoctorId == id &&
                     availability.Date >= firstDayOfMonth &&
-                    availability.Date <= lastDayOfMonth);
+                    availability.Date < firstDayOfNextMonth);
 
-        if (availabilities is null ||
-            !availabilities.Any())
+        if (availabilities is null)
         {
             return [];
         }
 
-        var schedule = availabilities
-            .GroupBy(
-                availability =>
-                    availability.Date.DayOfWeek)
+        return availabilities
+            .OrderBy(availability =>
+                availability.Date)
+            .ThenBy(availability =>
+                availability.StartTime)
             .Select(
-                group =>
-                    new DoctorModel.AvailiabilityResponse(
-                        Day: group.Key.ToSpanish(),
-                        StartTime: group
-                            .Min(availability =>
-                                availability.StartTime)
-                            .ToTimeString(),
-                        EndTime: group
-                            .Max(availability =>
-                                availability.EndTime)
-                            .ToTimeString()))
+                availability =>
+                    new DoctorModel.AvailabilityResponse(
+                        availability.Id,
+                        availability.Date.DayOfWeek.ToSpanish(),
+                        availability.StartTime.ToTimeString(),
+                        availability.EndTime.ToTimeString()))
             .ToList();
-
-        return schedule;
     }
 
     /// <summary>

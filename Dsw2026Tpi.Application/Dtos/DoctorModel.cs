@@ -17,7 +17,8 @@ public record DoctorModel
         Guid? Id,
         string? Name);
 
-    public record AvailiabilityResponse(
+    public record AvailabilityResponse(
+        Guid Id,
         string Day,
         string StartTime,
         string EndTime);
