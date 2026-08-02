@@ -1,7 +1,7 @@
 ﻿using Dsw2026Tpi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
+using Dsw2026Tpi.Domain.Rules;
 namespace Dsw2026Tpi.Data.Configurations;
 
 /// <summary>
@@ -67,7 +67,8 @@ public class AppointmentConfiguration
          */
         builder.Property(appointment => appointment.Reason)
             .IsRequired()
-            .HasMaxLength(300);
+            .HasMaxLength(
+    AppointmentRules.MaximumReasonLength);
 
         /*
          * Guarda AppointmentStatus como texto en la base de datos.

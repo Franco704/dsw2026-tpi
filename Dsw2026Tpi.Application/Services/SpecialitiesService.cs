@@ -29,19 +29,36 @@ public class SpecialitiesService : ISpecialitiesService
     /// Obtiene una página de especialidades,
     /// con filtro opcional por nombre.
     /// </summary>
+    /// <summary>
+    /// Obtiene una página de especialidades,
+    /// con filtro opcional por nombre.
+    /// </summary>
     public async Task<Pagination<SpecialtyModel.Response>> GetAll(
         int pageSize,
         int pageIndex,
         string? name = null)
     {
+        /*
+         * La consulta no llega a persistencia hasta que
+         * la paginación y el filtro sean válidos.
+         */
+        SpecialityRequestValidator.ValidateGetAll(
+            pageSize,
+            pageIndex,
+            name);
+
+        var normalizedName =
+            name?.Trim();
+
         var page =
             await _persistence.Paginate<Specialty, string>(
                 pageSize,
                 pageIndex,
                 speciality =>
-                    string.IsNullOrWhiteSpace(name) ||
-                    speciality.Name.Contains(name),
-                speciality => speciality.Name);
+                    string.IsNullOrWhiteSpace(normalizedName) ||
+                    speciality.Name.Contains(normalizedName),
+                speciality =>
+                    speciality.Name);
 
         return page.Map(
             speciality =>
@@ -50,7 +67,6 @@ public class SpecialitiesService : ISpecialitiesService
                     speciality.Name,
                     speciality.Description));
     }
-
     /// <summary>
     /// Crea una nueva especialidad cuando los datos son válidos
     /// y no existe otra con el mismo nombre.

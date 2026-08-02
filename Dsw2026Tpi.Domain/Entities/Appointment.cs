@@ -1,4 +1,5 @@
-﻿namespace Dsw2026Tpi.Domain.Entities;
+﻿using Dsw2026Tpi.Domain.Rules;
+namespace Dsw2026Tpi.Domain.Entities;
 
 /// <summary>
 /// Representa un turno reservado por un paciente
@@ -109,11 +110,25 @@ public class Appointment : EntityBase
                 nameof(reason));
         }
 
+        var normalizedReason =
+            reason.Trim();
+
+        if (normalizedReason.Length is
+            < AppointmentRules.MinimumReasonLength
+            or > AppointmentRules.MaximumReasonLength)
+        {
+            throw new ArgumentException(
+                $"El motivo de la consulta debe tener entre " +
+                $"{AppointmentRules.MinimumReasonLength} y " +
+                $"{AppointmentRules.MaximumReasonLength} caracteres.",
+                nameof(reason));
+        }
+
         DoctorId = doctorId;
         AvailabilityId = availabilityId;
         PatientId = patientId;
         ScheduledAt = scheduledAt;
-        Reason = reason.Trim();
+        Reason = normalizedReason;
         Status = AppointmentStatus.BOOKED;
     }
 
