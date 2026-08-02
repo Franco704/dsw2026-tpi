@@ -12,10 +12,10 @@ namespace Dsw2026Tpi.Application.Validators;
 public static class AppointmentRequestValidator
 {
     /// <summary>
-    /// Valida los datos necesarios para crear un turno.
-    /// Acumula todos los errores detectados antes de lanzar
+    /// Valida los datos necesarios para reservar un turno.
+    /// Acumula todos los errores antes de lanzar
     /// una ValidationException.
-
+    /// </summary>
     public static void ValidateCreate(
         AppointmentModel.Request? request)
     {

@@ -1,114 +1,114 @@
 [
   {
-    "Fecha": "2026-01-01",
+    "fecha": "2026-01-01",
     "dia": "Jueves",
     "motivo": "Año Nuevo",
     "tipo": "inamovible"
   },
   {
-    "Fecha": "2026-02-16",
+    "fecha": "2026-02-16",
     "dia": "Lunes",
     "motivo": "Carnaval",
     "tipo": "inamovible"
   },
   {
-    "Fecha": "2026-02-17",
+    "fecha": "2026-02-17",
     "dia": "Martes",
     "motivo": "Carnaval",
     "tipo": "inamovible"
   },
   {
-    "Fecha": "2026-03-23",
+    "fecha": "2026-03-23",
     "dia": "Lunes",
     "motivo": "Día no laborable con fines turísticos",
     "tipo": "no laborable"
   },
   {
-    "Fecha": "2026-03-24",
+    "fecha": "2026-03-24",
     "dia": "Martes",
     "motivo": "Día Nacional de la Memoria por la Verdad y la Justicia",
     "tipo": "inamovible"
   },
   {
-    "Fecha": "2026-04-02",
+    "fecha": "2026-04-02",
     "dia": "Jueves",
     "motivo": "Día del Veterano y de los Caídos en la Guerra de Malvinas",
     "tipo": "inamovible"
   },
   {
-    "Fecha": "2026-04-03",
+    "fecha": "2026-04-03",
     "dia": "Viernes",
     "motivo": "Viernes Santo",
     "tipo": "inamovible"
   },
   {
-    "Fecha": "2026-05-01",
+    "fecha": "2026-05-01",
     "dia": "Viernes",
     "motivo": "Día del Trabajador",
     "tipo": "inamovible"
   },
   {
-    "Fecha": "2026-05-25",
+    "fecha": "2026-05-25",
     "dia": "Lunes",
     "motivo": "Día de la Revolución de Mayo",
     "tipo": "inamovible"
   },
   {
-    "Fecha": "2026-06-15",
+    "fecha": "2026-06-15",
     "dia": "Lunes",
     "motivo": "Paso a la Inmortalidad del Gral. Martín Miguel de Güemes",
     "tipo": "trasladable"
   },
   {
-    "Fecha": "2026-06-20",
+    "fecha": "2026-06-20",
     "dia": "Sábado",
     "motivo": "Paso a la Inmortalidad del Gral. Manuel Belgrano",
     "tipo": "inamovible"
   },
   {
-    "Fecha": "2026-07-09",
+    "fecha": "2026-07-09",
     "dia": "Jueves",
     "motivo": "Día de la Independencia",
     "tipo": "inamovible"
   },
   {
-    "Fecha": "2026-07-10",
+    "fecha": "2026-07-10",
     "dia": "Viernes",
     "motivo": "Día no laborable con fines turísticos",
     "tipo": "no laborable"
   },
   {
-    "Fecha": "2026-08-17",
+    "fecha": "2026-08-17",
     "dia": "Lunes",
     "motivo": "Paso a la Inmortalidad del Gral. José de San Martín",
     "tipo": "trasladable"
   },
   {
-    "Fecha": "2026-10-12",
+    "fecha": "2026-10-12",
     "dia": "Lunes",
     "motivo": "Día del Respeto a la Diversidad Cultural",
     "tipo": "trasladable"
   },
   {
-    "Fecha": "2026-11-23",
+    "fecha": "2026-11-23",
     "dia": "Lunes",
     "motivo": "Día de la Soberanía Nacional",
     "tipo": "trasladable"
   },
   {
-    "Fecha": "2026-12-07",
+    "fecha": "2026-12-07",
     "dia": "Lunes",
     "motivo": "Día no laborable con fines turísticos",
     "tipo": "no laborable"
   },
   {
-    "Fecha": "2026-12-08",
+    "fecha": "2026-12-08",
     "dia": "Martes",
     "motivo": "Inmaculada Concepción de María",
     "tipo": "inamovible"
   },
   {
-    "Fecha": "2026-12-25",
+    "fecha": "2026-12-25",
     "dia": "Viernes",
     "motivo": "Navidad",
     "tipo": "inamovible"

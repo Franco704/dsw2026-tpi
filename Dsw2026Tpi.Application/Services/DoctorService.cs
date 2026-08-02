@@ -107,10 +107,6 @@ public class DoctorService : IDoctorService
     /// Obtiene una página de médicos activos,
     /// con filtro opcional por nombre.
     /// </summary>
-    /// <summary>
-    /// Obtiene una página de médicos activos,
-    /// con filtro opcional por nombre.
-    /// </summary>
     public async Task<Pagination<DoctorModel.Response>> GetAll(
         int pageSize,
         int pageIndex,
