@@ -2,7 +2,7 @@
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Application.Validators;
 using Dsw2026Tpi.CrossCutting.Exceptions;
-using Dsw2026Tpi.CrossCutting.Helpers;
+using Dsw2026Tpi.Application.Mappers;
 using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
@@ -52,7 +52,7 @@ public class DoctorService : IDoctorService
         var createdDoctor =
             await _persistence.Add(doctor);
 
-        return MapResponse(
+        return DoctorMapper.ToResponse(
             createdDoctor);
     }
 
@@ -99,7 +99,7 @@ public class DoctorService : IDoctorService
         var updatedDoctor =
             await _persistence.Update(doctor);
 
-        return MapResponse(
+        return DoctorMapper.ToResponse(
             updatedDoctor);
     }
 
@@ -138,7 +138,7 @@ public class DoctorService : IDoctorService
                 nameof(Doctor.Speciality));
 
         return doctors.Map(
-            MapResponse);
+            DoctorMapper.ToResponse);
     }
 
     /// <summary>
@@ -184,17 +184,14 @@ public class DoctorService : IDoctorService
         }
 
         return availabilities
-            .OrderBy(availability =>
-                availability.Date)
-            .ThenBy(availability =>
-                availability.StartTime)
-            .Select(
+            .OrderBy(
                 availability =>
-                    new DoctorModel.AvailabilityResponse(
-                        availability.Id,
-                        availability.Date.DayOfWeek.ToSpanish(),
-                        availability.StartTime.ToTimeString(),
-                        availability.EndTime.ToTimeString()))
+                    availability.Date)
+            .ThenBy(
+                availability =>
+                    availability.StartTime)
+            .Select(
+                DoctorMapper.ToAvailabilityResponse)
             .ToList();
     }
 
@@ -265,19 +262,4 @@ public class DoctorService : IDoctorService
         return specialty;
     }
 
-    /// <summary>
-    /// Convierte una entidad Doctor al contrato
-    /// público de respuesta.
-    /// </summary>
-    private static DoctorModel.Response MapResponse(
-        Doctor doctor)
-    {
-        return new DoctorModel.Response(
-            doctor.Id,
-            doctor.Name,
-            doctor.LicenseNumber,
-            new DoctorModel.SpecialtyDto(
-                doctor.Speciality?.Id,
-                doctor.Speciality?.Name));
-    }
 }
