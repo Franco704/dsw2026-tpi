@@ -45,6 +45,7 @@ public static class DoctorRequestValidator
             validation);
     }
 
+
     /// <summary>
     /// Valida los parámetros utilizados para consultar
     /// la lista paginada de médicos.
@@ -57,20 +58,20 @@ public static class DoctorRequestValidator
         var validation =
             new ValidationException();
 
-        if (pageSize is < 1 or > 100)
-        {
-            validation.WithDetail(
-                "pageSize",
-                "must_be_between_1_and_100");
-        }
+        /*
+         * Las reglas comunes de paginación se centralizan
+         * para mantener el mismo comportamiento en todos
+         * los endpoints paginados.
+         */
+        PaginationRequestValidator.AddValidationDetails(
+            pageSize,
+            pageIndex,
+            validation);
 
-        if (pageIndex < 1)
-        {
-            validation.WithDetail(
-                "pageIndex",
-                "must_be_greater_than_zero");
-        }
-
+        /*
+         * El filtro por nombre pertenece específicamente
+         * al módulo de médicos y continúa validándose aquí.
+         */
         ValidateName(
             name,
             validation,
