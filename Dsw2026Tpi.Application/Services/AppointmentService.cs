@@ -5,6 +5,7 @@ using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 
@@ -152,8 +153,22 @@ public class AppointmentService : IAppointmentService
          * Appointment se agrega y Availability ya está trackeada.
          * SaveChangesAsync persiste ambas modificaciones.
          */
-        await _persistence.Add(
-            appointment);
+        try
+        {
+            await _persistence.Add(appointment);
+        }
+        catch (DbUpdateException ex)
+        {
+            // Otro request reservó el mismo slot al mismo tiempo, el índice único lo frenó en config.
+            _logger.LogWarning(ex,
+                "Reserva concurrente rechazada por el índice único. Disponibilidad {AvailabilityId}, paciente {PatientId}.",
+                availability.Id,
+                patient.Id);
+
+            throw new ConflictException(
+                ErrorCodes.APPOINTMENT_CONFLICT,
+                nameof(ErrorCodes.APPOINTMENT_CONFLICT));
+        }
 
         _logger.LogInformation(
             "Reserva confirmada. Turno {AppointmentId}, paciente {PatientId}, disponibilidad {AvailabilityId}.",
