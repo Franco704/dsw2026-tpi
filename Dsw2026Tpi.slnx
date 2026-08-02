@@ -1,9 +1,8 @@
 <Solution>
   <Project Path="Dsw2026Tpi.Api/Dsw2026Tpi.Api.csproj" />
   <Project Path="Dsw2026Tpi.Application/Dsw2026Tpi.Application.csproj" />
-  <Project
-    Path="Dsw2026Tpi.CrossCutting/Dsw2026Tpi.CrossCutting.csproj"
-    Id="0dd6d6ea-0e59-4ffb-9a7f-f9efc8788ae6" />
+  <Project Path="Dsw2026Tpi.CrossCutting/Dsw2026Tpi.CrossCutting.csproj" Id="0dd6d6ea-0e59-4ffb-9a7f-f9efc8788ae6" />
   <Project Path="Dsw2026Tpi.Data/Dsw2026Tpi.Data.csproj" />
   <Project Path="Dsw2026Tpi.Domain/Dsw2026Tpi.Domain.csproj" />
+  <Project Path="PruebasUnitarias/PruebasUnitarias.csproj" Id="45d63ead-39cc-411b-ac41-014f0f5a0de7" />
 </Solution>
