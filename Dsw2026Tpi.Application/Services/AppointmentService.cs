@@ -397,9 +397,6 @@ public class AppointmentService : IAppointmentService
     }
 
     /// <summary>
-    /// Convierte un turno en el DTO general de respuesta.
-    /// </summary>
-    /// <summary>
     /// Convierte una entidad Appointment al contrato
     /// público de respuesta.
     /// </summary>
