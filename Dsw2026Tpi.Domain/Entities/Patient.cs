@@ -91,13 +91,3 @@ public class Patient : DeletedEntity
     }
 }
 
-/*
- * CONSIDERACIONES:
- *
- * - Deleted se hereda de EntityBase y no debe redeclararse.
- * - CreatedAt y UpdatedAt también se inicializan en EntityBase.
- * - UserId es string porque IdentityUser utiliza string como clave.
- * - La unicidad de UserId y Dni se controla en Data y Application.
- * 
- * Importante: La propiedad deleted es propia del paciente, la elimine porque seria pisar la propiedad de la entidad base, tenemos que ver que hacemos con esa property
- */
