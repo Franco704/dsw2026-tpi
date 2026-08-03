@@ -45,12 +45,13 @@ public class Program
                 builder.Configuration);
             var app = builder.Build();
 
-            await app.SeedInitialAdminAsync();
+            await app.SeedInitialAdminAsync();  // pagina 10: Las credenciales del Admin se inicializan en el momento de inicialización del sistema 
+                                                // por primera vez.
 
-            /*
-             * Procesa primero la IP y el esquema originales
-             * enviados por proxies confiables como ngrok.
-             */
+           /*
+           * Procesa primero la IP y el esquema originales
+           * enviados por proxies confiables como ngrok.
+           */
             app.UseForwardedHeaders();
 
             app.UseSerilogRequestLogging();
