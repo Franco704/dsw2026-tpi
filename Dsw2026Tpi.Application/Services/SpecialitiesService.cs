@@ -128,10 +128,12 @@ public class SpecialitiesService : ISpecialitiesService
         }
 
         // Comprueba que el nombre no pertenezca a otra especialidad.
+        var nameSpeciality = request.Name.Trim();
+        
         var sameName =
             await _persistence.First<Specialty>(
                 speciality =>
-                    speciality.Name == request.Name);
+                    speciality.Name == nameSpeciality);
 
         if (sameName is not null &&
             sameName.Id != id)
