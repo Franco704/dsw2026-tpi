@@ -21,7 +21,7 @@ public class SpecialtiesController : AppController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int pageSize, [FromQuery] int pageIndex, [FromQuery] string? name = null)
     {
-        var specialties = await _service.GetAll(pageSize, pageIndex, name);
+        var specialties = await _service.GetAllSpecialtyAsync(pageSize, pageIndex, name);
         return Ok(specialties);
     }
 
@@ -30,7 +30,7 @@ public class SpecialtiesController : AppController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] SpecialtyModel.Request request)
     {
-        var created = await _service.Create(request);
+        var created = await _service.CreateSpecialtyAsync(request);
         return CreatedAtAction(nameof(GetAll), created);
     }
 
@@ -39,7 +39,7 @@ public class SpecialtiesController : AppController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateSpeciality([FromRoute] Guid id, [FromBody] SpecialtyModel.Request request)
     {
-        var updated = await _service.UpdateSpecialitiy(id, request);
+        var updated = await _service.UpdateSpecialtyAsync(id, request);
         return Ok(updated);
     }
 
@@ -52,7 +52,7 @@ public class SpecialtiesController : AppController
     public async Task<IActionResult> DeleteSpeciality(
         [FromRoute] Guid id)
     {
-        await _service.DeleteSpecialitiy(
+        await _service.DeleteSpecialtyAsync(
             id);
 
         return Ok("ok"); //Antes era un 204 no content, corrijo eso segun las responses actuales. 

@@ -33,7 +33,7 @@ public class SpecialitiesService : ISpecialitiesService
     /// Obtiene una página de especialidades,
     /// con filtro opcional por nombre.
     /// </summary>
-    public async Task<Pagination<SpecialtyModel.Response>> GetAll(
+    public async Task<Pagination<SpecialtyModel.Response>> GetAllSpecialtyAsync(
         int pageSize,
         int pageIndex,
         string? name = null)
@@ -71,7 +71,7 @@ public class SpecialitiesService : ISpecialitiesService
     /// Crea una nueva especialidad cuando los datos son válidos
     /// y no existe otra con el mismo nombre.
     /// </summary>
-    public async Task<SpecialtyModel.Response> Create(
+    public async Task<SpecialtyModel.Response> CreateSpecialtyAsync(
         SpecialtyModel.Request request)
     {
         SpecialityRequestValidator.Validate(request);
@@ -110,7 +110,7 @@ public class SpecialitiesService : ISpecialitiesService
     /// Actualiza los datos de una especialidad existente,
     /// verificando que el nuevo nombre no esté repetido.
     /// </summary>
-    public async Task<SpecialtyModel.Response> UpdateSpecialitiy(
+    public async Task<SpecialtyModel.Response> UpdateSpecialtyAsync(
         Guid id,
         SpecialtyModel.Request request)
     {
@@ -163,7 +163,7 @@ public class SpecialitiesService : ISpecialitiesService
     /// <summary>
     /// Elimina lógicamente una especialidad existente.
     /// </summary>
-    public async Task DeleteSpecialitiy(
+    public async Task DeleteSpecialtyAsync(
         Guid id)
     {
         var speciality =

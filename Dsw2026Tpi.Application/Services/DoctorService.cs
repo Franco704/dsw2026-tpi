@@ -29,7 +29,7 @@ public class DoctorService : IDoctorService
     /// <summary>
     /// Crea un nuevo médico asociado a una especialidad existente.
     /// </summary>
-    public async Task<DoctorModel.Response> Create(
+    public async Task<DoctorModel.Response> CreateDoctorAsync(
         DoctorModel.Request request)
     {
         DoctorRequestValidator.Validate(request);
@@ -60,7 +60,7 @@ public class DoctorService : IDoctorService
     /// Actualiza los datos principales y la especialidad
     /// de un médico existente.
     /// </summary>
-    public async Task<DoctorModel.Response> UpdateDoctors(
+    public async Task<DoctorModel.Response> UpdateDoctorAsync(
         Guid id,
         DoctorModel.Request request)
     {
@@ -115,7 +115,7 @@ public class DoctorService : IDoctorService
     /// fue eliminada lógicamente. En ese caso, la respuesta
     /// contiene specialty con valor null.
     /// </summary>
-    public async Task<Pagination<DoctorModel.Response>> GetAll(
+    public async Task<Pagination<DoctorModel.Response>> GetAllDoctorsAsync(
         int pageSize,
         int pageIndex,
         string? name = null)
@@ -215,7 +215,7 @@ public class DoctorService : IDoctorService
     /// Cada elemento representa un slot real almacenado,
     /// con su propio identificador y duración de treinta minutos.
     /// </summary>
-    public async Task<List<DoctorModel.AvailabilityResponse>> GetById(
+    public async Task<List<DoctorModel.AvailabilityResponse>> GetDoctorByIdAsync(
         Guid id)
     {
         var doctor =
@@ -265,7 +265,7 @@ public class DoctorService : IDoctorService
     /// <summary>
     /// Elimina lógicamente un médico existente.
     /// </summary>
-    public async Task DeleteDoctor(
+    public async Task DeleteDoctorAsync(
         Guid id)
     {
         var doctor =

@@ -21,7 +21,7 @@ public class DoctorController : AppController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int pageSize, [FromQuery] int pageIndex, [FromQuery] string? name = null)
     {
-        var doctors = await _service.GetAll(pageSize, pageIndex, name);
+        var doctors = await _service.GetAllDoctorsAsync(pageSize, pageIndex, name);
         return Ok(doctors);
     }
 
@@ -30,7 +30,7 @@ public class DoctorController : AppController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById([FromRoute] Guid id)
     {
-        var doctor = await _service.GetById(id);
+        var doctor = await _service.GetDoctorByIdAsync(id);
         return Ok(doctor);
     }
 
@@ -40,7 +40,7 @@ public class DoctorController : AppController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Create([FromBody] DoctorModel.Request request)
     {
-        var created = await _service.Create(request);
+        var created = await _service.CreateDoctorAsync(request);
         return CreatedAtAction(nameof(GetAll), created);
     }
 
@@ -56,7 +56,7 @@ public class DoctorController : AppController
     [FromBody] DoctorModel.Request request)
     {
         var updatedDoctor =
-            await _service.UpdateDoctors(
+            await _service.UpdateDoctorAsync(
                 id,
                 request);
 
@@ -70,7 +70,7 @@ public class DoctorController : AppController
     public async Task<IActionResult> DeleteDoctor(
         [FromRoute] Guid id)
     {
-        await _service.DeleteDoctor(
+        await _service.DeleteDoctorAsync(
             id);
 
         return Ok("ok");

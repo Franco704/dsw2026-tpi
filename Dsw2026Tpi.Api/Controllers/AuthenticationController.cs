@@ -31,7 +31,7 @@ public class AuthenticationController : AppController
     {
         // Delega la creación del usuario al servicio de autenticación.
         var result =
-            await _authenticationService.Register(request);
+            await _authenticationService.RegisterAsync(request);
 
         // Devuelve el email del administrador creado.
         return Ok(result.Email);
@@ -49,7 +49,7 @@ public class AuthenticationController : AppController
     {
         // Delega la autenticación al servicio.
         var result =
-            await _authenticationService.LoginAdmin(request);
+            await _authenticationService.LoginAdminAsync(request);
 
         // Devuelve el JWT y el rol.
         return Ok(result);
@@ -67,7 +67,7 @@ public class AuthenticationController : AppController
     {
         // Delega el flujo de autenticación a Application.
         var result = await _authenticationService
-            .LoginPatient(request);
+            .LoginPatientAsync(request);
 
         // Devuelve el JWT y el rol del paciente.
         return Ok(result);

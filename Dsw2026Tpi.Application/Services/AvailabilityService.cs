@@ -31,7 +31,7 @@ public class AvailabilityService : IAvailabilitiesService
     /// Crea las disponibilidades del médico desde la fecha actual
     /// hasta el último día del mismo mes.
     /// </summary>
-    public async Task<IEnumerable<AvailabilityModel.Response>> Create(
+    public async Task<IEnumerable<AvailabilityModel.Response>> CreateAvailabilityAsync(
         AvailabilityModel.Request request)
     {
         return await ProcessAvailabilitiesAsync(
@@ -47,7 +47,7 @@ public class AvailabilityService : IAvailabilitiesService
     /// ser reemplazadas.
     /// </summary>
     public async Task<IEnumerable<AvailabilityModel.Response>>
-        UpdateAvailability(
+        UpdateAvailabilityAsync(
             AvailabilityModel.Request request)
     {
         return await ProcessAvailabilitiesAsync(

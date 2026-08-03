@@ -122,7 +122,7 @@ public static class DoctorRequestValidator
     }
 
     private static void ValidateLicenseNumber(
-        string? licenseNumber,
+        string licenseNumber,
         ValidationException validation)
     {
         if (string.IsNullOrWhiteSpace(
@@ -132,6 +132,12 @@ public static class DoctorRequestValidator
                 "licenseNumber",
                 "required");
         }
+        if (licenseNumber.Trim().Length is > 50)
+        {
+            validation.WithDetail("licenseNumer", "lenght_must_be_less_than_50");
+
+        }
+
     }
 
     private static void ValidateSpecialtyId(

@@ -54,7 +54,7 @@ public class AuthenticationService : IAuthenticationService
     /// Autentica un administrador mediante email y contraseña
     /// y genera su token JWT.
     /// </summary>
-    public async Task<LoginAdminModel.Response> LoginAdmin(
+    public async Task<LoginAdminModel.Response> LoginAdminAsync(
         LoginAdminModel.Request request)
     {
         // Valida el formato y obligatoriedad del email.
@@ -109,7 +109,7 @@ public class AuthenticationService : IAuthenticationService
     /// Autentica un paciente mediante email y DNI.
     /// Si es su primer acceso, crea el usuario y el paciente.
     /// </summary>
-    public async Task<LoginPatientModel.Response> LoginPatient(
+    public async Task<LoginPatientModel.Response> LoginPatientAsync(
         LoginPatientModel.Request request)
     {
         // Valida el formato y obligatoriedad del email.
@@ -151,7 +151,7 @@ public class AuthenticationService : IAuthenticationService
     /// Registra temporalmente un usuario administrador
     /// y le asigna el rol correspondiente.
     /// </summary>
-    public async Task<RegisterModel.Response> Register(
+    public async Task<RegisterModel.Response> RegisterAsync(
         RegisterModel.Request request)
     {
         // Valida el formato del email recibido.

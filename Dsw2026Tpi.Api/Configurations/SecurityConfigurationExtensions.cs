@@ -92,7 +92,8 @@ public static class SecurityConfigurationExtensions
                 RequiredLength = 8, //modificamos el minimo de la contraseña que nos da identity (es 6) y lo llevamos a 8. 
                 RequireLowercase = true,
                 RequireUppercase = true,
-                RequireDigit = true
+                RequireDigit = true,
+
             };
             options.User.RequireUniqueEmail = true; //Agrego esta restriccion para que el email sea unico. 
 

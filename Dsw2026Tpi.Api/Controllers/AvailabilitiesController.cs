@@ -23,7 +23,7 @@ public class AvailabilitiesController : AppController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AvailabilityModel.Request request)
     {
-        var created = await _service.Create(request);
+        var created = await _service.CreateAvailabilityAsync(request);
         return CreatedAtAction(nameof(Create), created);
     }
     
@@ -32,7 +32,7 @@ public class AvailabilitiesController : AppController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateAvailability([FromBody] AvailabilityModel.Request request)
     {
-        var updated = await _service.UpdateAvailability(request);
+        var updated = await _service.UpdateAvailabilityAsync(request);
         return Ok(updated);
     }
 }

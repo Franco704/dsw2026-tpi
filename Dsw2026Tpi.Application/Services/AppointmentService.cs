@@ -41,7 +41,7 @@ public class AppointmentService : IAppointmentService
     /// <summary>
     /// Reserva un turno para el paciente autenticado.
     /// </summary>
-    public async Task<AppointmentModel.Response> CreateAsync(
+    public async Task<AppointmentModel.Response> CreateAppointmentAsync(
         AppointmentModel.Request request,
         string authenticatedEmail)
     {
@@ -214,7 +214,7 @@ public class AppointmentService : IAppointmentService
     /// y devuelve los resultados paginados.
     /// </summary>
     public async Task<Pagination<AppointmentModel.SearchResponse>>
-        SearchAsync(
+        SearchAppointmentAsync(
             AppointmentModel.SearchRequest request)
     {
         // Valida los filtros y parámetros de paginación.

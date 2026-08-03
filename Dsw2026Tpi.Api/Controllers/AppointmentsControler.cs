@@ -49,7 +49,7 @@ public class AppointmentsController : AppController
         var authenticatedEmail = GetAuthenticatedEmail();
 
         var appointment =
-            await _appointmentService.CreateAsync(
+            await _appointmentService.CreateAppointmentAsync(
                 request,
                 authenticatedEmail);
 
@@ -123,7 +123,7 @@ public class AppointmentsController : AppController
             PageIndex: pageIndex);
 
         var appointments =
-            await _appointmentService.SearchAsync(request);
+            await _appointmentService.SearchAppointmentAsync(request);
 
         return Ok(appointments);
     }
@@ -153,7 +153,7 @@ public class AppointmentsController : AppController
             PageIndex: pageIndex);
 
         var appointments =
-            await _appointmentService.SearchAsync(request);
+            await _appointmentService.SearchAppointmentAsync(request);
 
         return Ok(appointments);
     }

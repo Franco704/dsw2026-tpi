@@ -68,7 +68,7 @@ public class IdentityAccessService : IIdentityAccessService
 
         // Compara la contraseña con el hash almacenado.
         var passwordIsCorrect =
-            await _signInService.CheckPassword(
+            await _signInService.CheckPasswordAsync(
                 user,
                 password);
 
