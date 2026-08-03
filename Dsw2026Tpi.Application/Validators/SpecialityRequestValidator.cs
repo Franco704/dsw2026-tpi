@@ -73,13 +73,13 @@ public static class SpecialityRequestValidator
         ValidationException validation,
         bool isRequired)
     {
-        if (name is null)
+        if (string.IsNullOrWhiteSpace(name))
         {
             if (isRequired)
             {
                 validation.WithDetail(
                     "name",
-                    "El nombre debe tener entre 3 y 100 caracteres.");
+                    "required");
             }
 
             return;
@@ -105,7 +105,7 @@ public static class SpecialityRequestValidator
         string? description,
         ValidationException validation)
     {
-        if (description is null)
+        if (string.IsNullOrWhiteSpace(description))
         {
             validation.WithDetail(
                 "description",

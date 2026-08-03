@@ -155,12 +155,8 @@ public class AuthenticationService : IAuthenticationService
         RegisterModel.Request request)
     {
         // Valida el formato del email recibido.
-        if (!request.Email.IsEmailValid())
-        {
-            throw new ValidationException(
-                ErrorCodes.REGISTER_USER_INVALID,
-                nameof(ErrorCodes.REGISTER_USER_INVALID));
-        }
+        AuthenticationRequestValidator.ValidateEmail(
+            request.Email);
 
         var normalizedEmail = request.Email
             .Trim()
