@@ -1,10 +1,12 @@
-﻿using Dsw2026Tpi.CrossCutting.Identity;
+﻿using Dsw2026Tpi.Api.Responses;
+using Dsw2026Tpi.CrossCutting.Identity;
+using Dsw2026Tpi.CrossCutting.Models;
+using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Data.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-
 namespace Dsw2026Tpi.Api.Configurations;
 
 public static class SecurityConfigurationExtensions
@@ -37,6 +39,46 @@ public static class SecurityConfigurationExtensions
                     ValidIssuer = issuer,
                     ValidAudience = audience,
                     IssuerSigningKey = new SymmetricSecurityKey(key)
+                };
+                /*
+     * El handler de JWT corta el pipeline sin lanzar excepciones,
+     * por lo que el middleware global no interviene.
+     * Estos eventos escriben el mismo contrato de error
+     * utilizado por el resto de la API.
+     */
+                options.Events = new JwtBearerEvents
+                {
+                    // 401: falta el token, expiró o no es válido.
+                    OnChallenge = async context =>
+                    {
+                        /*
+                         * Suprime el challenge por defecto, que responde
+                         * con un body vacío y una cabecera WWW-Authenticate.
+                         */
+                        context.HandleResponse();
+
+                        var error = new ErrorResponse(
+                            nameof(ErrorCodes.AUTHENTICATION_FAILED),
+                            ErrorCodes.AUTHENTICATION_FAILED);
+
+                        await ErrorResponseWriter.WriteAsync(
+                            context.HttpContext,
+                            StatusCodes.Status401Unauthorized,
+                            error);
+                    },
+
+                    // 403: el token es válido pero el rol no habilita la operación.
+                    OnForbidden = async context =>
+                    {
+                        var error = new ErrorResponse(
+                            nameof(ErrorCodes.AUTHORIZATION_FAILED),
+                            ErrorCodes.AUTHORIZATION_FAILED);
+
+                        await ErrorResponseWriter.WriteAsync(
+                            context.HttpContext,
+                            StatusCodes.Status403Forbidden,
+                            error);
+                    }
                 };
             });
         services.AddAuthorizationBuilder()
