@@ -107,6 +107,14 @@ public class DoctorService : IDoctorService
     /// Obtiene una página de médicos activos,
     /// con filtro opcional por nombre.
     /// </summary>
+    /// <summary>
+    /// Obtiene una página de médicos activos,
+    /// con filtro opcional por nombre.
+    ///
+    /// Los médicos continúan visibles cuando su especialidad
+    /// fue eliminada lógicamente. En ese caso, la respuesta
+    /// contiene specialty con valor null.
+    /// </summary>
     public async Task<Pagination<DoctorModel.Response>> GetAll(
         int pageSize,
         int pageIndex,
@@ -120,23 +128,86 @@ public class DoctorService : IDoctorService
         var normalizedName =
             name?.Trim();
 
-        var doctors =
+        /*
+         * La navegación Specialty no se incluye en esta consulta.
+         *
+         * Un Include aplicaría el query filter de Specialty y
+         * ocultaría también al médico cuando su especialidad
+         * estuviera eliminada.
+         */
+        var doctorsPage =
             await _persistence.Paginate<Doctor, string>(
                 pageSize,
                 pageIndex,
                 doctor =>
                     doctor.IsActive &&
+                    !doctor.Deleted &&
                     (
                         string.IsNullOrWhiteSpace(normalizedName) ||
                         doctor.Name.Contains(normalizedName)
                     ),
-                doctor => doctor.Name,
-                nameof(Doctor.Speciality));
+                doctor =>
+                    doctor.Name);
 
-        return doctors.Map(
-            DoctorMapper.ToResponse);
+        var doctors =
+            doctorsPage.Data.ToList();
+
+        /*
+         * Se obtienen en una única consulta las especialidades
+         * activas utilizadas por los médicos de esta página.
+         *
+         * El query filter de Specialty excluye automáticamente
+         * las especialidades eliminadas.
+         */
+        var specialtyIds = doctors
+            .Select(doctor =>
+                doctor.SpecialityId)
+            .Distinct()
+            .ToList();
+
+        var activeSpecialties =
+            new List<Specialty>();
+
+        if (specialtyIds.Count > 0)
+        {
+            activeSpecialties =
+                (
+                    await _persistence.GetFiltered<Specialty>(
+                        specialty =>
+                            specialtyIds.Contains(
+                                specialty.Id))
+                )?.ToList() ?? [];
+        }
+
+        var specialtiesById =
+            activeSpecialties.ToDictionary(
+                specialty =>
+                    specialty.Id);
+
+        /*
+         * Si el diccionario no contiene la especialidad,
+         * significa que fue eliminada lógicamente.
+         * El mapper devolverá specialty con valor null.
+         */
+        var responses = doctors
+            .Select(doctor =>
+            {
+                specialtiesById.TryGetValue(
+                    doctor.SpecialityId,
+                    out var specialty);
+
+                return DoctorMapper.ToResponse(
+                    doctor,
+                    specialty);
+            })
+            .ToList();
+
+        return new Pagination<DoctorModel.Response>(
+            doctorsPage.PageSize,
+            doctorsPage.PageIndex,
+            doctorsPage.Total,
+            responses);
     }
-
     /// <summary>
     /// Obtiene los bloques de disponibilidad del médico
     /// correspondientes al mes actual.

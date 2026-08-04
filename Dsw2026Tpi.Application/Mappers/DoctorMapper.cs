@@ -14,8 +14,30 @@ public static class DoctorMapper
     /// Convierte un médico al response contractual,
     /// incluyendo su especialidad.
     /// </summary>
+    /// <summary>
+    /// Convierte un médico al response contractual utilizando
+    /// la especialidad que ya se encuentra cargada en la entidad.
+    /// </summary>
     public static DoctorModel.Response ToResponse(
         Doctor doctor)
+    {
+        ArgumentNullException.ThrowIfNull(
+            doctor);
+
+        return ToResponse(
+            doctor,
+            doctor.Speciality);
+    }
+
+    /// <summary>
+    /// Convierte un médico al response contractual.
+    ///
+    /// La especialidad puede ser nula cuando fue eliminada
+    /// lógicamente, sin que eso elimine u oculte al médico.
+    /// </summary>
+    public static DoctorModel.Response ToResponse(
+        Doctor doctor,
+        Specialty? specialty)
     {
         ArgumentNullException.ThrowIfNull(
             doctor);
@@ -31,12 +53,14 @@ public static class DoctorMapper
                 doctor.LicenseNumber,
 
             Specialty:
-                new DoctorModel.SpecialtyDto(
-                    Id:
-                        doctor.Speciality?.Id,
+                specialty is null
+                    ? null
+                    : new DoctorModel.SpecialtyDto(
+                        Id:
+                            specialty.Id,
 
-                    Name:
-                        doctor.Speciality?.Name));
+                        Name:
+                            specialty.Name));
     }
 
     /// <summary>
