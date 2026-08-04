@@ -26,8 +26,11 @@ public class AppointmentService : IAppointmentService
         _patientAccessService = patientAccessService;
         _logger = logger;
     }
+    //GetActiveAppointmentsByPatientDniAsync
+    //CancelAppointmentAsync
+    // SearchAppointmentsAsync
 
-    public async Task<AppointmentModel.Response> CreateAsync(
+    public async Task<AppointmentModel.Response> CreateAppointmentAsync(
         AppointmentModel.Request request,
         string authenticatedEmail)
     {
@@ -99,7 +102,7 @@ public class AppointmentService : IAppointmentService
             appointment);
     }
     public async Task<IReadOnlyCollection<AppointmentModel.Response>>
-        GetActiveByPatientDniAsync(
+        GetActiveAppointmentsByPatientDniAsync(
             long dni,
             string authenticatedEmail)
     {
@@ -130,7 +133,7 @@ public class AppointmentService : IAppointmentService
                 AppointmentMapper.ToResponse)
             .ToList();
     }
-    public async Task CancelAsync(
+    public async Task CancelAppointmentAsync(
         Guid appointmentId,
         string authenticatedEmail)
     {
@@ -171,7 +174,7 @@ public class AppointmentService : IAppointmentService
     }
 
     public async Task<Pagination<AppointmentModel.SearchResponse>>
-        SearchAsync(
+        SearchAppointmentsAsync(
             AppointmentModel.SearchRequest request)
     {
         AppointmentRequestValidator.ValidateSearch(

@@ -37,7 +37,7 @@ public class AuthenticationService : IAuthenticationService
         _logger = logger;
     }
 
-    public async Task<LoginAdminModel.Response> LoginAdmin(
+    public async Task<LoginAdminModel.Response> LoginAdminAsync(
         LoginAdminModel.Request request)
     {
         AuthenticationRequestValidator.ValidateEmail(
@@ -48,11 +48,11 @@ public class AuthenticationService : IAuthenticationService
 
         var user =
             await _identityAccessService
-                .AuthenticateWithPasswordAsync(
+                .AuthenticateUserWithPasswordAsync(
                     request.Email,
                     request.Password);
 
-        await _identityAccessService.EnsureRoleAsync(
+        await _identityAccessService.EnsureUserHasRoleAsync(
             user,
             Roles.Administrator);
 
@@ -78,7 +78,7 @@ public class AuthenticationService : IAuthenticationService
             Roles.Administrator.ToUpperInvariant());
     }
 
-    public async Task<LoginPatientModel.Response> LoginPatient(
+    public async Task<LoginPatientModel.Response> LoginPatientAsync(
         LoginPatientModel.Request request)
     {
         AuthenticationRequestValidator.ValidateEmail(
@@ -93,7 +93,7 @@ public class AuthenticationService : IAuthenticationService
 
         var patient =
             await _patientAccessService
-                .AuthenticateOrCreateAsync(
+                .AuthenticatePatientOrCreateAsync(
                     normalizedEmail,
                     request.Dni);
 
@@ -110,7 +110,7 @@ public class AuthenticationService : IAuthenticationService
             Roles.Patient.ToUpperInvariant());
     }
 
-    public async Task<RegisterModel.Response> Register(
+    public async Task<RegisterModel.Response> RegisterAdminAsync(
         RegisterModel.Request request)
     {
         AuthenticationRequestValidator.ValidateEmail(

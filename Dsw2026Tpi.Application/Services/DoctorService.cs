@@ -12,14 +12,13 @@ namespace Dsw2026Tpi.Application.Services;
 public class DoctorService : IDoctorService
 {
     private readonly IPersistence _persistence;
-
     public DoctorService(
         IPersistence persistence)
     {
         _persistence = persistence;
     }
 
-    public async Task<DoctorModel.Response> Create(
+    public async Task<DoctorModel.Response> CreateDoctorAsync(
         DoctorModel.Request request)
     {
         DoctorRequestValidator.Validate(request);
@@ -46,7 +45,7 @@ public class DoctorService : IDoctorService
             createdDoctor);
     }
 
-    public async Task<DoctorModel.Response> UpdateDoctors(
+    public async Task<DoctorModel.Response> UpdateDoctorAsync(
         Guid id,
         DoctorModel.Request request)
     {
@@ -85,7 +84,7 @@ public class DoctorService : IDoctorService
             updatedDoctor);
     }
 
-    public async Task<Pagination<DoctorModel.Response>> GetAll(
+    public async Task<Pagination<DoctorModel.Response>> GetAllDoctorsAsync(
         int pageSize,
         int pageIndex,
         string? name = null)
@@ -159,7 +158,7 @@ public class DoctorService : IDoctorService
             doctorsPage.Total,
             responses);
     }
-    public async Task<List<DoctorModel.AvailabilityResponse>> GetById(
+    public async Task<List<DoctorModel.AvailabilityResponse>> GetDoctorAvailabilitiesAsync(
         Guid id)
     {
         var doctor =
@@ -206,7 +205,7 @@ public class DoctorService : IDoctorService
             .ToList();
     }
 
-    public async Task DeleteDoctor(
+    public async Task DeleteDoctorAsync(
         Guid id)
     {
         var doctor =

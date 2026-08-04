@@ -5,19 +5,21 @@ namespace Dsw2026Tpi.Application.Interfaces;
 
 public interface IAppointmentService
 {
-    Task<AppointmentModel.Response> CreateAsync(
+    Task<AppointmentModel.Response> CreateAppointmentAsync(
         AppointmentModel.Request request,
         string authenticatedEmail);
 
     Task<IReadOnlyCollection<AppointmentModel.Response>>
-        GetActiveByPatientDniAsync(
+        GetActiveAppointmentsByPatientDniAsync(
             long dni,
             string authenticatedEmail);
 
-    Task CancelAsync(
+    Task CancelAppointmentAsync(
         Guid appointmentId,
         string authenticatedEmail);
 
-    Task<Pagination<AppointmentModel.SearchResponse>> SearchAsync(
-    AppointmentModel.SearchRequest request);
+    Task<Pagination<AppointmentModel.SearchResponse>>
+        SearchAppointmentsAsync(
+            AppointmentModel.SearchRequest request);
 }
+

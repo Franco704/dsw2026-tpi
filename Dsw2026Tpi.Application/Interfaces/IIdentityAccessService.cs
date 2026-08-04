@@ -4,18 +4,18 @@ namespace Dsw2026Tpi.Application.Interfaces;
 
 public interface IIdentityAccessService
 {
-    Task<ApplicationUser> AuthenticateWithPasswordAsync(
+    Task<ApplicationUser> AuthenticateUserWithPasswordAsync(
         string email,
         string password);
 
-    Task EnsureRoleAsync(
+    Task EnsureUserHasRoleAsync(
         ApplicationUser user,
         string requiredRole);
 
-    Task<ApplicationUser?> FindByEmailAsync(
+    Task<ApplicationUser?> FindUserByEmailAsync(
         string email);
 
-    Task<ApplicationUser> CreateWithoutPasswordAsync(
+    Task<ApplicationUser> CreateUserWithoutPasswordAsync(
         string email,
         string role);
 }
