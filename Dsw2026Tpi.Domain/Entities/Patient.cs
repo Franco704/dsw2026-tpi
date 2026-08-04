@@ -1,70 +1,67 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace Dsw2026Tpi.Domain.Entities;
 
-namespace Dsw2026Tpi.Domain.Entities
+public class Patient : DeletedEntity
 {
-    public class Patient : EntityBase
+    public string UserId { get; private set; }
+
+    public string Dni { get; private set; }
+
+    public string? FullName { get; private set; }
+
+    #region Constructor for EF
+
+#pragma warning disable CS8618
+
+    private Patient()
     {
-        public string UserId { get; private set; }
+    }
 
-        public string Dni { get; private set; }
+#pragma warning restore CS8618
 
-        public string? FullName { get; private set; }
+    #endregion
 
-        
-        public bool Deleted { get; private set; }
-
-   
-
-        private Patient()
+    public Patient(
+        string userId,
+        string dni,
+        Guid? id = null)
+        : base(id)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
         {
+            throw new ArgumentException(
+                "El identificador de usuario es obligatorio.",
+                nameof(userId));
         }
 
-
-
-        
-
-        public Patient(
-            string userId,
-            string dni,
-            Guid? id = null) : base(id)
+        if (string.IsNullOrWhiteSpace(dni))
         {
-            // Relaciona el paciente con su usuario de Identity.
-            UserId = userId;
-
-            // Guarda el DNI validado previamente.
-            Dni = dni;
-
-            // El nombre todavía no está disponible en el primer acceso.
-            FullName = null;
-
-            // Todo paciente nuevo comienza activo.
-            Deleted = false;
-
-            // Inicializa las fechas heredadas.
-            CreatedAt = DateTime.UtcNow;
-            UpdatedAt = DateTime.UtcNow;
+            throw new ArgumentException(
+                "El DNI es obligatorio.",
+                nameof(dni));
         }
 
-        // Permite completar posteriormente el perfil.
-        public void SetFullName(string fullName)
-        {
-            // Asigna el nombre recibido.
-            FullName = fullName;
+        UserId = userId.Trim();
+        Dni = dni.Trim();
+        FullName = null;
+    }
 
-            // Registra cuándo se modificó el paciente.
-            UpdatedAt = DateTime.UtcNow;
+    public void SetFullName(
+        string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            throw new ArgumentException(
+                "El nombre completo es obligatorio.",
+                nameof(fullName));
         }
 
-        // Realiza la eliminación lógica.
-        public void Delete()
-        {
-            // Marca al paciente como eliminado.
-            Deleted = true;
+        FullName = fullName.Trim();
+        MarkAsUpdated();
+    }
 
-            // Registra la modificación.
-            UpdatedAt = DateTime.UtcNow;
-        }
+    public void Deactivate()
+    {
+        Delete();
     }
 }
+

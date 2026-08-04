@@ -5,5 +5,21 @@ namespace Dsw2026Tpi.Application.Interfaces;
 
 public interface IDoctorService
 {
-    Task<Pagination<DoctorModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null);
+    Task<DoctorModel.Response> Create(
+        DoctorModel.Request request);
+
+    Task<DoctorModel.Response> UpdateDoctors(
+        Guid id,
+        DoctorModel.Request request);
+
+    Task<Pagination<DoctorModel.Response>> GetAll(
+        int pageSize,
+        int pageIndex,
+        string? name = null);
+
+    Task<List<DoctorModel.AvailabilityResponse>> GetById(
+        Guid id);
+
+    Task DeleteDoctor(
+        Guid id);
 }

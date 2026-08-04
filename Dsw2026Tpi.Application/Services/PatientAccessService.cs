@@ -8,7 +8,6 @@ using System.Globalization;
 
 namespace Dsw2026Tpi.Application.Services;
 
-// Coordina el usuario de Identity con la entidad Patient.
 public class PatientAccessService : IPatientAccessService
 {
     private readonly IPersistence _persistence;
@@ -20,13 +19,10 @@ public class PatientAccessService : IPatientAccessService
         IIdentityAccessService identityAccessService,
         ILogger<PatientAccessService> logger)
     {
-        // Permite consultar y guardar entidades del dominio.
         _persistence = persistence;
 
-        // Encapsula las operaciones realizadas con Identity.
         _identityAccessService = identityAccessService;
 
-        // Permite registrar situaciones relevantes del login.
         _logger = logger;
     }
 
@@ -34,24 +30,24 @@ public class PatientAccessService : IPatientAccessService
         string email,
         long dni)
     {
-        // Normaliza el email utilizado durante el proceso.
-        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var normalizedEmail = email
+            .Trim()
+            .ToLowerInvariant();
 
-        // Convierte el DNI numérico al formato varchar del modelo.
-        var dniText = dni.ToString(CultureInfo.InvariantCulture);
+        var dniText = dni.ToString(
+            CultureInfo.InvariantCulture);
 
-        // Busca el usuario técnico mediante Identity.
-        var user = await _identityAccessService.FindByEmailAsync(
-            normalizedEmail);
+        var user =
+            await _identityAccessService.FindByEmailAsync(
+                normalizedEmail);
 
-        // Busca si el DNI ya pertenece a algún paciente.
-        var patientByDni = await _persistence.First<Patient>(
-            patient => patient.Dni == dniText);
+        var patientByDni =
+            await _persistence.First<Patient>(
+                patient =>
+                    patient.Dni == dniText);
 
-        // Resuelve el primer acceso cuando el usuario todavía no existe.
         if (user is null)
         {
-            // Impide asociar un DNI existente a un nuevo usuario.
             if (patientByDni is not null)
             {
                 _logger.LogWarning(
@@ -60,22 +56,20 @@ public class PatientAccessService : IPatientAccessService
                 throw new AuthenticationException();
             }
 
-            // Crea el usuario sin contraseña y le asigna el rol Paciente.
-            user = await _identityAccessService
-                .CreateWithoutPasswordAsync(
-                    normalizedEmail,
-                    Roles.Patient);
+            user =
+                await _identityAccessService
+                    .CreateWithoutPasswordAsync(
+                        normalizedEmail,
+                        Roles.Patient);
 
-            // Crea el perfil de dominio asociado al usuario.
             var newPatient = new Patient(
                 user.Id,
                 dniText);
 
-            // Guarda el paciente en la base de dominio.
-            return await _persistence.Add(newPatient);
+            return await _persistence.Add(
+                newPatient);
         }
 
-        // Rechaza usuarios eliminados lógicamente.
         if (user.Deleted)
         {
             _logger.LogWarning(
@@ -85,19 +79,17 @@ public class PatientAccessService : IPatientAccessService
             throw new AuthenticationException();
         }
 
-        // Comprueba que el usuario tenga el rol Paciente.
         await _identityAccessService.EnsureRoleAsync(
             user,
             Roles.Patient);
 
-        // Busca el paciente asociado al usuario.
-        var patientByUser = await _persistence.First<Patient>(
-            patient => patient.UserId == user.Id);
+        var patientByUser =
+            await _persistence.First<Patient>(
+                patient =>
+                    patient.UserId == user.Id);
 
-        // Crea el perfil si el usuario existe pero todavía no tiene Patient.
         if (patientByUser is null)
         {
-            // Impide reutilizar el DNI de otro paciente.
             if (patientByDni is not null)
             {
                 _logger.LogWarning(
@@ -107,16 +99,14 @@ public class PatientAccessService : IPatientAccessService
                 throw new AuthenticationException();
             }
 
-            // Crea el perfil faltante para el usuario paciente.
             var newPatient = new Patient(
                 user.Id,
                 dniText);
 
-            // Guarda y retorna el nuevo perfil.
-            return await _persistence.Add(newPatient);
+            return await _persistence.Add(
+                newPatient);
         }
 
-        // Rechaza pacientes eliminados o con un DNI diferente.
         if (patientByUser.Deleted ||
             patientByUser.Dni != dniText)
         {
@@ -127,7 +117,58 @@ public class PatientAccessService : IPatientAccessService
             throw new AuthenticationException();
         }
 
-        // Retorna el paciente correctamente autenticado.
         return patientByUser;
     }
+
+    public async Task<Patient> GetAuthenticatedPatientAsync(
+        string email)
+    {
+        var normalizedEmail = email
+            .Trim()
+            .ToLowerInvariant();
+
+        var user =
+            await _identityAccessService.FindByEmailAsync(
+                normalizedEmail);
+
+        if (user is null ||
+            user.Deleted)
+        {
+            _logger.LogWarning(
+                "No se pudo resolver el paciente autenticado.");
+
+            throw new AuthorizationException();
+        }
+
+        try
+        {
+            await _identityAccessService.EnsureRoleAsync(
+                user,
+                Roles.Patient);
+        }
+        catch (AuthenticationException)
+        {
+            _logger.LogWarning(
+                "El usuario autenticado no posee el rol Patient.");
+
+            throw new AuthorizationException();
+        }
+
+        var patient =
+            await _persistence.First<Patient>(
+                patient =>
+                    patient.UserId == user.Id);
+
+        if (patient is null ||
+            patient.Deleted)
+        {
+            _logger.LogWarning(
+                "El usuario autenticado no posee un paciente activo.");
+
+            throw new AuthorizationException();
+        }
+
+        return patient;
+    }
 }
+

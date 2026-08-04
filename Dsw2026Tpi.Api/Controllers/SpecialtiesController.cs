@@ -6,17 +6,17 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
-[Route("specialties")]
+[Route("api/specialties")]
 [Authorize(Policy = Policies.AdminPolicy)]
 public class SpecialtiesController : AppController
 {
     private readonly ISpecialitiesService _service;
-    
+
     public SpecialtiesController(ISpecialitiesService service)
     {
         _service = service;
     }
-    
+
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int pageSize, [FromQuery] int pageIndex, [FromQuery] string? name = null)
@@ -28,7 +28,7 @@ public class SpecialtiesController : AppController
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] SpecialityModel.Request request)
+    public async Task<IActionResult> Create([FromBody] SpecialtyModel.Request request)
     {
         var created = await _service.Create(request);
         return CreatedAtAction(nameof(GetAll), created);
@@ -36,17 +36,25 @@ public class SpecialtiesController : AppController
 
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateSpeciality([FromRoute] Guid id, [FromBody] SpecialityModel.Request request)
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateSpeciality([FromRoute] Guid id, [FromBody] SpecialtyModel.Request request)
     {
         var updated = await _service.UpdateSpecialitiy(id, request);
         return Ok(updated);
     }
 
     [HttpDelete("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteSpeciality([FromRoute] Guid id)
+    [ProducesResponseType(
+        typeof(string),
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteSpeciality(
+        [FromRoute] Guid id)
     {
-        await _service.DeleteSpecialitiy(id);
-        return NoContent();
+        await _service.DeleteSpecialitiy(
+            id);
+
+        return Ok("ok");
     }
 }

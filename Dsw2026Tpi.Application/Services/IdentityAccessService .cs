@@ -1,12 +1,12 @@
 ﻿using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Exceptions;
+using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Data.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
 namespace Dsw2026Tpi.Application.Services;
 
-// Encapsula las operaciones de autenticación realizadas con Identity.
 public class IdentityAccessService : IIdentityAccessService
 {
     private readonly UserManager<ApplicationUser> _userManager;
@@ -18,13 +18,10 @@ public class IdentityAccessService : IIdentityAccessService
         ISignInService signInService,
         ILogger<IdentityAccessService> logger)
     {
-        // Permite buscar usuarios y consultar sus roles.
         _userManager = userManager;
 
-        // Permite comprobar contraseñas mediante Identity.
         _signInService = signInService;
 
-        // Permite registrar los intentos de autenticación.
         _logger = logger;
     }
 
@@ -32,36 +29,37 @@ public class IdentityAccessService : IIdentityAccessService
         string email,
         string password)
     {
-        // Busca al usuario por email utilizando Identity.
-        var user = await _userManager.FindByEmailAsync(email);
+        var normalizedEmail = email
+            .Trim()
+            .ToLowerInvariant();
 
-        // Rechaza usuarios inexistentes o eliminados.
-        if (user is null || user.Deleted)
+        var user = await _userManager.FindByEmailAsync(
+            normalizedEmail);
+
+        if (user is null ||
+            user.Deleted)
         {
             _logger.LogWarning(
                 "Intento de login con credenciales inválidas: {Email}",
-                email);
+                normalizedEmail);
 
-            // No informa si el usuario existe o está eliminado.
             throw new AuthenticationException();
         }
 
-        // Compara la contraseña con el hash almacenado.
-        var passwordIsCorrect = await _signInService.CheckPassword(
-            user,
-            password);
+        var passwordIsCorrect =
+            await _signInService.CheckPassword(
+                user,
+                password);
 
-        // Rechaza una contraseña incorrecta.
         if (!passwordIsCorrect)
         {
             _logger.LogWarning(
                 "Intento de login con credenciales inválidas: {Email}",
-                email);
+                normalizedEmail);
 
             throw new AuthenticationException();
         }
 
-        // Retorna el usuario correctamente autenticado.
         return user;
     }
 
@@ -69,12 +67,11 @@ public class IdentityAccessService : IIdentityAccessService
         ApplicationUser user,
         string requiredRole)
     {
-        // Consulta si el usuario tiene el rol requerido.
-        var hasRequiredRole = await _userManager.IsInRoleAsync(
-            user,
-            requiredRole);
+        var hasRequiredRole =
+            await _userManager.IsInRoleAsync(
+                user,
+                requiredRole);
 
-        // Rechaza el acceso cuando el rol no corresponde.
         if (!hasRequiredRole)
         {
             _logger.LogWarning(
@@ -82,74 +79,101 @@ public class IdentityAccessService : IIdentityAccessService
                 requiredRole,
                 user.Email);
 
-            // Mantiene un error genérico dentro del flujo de login.
             throw new AuthenticationException();
         }
     }
+
     public async Task<ApplicationUser?> FindByEmailAsync(
-    string email)
+        string email)
     {
-        // Utiliza la búsqueda y normalización de Identity.
-        return await _userManager.FindByEmailAsync(email);
+        var normalizedEmail = email
+            .Trim()
+            .ToLowerInvariant();
+
+        return await _userManager.FindByEmailAsync(
+            normalizedEmail);
     }
 
     public async Task<ApplicationUser> CreateWithoutPasswordAsync(
         string email,
         string role)
     {
-        // Registra la fecha una sola vez para mantener consistencia.
-        var now = DateTime.UtcNow;
+        var normalizedEmail = email
+            .Trim()
+            .ToLowerInvariant();
 
-        // Construye un usuario que no utiliza contraseña.
+        var now = DateTime.Now;
+
         var user = new ApplicationUser
         {
-            UserName = email,
-            Email = email,
+            UserName = normalizedEmail,
+            Email = normalizedEmail,
             EmailConfirmed = false,
             Deleted = false,
             CreatedAt = now,
             UpdatedAt = now
         };
 
-        // Crea el usuario sin ejecutar las políticas de contraseña.
-        var creationResult = await _userManager.CreateAsync(user);
+        var creationResult =
+            await _userManager.CreateAsync(user);
 
-        // Rechaza la operación si Identity no pudo crear al usuario.
         if (!creationResult.Succeeded)
         {
             _logger.LogError(
-                "No se pudo crear el usuario sin contraseña: {Email}. Errores: {Errors}",
-                email,
+                "No se pudo crear el usuario sin contraseña: {Email}. " +
+                "Errores: {Errors}",
+                normalizedEmail,
                 string.Join(
                     ", ",
-                    creationResult.Errors.Select(error => error.Code)));
+                    creationResult.Errors.Select(
+                        error => error.Code)));
 
-            // El middleware convertirá este error inesperado en 500.
-            throw new InvalidOperationException(
-                "No se pudo crear el usuario de Identity.");
+            throw new ConflictException(
+                ErrorCodes.REGISTER_USER_CONFLICT,
+                nameof(ErrorCodes.REGISTER_USER_CONFLICT))
+                .WithDetail(
+                    creationResult.Errors.Select(
+                        error =>
+                            (
+                                error.Code,
+                                error.Description
+                            )));
         }
 
-        // Asigna el rol indicado al usuario creado.
-        var roleResult = await _userManager.AddToRoleAsync(
-            user,
-            role);
+        var roleResult =
+            await _userManager.AddToRoleAsync(
+                user,
+                role);
 
-        // Revierte la creación si no fue posible asignar el rol.
         if (!roleResult.Succeeded)
         {
-            // El usuario acaba de crearse dentro de esta operación.
-            await _userManager.DeleteAsync(user);
+            var rollbackResult =
+                await _userManager.DeleteAsync(user);
 
             _logger.LogError(
-                "No se pudo asignar el rol {Role} al usuario {Email}.",
+                "No se pudo asignar el rol {Role} al usuario {Email}. " +
+                "Reversión exitosa: {RollbackSucceeded}. " +
+                "Errores: {Errors}",
                 role,
-                email);
+                normalizedEmail,
+                rollbackResult.Succeeded,
+                string.Join(
+                    ", ",
+                    roleResult.Errors.Select(
+                        error => error.Code)));
 
-            throw new InvalidOperationException(
-                "No se pudo asignar el rol al usuario.");
+            throw new ConflictException(
+                ErrorCodes.REGISTER_USER_CONFLICT,
+                nameof(ErrorCodes.REGISTER_USER_CONFLICT))
+                .WithDetail(
+                    roleResult.Errors.Select(
+                        error =>
+                            (
+                                error.Code,
+                                error.Description
+                            )));
         }
 
-        // Retorna el usuario correctamente creado.
         return user;
     }
 }

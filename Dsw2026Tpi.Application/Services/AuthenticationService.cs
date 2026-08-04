@@ -18,60 +18,61 @@ public class AuthenticationService : IAuthenticationService
     private readonly ILogger<AuthenticationService> _logger;
     private readonly IIdentityAccessService _identityAccessService;
     private readonly IPatientAccessService _patientAccessService;
+
     public AuthenticationService(
-    UserManager<ApplicationUser> userManager,
-    IIdentityAccessService identityAccessService,
-    IPatientAccessService patientAccessService,
-    JwtService jwtService,
-    ILogger<AuthenticationService> logger)
+        UserManager<ApplicationUser> userManager,
+        IIdentityAccessService identityAccessService,
+        IPatientAccessService patientAccessService,
+        JwtService jwtService,
+        ILogger<AuthenticationService> logger)
     {
-        // Todavía se utiliza para el registro temporal.
         _userManager = userManager;
 
-        // Encapsula la autenticación y verificación de roles.
         _identityAccessService = identityAccessService;
 
-        // Genera los tokens JWT.
+        _patientAccessService = patientAccessService;
+
         _jwtService = jwtService;
 
-        // Registra las operaciones del caso de uso.
         _logger = logger;
-        _patientAccessService = patientAccessService;
     }
 
     public async Task<LoginAdminModel.Response> LoginAdmin(
-    LoginAdminModel.Request request)
+        LoginAdminModel.Request request)
     {
-        // Valida los datos recibidos.
-        AuthenticationRequestValidator.ValidateEmail(request.Email);
-        AuthenticationRequestValidator.ValidateLoginPassword(request.Password);
+        AuthenticationRequestValidator.ValidateEmail(
+            request.Email);
 
-        // Autentica al usuario mediante Identity.
-        var user = await _identityAccessService.AuthenticateWithPasswordAsync(
-            request.Email,
+        AuthenticationRequestValidator.ValidateLoginPassword(
             request.Password);
 
-        // Verifica que pueda ingresar como administrador.
+        var user =
+            await _identityAccessService
+                .AuthenticateWithPasswordAsync(
+                    request.Email,
+                    request.Password);
+
         await _identityAccessService.EnsureRoleAsync(
             user,
             Roles.Administrator);
 
-        // Comprueba que Identity tenga un UserName configurado.
-        var username = user.UserName
-            ?? throw new InvalidOperationException(
-                "El usuario no tiene UserName configurado.");
+        if (string.IsNullOrWhiteSpace(user.UserName))
+        {
+            _logger.LogError(
+                "El usuario {UserId} no posee UserName configurado.",
+                user.Id);
 
-        // Genera el JWT con el rol administrativo.
+            throw new AuthenticationException();
+        }
+
         var token = _jwtService.GenerateToken(
-            username,
+            user.UserName,
             Roles.Administrator);
 
-        // Registra el login exitoso.
         _logger.LogInformation(
-            "Login de administrador exitoso: {Email}",
-            request.Email);
+            "Login de administrador exitoso. UserId: {UserId}",
+            user.Id);
 
-        // Devuelve el formato solicitado.
         return new LoginAdminModel.Response(
             token,
             Roles.Administrator.ToUpperInvariant());
@@ -80,64 +81,121 @@ public class AuthenticationService : IAuthenticationService
     public async Task<LoginPatientModel.Response> LoginPatient(
         LoginPatientModel.Request request)
     {
-        // Valida que el email sea obligatorio y tenga formato válido.
         AuthenticationRequestValidator.ValidateEmail(
             request.Email);
 
-        // Valida que el DNI tenga siete u ocho dígitos.
         AuthenticationRequestValidator.ValidatePatientDni(
             request.Dni);
 
-        // Normaliza el email para almacenarlo y utilizarlo en el JWT.
         var normalizedEmail = request.Email
             .Trim()
             .ToLowerInvariant();
 
-        // Autentica al paciente o lo crea durante su primer acceso.
-        var patient = await _patientAccessService
-            .AuthenticateOrCreateAsync(
-                normalizedEmail,
-                request.Dni);
+        var patient =
+            await _patientAccessService
+                .AuthenticateOrCreateAsync(
+                    normalizedEmail,
+                    request.Dni);
 
-        // Genera el JWT con el rol utilizado por PatientPolicy.
         var token = _jwtService.GenerateToken(
             normalizedEmail,
             Roles.Patient);
 
-        // Registra el acceso sin almacenar el DNI ni el token.
         _logger.LogInformation(
             "Login de paciente exitoso. PatientId: {PatientId}",
             patient.Id);
 
-        // Devuelve el formato exigido por la consigna.
         return new LoginPatientModel.Response(
             token,
             Roles.Patient.ToUpperInvariant());
     }
 
-    public async Task<RegisterModel.Response> Register(RegisterModel.Request request)
+    public async Task<RegisterModel.Response> Register(
+        RegisterModel.Request request)
     {
-        if (!request.Email.IsEmailValid()) throw new ValidationException(ErrorCodes.REGISTER_USER_INVALID,
-            nameof(ErrorCodes.REGISTER_USER_INVALID));
+        AuthenticationRequestValidator.ValidateEmail(
+            request.Email);
+
+        var normalizedEmail = request.Email
+            .Trim()
+            .ToLowerInvariant();
+
+        var now = DateTime.Now;
 
         var user = new ApplicationUser
         {
-            UserName = request.Email,
-            Email = request.Email,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UserName = normalizedEmail,
+            Email = normalizedEmail,
+            CreatedAt = now,
+            UpdatedAt = now,
+            Deleted = false
         };
 
-        var result = await _userManager.CreateAsync(user, request.Password);
+        var creationResult =
+            await _userManager.CreateAsync(
+                user,
+                request.Password);
 
-        if (!result.Succeeded) throw new ConflictException(nameof(ErrorCodes.REGISTER_USER_CONFLICT),
-            ErrorCodes.REGISTER_USER_CONFLICT)
-                .WithDetail(result.Errors.Select(e => (e.Code, e.Description)));
-       
-        _ = await _userManager.AddToRoleAsync(user, Roles.Administrator);
+        if (!creationResult.Succeeded)
+        {
+            _logger.LogWarning(
+                "No se pudo registrar el usuario {Email}. Errores: {Errors}",
+                normalizedEmail,
+                string.Join(
+                    ", ",
+                    creationResult.Errors.Select(
+                        error => error.Code)));
 
-        _logger.LogInformation("Usuario registrado: {Email}", request.Email);
+            throw new ConflictException(
+                ErrorCodes.REGISTER_USER_CONFLICT,
+                nameof(ErrorCodes.REGISTER_USER_CONFLICT))
+                .WithDetail(
+                    creationResult.Errors.Select(
+                        error =>
+                            (
+                                error.Code,
+                                error.Description
+                            )));
+        }
 
-        return new RegisterModel.Response(request.Email);
+        var roleResult =
+            await _userManager.AddToRoleAsync(
+                user,
+                Roles.Administrator);
+
+        if (!roleResult.Succeeded)
+        {
+            var rollbackResult =
+                await _userManager.DeleteAsync(user);
+
+            _logger.LogError(
+                "No se pudo asignar el rol {Role} al usuario {Email}. " +
+                "Reversión exitosa: {RollbackSucceeded}. Errores: {Errors}",
+                Roles.Administrator,
+                normalizedEmail,
+                rollbackResult.Succeeded,
+                string.Join(
+                    ", ",
+                    roleResult.Errors.Select(
+                        error => error.Code)));
+
+            throw new ConflictException(
+                ErrorCodes.REGISTER_USER_CONFLICT,
+                nameof(ErrorCodes.REGISTER_USER_CONFLICT))
+                .WithDetail(
+                    roleResult.Errors.Select(
+                        error =>
+                            (
+                                error.Code,
+                                error.Description
+                            )));
+        }
+
+        _logger.LogInformation(
+            "Usuario administrador registrado correctamente. UserId: {UserId}",
+            user.Id);
+
+        return new RegisterModel.Response(
+            normalizedEmail);
     }
 }

@@ -14,11 +14,11 @@ public static class DependencyInjectionConfigurationExtensions
         services.AddScoped<IPersistence, PersistenceEf>();
         services.AddScoped<IDoctorService, DoctorService>();
         services.AddScoped<ISpecialitiesService, SpecialitiesService>();
+        services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<ISignInService, SignInService>();
-
-
-        // IdentityAccessService utiliza servicios scoped de Identity.
+        services.AddScoped<IAvailabilitiesService, AvailabilityService>();
+        services.AddSingleton<IFeriadoProvider, FeriadoProvider>();
         services.AddScoped<IIdentityAccessService, IdentityAccessService>();
         services.AddScoped<IPatientAccessService, PatientAccessService>();
         services.AddSingleton<JwtService>();

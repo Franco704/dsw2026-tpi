@@ -3,6 +3,7 @@ using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Domain.Entities;
+using Dsw2026Tpi.Application.Validators;
 using Dsw2026Tpi.Domain.Interfaces;
 
 namespace Dsw2026Tpi.Application.Services;
@@ -10,86 +11,131 @@ namespace Dsw2026Tpi.Application.Services;
 public class SpecialitiesService : ISpecialitiesService
 {
     private readonly IPersistence _persistence;
-    
-    public SpecialitiesService(IPersistence persistence)
+
+    public SpecialitiesService(
+        IPersistence persistence)
     {
         _persistence = persistence;
     }
 
-    public async Task<Pagination<SpecialityModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null)
+    public async Task<Pagination<SpecialtyModel.Response>> GetAll(
+        int pageSize,
+        int pageIndex,
+        string? name = null)
     {
-        var page = await _persistence.Paginate<Speciality, string>(
+        SpecialityRequestValidator.ValidateGetAll(
             pageSize,
             pageIndex,
-            s => string.IsNullOrWhiteSpace(name) || s.Name.Contains(name),
-            s => s.Name);
+            name);
 
-        return page.Map(s => new SpecialityModel.Response(s.Id, s.Name, s.Description));
+        var normalizedName =
+            name?.Trim();
+
+        var page =
+            await _persistence.Paginate<Specialty, string>(
+                pageSize,
+                pageIndex,
+                speciality =>
+                    string.IsNullOrWhiteSpace(normalizedName) ||
+                    speciality.Name.Contains(normalizedName),
+                speciality =>
+                    speciality.Name);
+
+        return page.Map(
+            speciality =>
+                new SpecialtyModel.Response(
+                    speciality.Id,
+                    speciality.Name,
+                    speciality.Description));
     }
-
-    public async Task<SpecialityModel.Response> Create(SpecialityModel.Request request)
+    public async Task<SpecialtyModel.Response> Create(
+        SpecialtyModel.Request request)
     {
-        var validation = new ValidationException();
+        SpecialityRequestValidator.Validate(request);
 
-        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length is < 3 or > 100)
-            validation.WithDetail(nameof(request.Name), "El nombre debe tener entre 3 y 100 caracteres");
+        var existing =
+            await _persistence.First<Specialty>(
+                speciality =>
+                    speciality.Name == request.Name);
 
-        if (string.IsNullOrWhiteSpace(request.Description) || request.Description.Length is < 10 or > 100)
-            validation.WithDetail(nameof(request.Description), "La descripción debe tener entre 10 y 100 caracteres");
-
-        if (validation.Error.Details.Any()) throw validation;
-
-        var existing = await _persistence.First<Speciality>(s => s.Name == request.Name);
         if (existing is not null)
-            throw new ConflictException(nameof(ErrorCodes.SPECIALITY_NAME_CONFLICT), ErrorCodes.SPECIALITY_NAME_CONFLICT);
-
-        var speciality = new Speciality(request.Name, request.Description)
         {
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            throw new ConflictException(
+                ErrorCodes.SPECIALITY_NAME_CONFLICT,
+                nameof(ErrorCodes.SPECIALITY_NAME_CONFLICT));
+        }
 
-        var created = await _persistence.Add(speciality);
+        var speciality = new Specialty(
+            request.Name,
+            request.Description);
 
-        return new SpecialityModel.Response(created.Id, created.Name, created.Description);
+        var created =
+            await _persistence.Add(speciality);
+
+        return new SpecialtyModel.Response(
+            created.Id,
+            created.Name,
+            created.Description);
     }
 
-    public async Task<SpecialityModel.Response> UpdateSpecialitiy(Guid id, SpecialityModel.Request request)
+    public async Task<SpecialtyModel.Response> UpdateSpecialitiy(
+        Guid id,
+        SpecialtyModel.Request request)
     {
-        var validation = new ValidationException();
+        SpecialityRequestValidator.Validate(request);
 
-        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length is < 3 or > 100)
-            validation.WithDetail(nameof(request.Name), "El nombre debe tener entre 3 y 100 caracteres");
+        var existing =
+            await _persistence.GetById<Specialty>(id);
 
-        if (string.IsNullOrWhiteSpace(request.Description) || request.Description.Length is < 10 or > 100)
-            validation.WithDetail(nameof(request.Description), "La descripción debe tener entre 10 y 100 caracteres");
-
-        if (validation.Error.Details.Any()) throw validation;
-
-        var existing = await _persistence.GetById<Speciality>(id);
         if (existing is null)
-            throw new KeyNotFoundException($"La especialidad con Id {id} no fue encontrada.");
-        
-        var sameName = await _persistence.First<Speciality>(s => s.Name == request.Name);
-        if (sameName != null && sameName.Id != id)
         {
-            throw new ConflictException(nameof(ErrorCodes.SPECIALITY_NAME_CONFLICT), "Ya existe otra especialidad con este nombre.");
+            throw new EntityNotFoundException(
+                nameof(Specialty));
         }
+
+        var nameSpeciality = request.Name.Trim();
         
-        existing.UpdateInfo(request.Name, request.Description);
-        
+        var sameName =
+            await _persistence.First<Specialty>(
+                speciality =>
+                    speciality.Name == nameSpeciality);
+
+        if (sameName is not null &&
+            sameName.Id != id)
+        {
+            throw new ConflictException(
+                ErrorCodes.SPECIALITY_NAME_CONFLICT,
+                nameof(ErrorCodes.SPECIALITY_NAME_CONFLICT));
+        }
+
+        existing.UpdateInfo(
+            request.Name,
+            request.Description);
+
         await _persistence.Update(existing);
-        return new SpecialityModel.Response(existing.Id, existing.Name, existing.Description);
+
+        return new SpecialtyModel.Response(
+            existing.Id,
+            existing.Name,
+            existing.Description);
     }
 
-    public async Task DeleteSpecialitiy(Guid id)
+    public async Task DeleteSpecialitiy(
+        Guid id)
     {
-        var speciality = await _persistence.GetById<Speciality>(id);
+        var speciality =
+            await _persistence.GetById<Specialty>(
+                id);
 
-        if (speciality != null)
+        if (speciality is null)
         {
-            speciality.Deactivate();
-            await _persistence.Update(speciality);
+            throw new EntityNotFoundException(
+                nameof(Specialty));
         }
+
+        speciality.Deactivate();
+
+        await _persistence.Update(
+            speciality);
     }
 }

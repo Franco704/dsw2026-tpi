@@ -1,12 +1,14 @@
-﻿using Dsw2026Tpi.Application.Dtos;
+﻿using Dsw2026Tpi.Api.Configurations;
+using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
-[Route("auth")]
+[Route("api/auth")]
 public class AuthenticationController : AppController
 {
     private readonly IAuthenticationService _authenticationService;
@@ -17,8 +19,8 @@ public class AuthenticationController : AppController
     }
 
 
-    // Solo un administrador autenticado puede crear otro administrador.
-    [Authorize(Policy = Policies.AdminPolicy)]
+
+    [AllowAnonymous]
     [HttpPost("admin/register")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -27,16 +29,15 @@ public class AuthenticationController : AppController
     public async Task<IActionResult> Register(
         [FromBody] RegisterModel.Request request)
     {
-        // Delega la creación del usuario al servicio de autenticación.
         var result =
             await _authenticationService.Register(request);
 
-        // Devuelve el email del administrador creado.
         return Ok(result.Email);
     }
+        
 
-    // Permite iniciar sesión sin tener previamente un JWT.
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.AdminLogin)]
     [HttpPost("admin/login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -44,15 +45,13 @@ public class AuthenticationController : AppController
     public async Task<IActionResult> Login(
         [FromBody] LoginAdminModel.Request request)
     {
-        // Delega la autenticación al servicio.
         var result =
             await _authenticationService.LoginAdmin(request);
 
-        // Devuelve el JWT y el rol.
         return Ok(result);
     }
-    // Permite el primer acceso y el login de pacientes sin JWT previo.
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.PatientLogin)]
     [HttpPost("patient/login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -61,11 +60,9 @@ public class AuthenticationController : AppController
     public async Task<IActionResult> LoginPatient(
         [FromBody] LoginPatientModel.Request request)
     {
-        // Delega el flujo de autenticación a Application.
         var result = await _authenticationService
             .LoginPatient(request);
 
-        // Devuelve el JWT y el rol del paciente.
         return Ok(result);
     }
-}
+}

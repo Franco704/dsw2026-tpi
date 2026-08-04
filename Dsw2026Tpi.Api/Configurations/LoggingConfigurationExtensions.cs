@@ -6,12 +6,10 @@ public static class LoggingConfigurationExtensions
 {
     public static void AddSerilogConfiguration(this WebApplicationBuilder builder)
     {
-        // Configurar Serilog desde appsettings.json
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(builder.Configuration)
             .CreateLogger();
 
-        // Reemplazar el logger por defecto con Serilog
         builder.Host.UseSerilog();
     }
 }

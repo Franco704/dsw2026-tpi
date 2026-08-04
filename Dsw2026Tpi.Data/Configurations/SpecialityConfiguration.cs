@@ -4,38 +4,47 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Dsw2026Tpi.Data.Configurations;
 
-public class SpecialityConfiguration : IEntityTypeConfiguration<Speciality>
+public class SpecialityConfiguration
+    : IEntityTypeConfiguration<Specialty>
 {
-    public void Configure(EntityTypeBuilder<Speciality> builder)
+    public void Configure(
+        EntityTypeBuilder<Specialty> builder)
     {
         builder.ToTable("Specialities");
 
-        builder.HasKey(s => s.Id);
-        
-        builder.Property(s => s.Name)
+        builder.HasKey(speciality => speciality.Id);
+
+        builder.Property(speciality => speciality.Id)
+            .ValueGeneratedNever();
+
+        builder.Property(speciality => speciality.Name)
             .IsRequired()
             .HasColumnType("varchar(100)");
-        
-        builder.HasIndex(s => s.Name)
+
+        builder.HasIndex(speciality => speciality.Name)
             .IsUnique()
             .HasFilter("[Deleted] = 0");
-        
-        builder.Property(s => s.Description)
+
+        builder.Property(speciality => speciality.Description)
             .IsRequired()
             .HasColumnType("varchar(100)");
-        
-        builder.Property(s => s.Deleted)
+
+        builder.Property(speciality => speciality.Deleted)
+            .IsRequired()
             .HasColumnType("bit")
             .HasDefaultValue(false);
-        
-        builder.Property(s => s.CreatedAt)
+
+        builder.Property(speciality => speciality.CreatedAt)
+            .IsRequired()
             .HasColumnName("created_at")
             .HasColumnType("datetime2");
-        
-        builder.Property(s => s.UpdatedAt)
+
+        builder.Property(speciality => speciality.UpdatedAt)
+            .IsRequired()
             .HasColumnName("updated_at")
             .HasColumnType("datetime2");
-        
-        builder.HasQueryFilter(s => !s.Deleted);
+
+        builder.HasQueryFilter(
+            speciality => !speciality.Deleted);
     }
 }
