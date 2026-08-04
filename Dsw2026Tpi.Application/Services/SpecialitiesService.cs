@@ -18,7 +18,7 @@ public class SpecialitiesService : ISpecialitiesService
         _persistence = persistence;
     }
 
-    public async Task<Pagination<SpecialtyModel.Response>> GetAll(
+    public async Task<Pagination<SpecialtyModel.Response>> GetAllSpecialtiesAsync(
         int pageSize,
         int pageIndex,
         string? name = null)
@@ -48,7 +48,7 @@ public class SpecialitiesService : ISpecialitiesService
                     speciality.Name,
                     speciality.Description));
     }
-    public async Task<SpecialtyModel.Response> Create(
+    public async Task<SpecialtyModel.Response> CreateSpecialtyAsync(
         SpecialtyModel.Request request)
     {
         SpecialityRequestValidator.Validate(request);
@@ -78,7 +78,7 @@ public class SpecialitiesService : ISpecialitiesService
             created.Description);
     }
 
-    public async Task<SpecialtyModel.Response> UpdateSpecialitiy(
+    public async Task<SpecialtyModel.Response> UpdateSpecialtyAsync(
         Guid id,
         SpecialtyModel.Request request)
     {
@@ -120,7 +120,7 @@ public class SpecialitiesService : ISpecialitiesService
             existing.Description);
     }
 
-    public async Task DeleteSpecialitiy(
+    public async Task DeleteSpecialtyAsync(
         Guid id)
     {
         var speciality =

@@ -4,7 +4,7 @@ namespace Dsw2026Tpi.Application.Interfaces;
 
 public interface IPatientAccessService
 {
-    Task<Patient> AuthenticateOrCreateAsync(
+    Task<Patient> AuthenticatePatientOrCreateAsync(
         string email,
         long dni);
     Task<Patient> GetAuthenticatedPatientAsync(

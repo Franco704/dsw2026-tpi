@@ -20,7 +20,7 @@ public class AvailabilityService : IAvailabilitiesService
         _feriado = feriadoProvider;
     }
 
-    public async Task<IEnumerable<AvailabilityModel.Response>> Create(
+    public async Task<IEnumerable<AvailabilityModel.Response>> CreateAvailabilitiesAsync(
         AvailabilityModel.Request request)
     {
         return await ProcessAvailabilitiesAsync(
@@ -29,7 +29,7 @@ public class AvailabilityService : IAvailabilitiesService
     }
 
     public async Task<IEnumerable<AvailabilityModel.Response>>
-        UpdateAvailability(
+        UpdateAvailabilitiesAsync(
             AvailabilityModel.Request request)
     {
         return await ProcessAvailabilitiesAsync(

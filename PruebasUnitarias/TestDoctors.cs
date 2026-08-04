@@ -31,7 +31,7 @@ namespace PruebasUnitarias
         {
             var request = new DoctorModel.Request("Gr", "M-4021", Guid.NewGuid());
 
-            await Assert.ThrowsAsync<ValidationException>(() => _service.Create(request));
+            await Assert.ThrowsAsync<ValidationException>(() => _service.CreateDoctorAsync(request));
         }
 
         [Fact]
@@ -44,7 +44,7 @@ namespace PruebasUnitarias
             _persistence.First<Doctor>(Arg.Any<Expression<Func<Doctor, bool>>>(), Arg.Any<string[]>())
                         .Returns(doctorExistente);
 
-            await Assert.ThrowsAsync<ConflictException>(() => _service.Create(request));
+            await Assert.ThrowsAsync<ConflictException>(() => _service.CreateDoctorAsync(request));
         }
 
         [Fact]
@@ -56,7 +56,7 @@ namespace PruebasUnitarias
             _persistence.GetById<Specialty>(Arg.Any<Guid>(), Arg.Any<string[]>())
                         .Returns((Specialty?)null);
 
-            await Assert.ThrowsAsync<EntityNotFoundException>(() => _service.Create(request));
+            await Assert.ThrowsAsync<EntityNotFoundException>(() => _service.CreateDoctorAsync(request));
         }
 
         [Fact]
@@ -74,7 +74,7 @@ namespace PruebasUnitarias
                 .Returns(callInfo => callInfo.Arg<Doctor>());
 
 
-            var response = await _service.Create(request);
+            var response = await _service.CreateDoctorAsync(request);
 
             Assert.Equal(request.Name, response.Name);
             Assert.Equal(request.LicenseNumber, response.LicenseNumber);

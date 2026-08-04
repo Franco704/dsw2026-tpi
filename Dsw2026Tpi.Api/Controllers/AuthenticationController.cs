@@ -30,7 +30,7 @@ public class AuthenticationController : AppController
         [FromBody] RegisterModel.Request request)
     {
         var result =
-            await _authenticationService.Register(request);
+            await _authenticationService.RegisterAdminAsync(request);
 
         return Ok(result.Email);
     }
@@ -46,7 +46,7 @@ public class AuthenticationController : AppController
         [FromBody] LoginAdminModel.Request request)
     {
         var result =
-            await _authenticationService.LoginAdmin(request);
+            await _authenticationService.LoginAdminAsync(request);
 
         return Ok(result);
     }
@@ -61,8 +61,8 @@ public class AuthenticationController : AppController
         [FromBody] LoginPatientModel.Request request)
     {
         var result = await _authenticationService
-            .LoginPatient(request);
+            .LoginPatientAsync(request);
 
         return Ok(result);
     }
-}
+}

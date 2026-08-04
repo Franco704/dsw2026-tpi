@@ -25,7 +25,7 @@ public class IdentityAccessService : IIdentityAccessService
         _logger = logger;
     }
 
-    public async Task<ApplicationUser> AuthenticateWithPasswordAsync(
+    public async Task<ApplicationUser> AuthenticateUserWithPasswordAsync(
         string email,
         string password)
     {
@@ -63,7 +63,7 @@ public class IdentityAccessService : IIdentityAccessService
         return user;
     }
 
-    public async Task EnsureRoleAsync(
+    public async Task EnsureUserHasRoleAsync(
         ApplicationUser user,
         string requiredRole)
     {
@@ -83,7 +83,7 @@ public class IdentityAccessService : IIdentityAccessService
         }
     }
 
-    public async Task<ApplicationUser?> FindByEmailAsync(
+    public async Task<ApplicationUser?> FindUserByEmailAsync(
         string email)
     {
         var normalizedEmail = email
@@ -94,7 +94,7 @@ public class IdentityAccessService : IIdentityAccessService
             normalizedEmail);
     }
 
-    public async Task<ApplicationUser> CreateWithoutPasswordAsync(
+    public async Task<ApplicationUser> CreateUserWithoutPasswordAsync(
         string email,
         string role)
     {

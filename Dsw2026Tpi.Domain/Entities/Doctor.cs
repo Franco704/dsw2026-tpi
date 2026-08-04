@@ -82,4 +82,4 @@ public class Doctor : DeletedEntity
         SpecialityId = speciality.Id;
     }
 }
-
+

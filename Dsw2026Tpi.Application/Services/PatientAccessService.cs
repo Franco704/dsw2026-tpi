@@ -13,7 +13,6 @@ public class PatientAccessService : IPatientAccessService
     private readonly IPersistence _persistence;
     private readonly IIdentityAccessService _identityAccessService;
     private readonly ILogger<PatientAccessService> _logger;
-
     public PatientAccessService(
         IPersistence persistence,
         IIdentityAccessService identityAccessService,
@@ -26,7 +25,7 @@ public class PatientAccessService : IPatientAccessService
         _logger = logger;
     }
 
-    public async Task<Patient> AuthenticateOrCreateAsync(
+    public async Task<Patient> AuthenticatePatientOrCreateAsync(
         string email,
         long dni)
     {
@@ -38,7 +37,7 @@ public class PatientAccessService : IPatientAccessService
             CultureInfo.InvariantCulture);
 
         var user =
-            await _identityAccessService.FindByEmailAsync(
+            await _identityAccessService.FindUserByEmailAsync(
                 normalizedEmail);
 
         var patientByDni =
@@ -58,7 +57,7 @@ public class PatientAccessService : IPatientAccessService
 
             user =
                 await _identityAccessService
-                    .CreateWithoutPasswordAsync(
+                    .CreateUserWithoutPasswordAsync(
                         normalizedEmail,
                         Roles.Patient);
 
@@ -79,7 +78,7 @@ public class PatientAccessService : IPatientAccessService
             throw new AuthenticationException();
         }
 
-        await _identityAccessService.EnsureRoleAsync(
+        await _identityAccessService.EnsureUserHasRoleAsync(
             user,
             Roles.Patient);
 
@@ -128,7 +127,7 @@ public class PatientAccessService : IPatientAccessService
             .ToLowerInvariant();
 
         var user =
-            await _identityAccessService.FindByEmailAsync(
+            await _identityAccessService.FindUserByEmailAsync(
                 normalizedEmail);
 
         if (user is null ||
@@ -142,7 +141,7 @@ public class PatientAccessService : IPatientAccessService
 
         try
         {
-            await _identityAccessService.EnsureRoleAsync(
+            await _identityAccessService.EnsureUserHasRoleAsync(
                 user,
                 Roles.Patient);
         }
@@ -171,4 +170,4 @@ public class PatientAccessService : IPatientAccessService
         return patient;
     }
 }
-
+
