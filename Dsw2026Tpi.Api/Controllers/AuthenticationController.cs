@@ -29,11 +29,9 @@ public class AuthenticationController : AppController
     public async Task<IActionResult> Register(
         [FromBody] RegisterModel.Request request)
     {
-        // Delega la creación del usuario al servicio de autenticación.
         var result =
             await _authenticationService.Register(request);
 
-        // Devuelve el email del administrador creado.
         return Ok(result.Email);
     }
         
@@ -47,14 +45,11 @@ public class AuthenticationController : AppController
     public async Task<IActionResult> Login(
         [FromBody] LoginAdminModel.Request request)
     {
-        // Delega la autenticación al servicio.
         var result =
             await _authenticationService.LoginAdmin(request);
 
-        // Devuelve el JWT y el rol.
         return Ok(result);
     }
-    // Permite el primer acceso y el login de pacientes sin JWT previo.
     [AllowAnonymous]
     [EnableRateLimiting(RateLimitPolicies.PatientLogin)]
     [HttpPost("patient/login")]
@@ -65,13 +60,9 @@ public class AuthenticationController : AppController
     public async Task<IActionResult> LoginPatient(
         [FromBody] LoginPatientModel.Request request)
     {
-        // Delega el flujo de autenticación a Application.
         var result = await _authenticationService
             .LoginPatient(request);
 
-        // Devuelve el JWT y el rol del paciente.
         return Ok(result);
     }
-}
-//IActionResult permite devolver distintos resultados HTTP, como Ok(), BadRequest() o Unauthorized()
-//[FromBody] hace que ASP.NET Core deserialice el JSON y construya el DTO Request.
+}

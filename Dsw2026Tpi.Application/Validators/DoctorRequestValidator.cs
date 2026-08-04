@@ -3,16 +3,8 @@ using Dsw2026Tpi.CrossCutting.Exceptions;
 
 namespace Dsw2026Tpi.Application.Validators;
 
-/// <summary>
-/// Valida los datos utilizados en las operaciones
-/// relacionadas con médicos.
-/// </summary>
 public static class DoctorRequestValidator
 {
-    /// <summary>
-    /// Valida el body utilizado para crear
-    /// o actualizar un médico.
-    /// </summary>
     public static void Validate(
         DoctorModel.Request? request)
     {
@@ -46,10 +38,6 @@ public static class DoctorRequestValidator
     }
 
 
-    /// <summary>
-    /// Valida los parámetros utilizados para consultar
-    /// la lista paginada de médicos.
-    /// </summary>
     public static void ValidateGetAll(
         int pageSize,
         int pageIndex,
@@ -58,20 +46,11 @@ public static class DoctorRequestValidator
         var validation =
             new ValidationException();
 
-        /*
-         * Las reglas comunes de paginación se centralizan
-         * para mantener el mismo comportamiento en todos
-         * los endpoints paginados.
-         */
         PaginationRequestValidator.AddValidationDetails(
             pageSize,
             pageIndex,
             validation);
 
-        /*
-         * El filtro por nombre pertenece específicamente
-         * al módulo de médicos y continúa validándose aquí.
-         */
         ValidateName(
             name,
             validation,
@@ -81,10 +60,6 @@ public static class DoctorRequestValidator
             validation);
     }
 
-    /// <summary>
-    /// Valida el nombre según sea obligatorio
-    /// o corresponda a un filtro opcional.
-    /// </summary>
     private static void ValidateName(
         string? name,
         ValidationException validation,
@@ -146,10 +121,6 @@ public static class DoctorRequestValidator
         }
     }
 
-    /// <summary>
-    /// Lanza la excepción acumulada solamente
-    /// cuando se detectaron errores.
-    /// </summary>
     private static void ThrowIfInvalid(
         ValidationException validation)
     {

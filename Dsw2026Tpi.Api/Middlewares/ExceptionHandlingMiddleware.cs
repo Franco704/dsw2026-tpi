@@ -5,19 +5,11 @@ using Dsw2026Tpi.CrossCutting.Resources;
 
 namespace Dsw2026Tpi.Api.Middlewares;
 
-/// <summary>
-/// Intercepta las excepciones producidas durante una solicitud
-/// y las transforma en respuestas HTTP uniformes.
-/// </summary>
 public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
-    /// <summary>
-    /// Inicializa el middleware con el siguiente componente
-    /// del pipeline y el servicio de logging.
-    /// </summary>
     public ExceptionHandlingMiddleware(
         RequestDelegate next,
         ILogger<ExceptionHandlingMiddleware> logger)
@@ -26,10 +18,6 @@ public class ExceptionHandlingMiddleware
         _logger = logger;
     }
 
-    /// <summary>
-    /// Ejecuta el siguiente componente del pipeline
-    /// y controla cualquier excepción producida.
-    /// </summary>
     public async Task InvokeAsync(
         HttpContext context)
     {
@@ -39,10 +27,6 @@ public class ExceptionHandlingMiddleware
         }
         catch (AppException exception)
         {
-            /*
-             * Las AppException representan errores controlados
-             * por la aplicación.
-             */
             _logger.LogWarning(
                 exception,
                 "La solicitud fue rechazada por una condición controlada. " +
@@ -55,10 +39,6 @@ public class ExceptionHandlingMiddleware
         }
         catch (Exception exception)
         {
-            /*
-             * Toda excepción que no sea AppException representa
-             * un error inesperado del servidor.
-             */
             _logger.LogError(
                 exception,
                 "Se produjo un error no controlado. Path: {Path}",
@@ -70,10 +50,6 @@ public class ExceptionHandlingMiddleware
         }
     }
 
-    /// <summary>
-    /// Selecciona el status y el error correspondientes
-    /// y delega la escritura al componente común.
-    /// </summary>
     private static async Task HandleExceptionAsync(
         HttpContext context,
         Exception exception)
@@ -87,13 +63,6 @@ public class ExceptionHandlingMiddleware
             errorResult.Error);
     }
 
-    /// <summary>
-    /// Traduce las excepciones conocidas al status HTTP
-    /// correspondiente.
-    ///
-    /// Las excepciones desconocidas siempre se convierten
-    /// en un error interno genérico.
-    /// </summary>
     private static ErrorResult MapException(
         Exception exception)
     {
@@ -134,10 +103,6 @@ public class ExceptionHandlingMiddleware
         };
     }
 
-    /// <summary>
-    /// Agrupa el status HTTP y el body que deben enviarse.
-    /// Se utiliza únicamente dentro del middleware.
-    /// </summary>
     private sealed record ErrorResult(
         int StatusCode,
         ErrorResponse Error);

@@ -4,16 +4,8 @@ using Dsw2026Tpi.CrossCutting.Helpers;
 
 namespace Dsw2026Tpi.Application.Validators;
 
-/// <summary>
-/// Centraliza las validaciones utilizadas en los
-/// flujos de autenticación de administradores y pacientes.
-/// </summary>
 public static class AuthenticationRequestValidator
 {
-    /// <summary>
-    /// Valida que el email sea obligatorio
-    /// y tenga un formato válido.
-    /// </summary>
     public static void ValidateEmail(
         string? email)
     {
@@ -26,10 +18,6 @@ public static class AuthenticationRequestValidator
         }
     }
 
-    /// <summary>
-    /// Valida la contraseña recibida durante
-    /// el inicio de sesión de un administrador.
-    /// </summary>
     public static void ValidateLoginPassword(
         string? password)
     {
@@ -50,10 +38,6 @@ public static class AuthenticationRequestValidator
         }
     }
 
-    /// <summary>
-    /// Valida que el DNI tenga entre siete
-    /// y ocho dígitos.
-    /// </summary>
     public static void ValidatePatientDni(
         long dni)
     {

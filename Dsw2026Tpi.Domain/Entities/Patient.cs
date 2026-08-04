@@ -1,34 +1,17 @@
 ﻿namespace Dsw2026Tpi.Domain.Entities;
 
-/// <summary>
-/// Representa el perfil de paciente asociado
-/// a un usuario de ASP.NET Core Identity.
-/// </summary>
 public class Patient : DeletedEntity
 {
-    /// <summary>
-    /// Identificador del usuario asociado en Identity.
-    /// </summary>
     public string UserId { get; private set; }
 
-    /// <summary>
-    /// Documento Nacional de Identidad del paciente.
-    /// </summary>
     public string Dni { get; private set; }
 
-    /// <summary>
-    /// Nombre completo del paciente.
-    /// Puede estar vacío durante el primer acceso.
-    /// </summary>
     public string? FullName { get; private set; }
 
     #region Constructor for EF
 
 #pragma warning disable CS8618
 
-    /// <summary>
-    /// Constructor requerido por Entity Framework Core.
-    /// </summary>
     private Patient()
     {
     }
@@ -37,9 +20,6 @@ public class Patient : DeletedEntity
 
     #endregion
 
-    /// <summary>
-    /// Crea un paciente asociado a un usuario de Identity.
-    /// </summary>
     public Patient(
         string userId,
         string dni,
@@ -65,9 +45,6 @@ public class Patient : DeletedEntity
         FullName = null;
     }
 
-    /// <summary>
-    /// Completa o actualiza el nombre del paciente.
-    /// </summary>
     public void SetFullName(
         string fullName)
     {
@@ -82,9 +59,6 @@ public class Patient : DeletedEntity
         MarkAsUpdated();
     }
 
-    /// <summary>
-    /// Desactiva el paciente mediante eliminación lógica.
-    /// </summary>
     public void Deactivate()
     {
         Delete();

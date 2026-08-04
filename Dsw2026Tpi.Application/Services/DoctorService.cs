@@ -9,26 +9,16 @@ using Dsw2026Tpi.Domain.Interfaces;
 
 namespace Dsw2026Tpi.Application.Services;
 
-/// <summary>
-/// Gestiona los casos de uso relacionados con médicos,
-/// incluyendo creación, actualización, consulta y eliminación lógica.
-/// </summary>
 public class DoctorService : IDoctorService
 {
     private readonly IPersistence _persistence;
 
-    /// <summary>
-    /// Inicializa el servicio con la abstracción de persistencia.
-    /// </summary>
     public DoctorService(
         IPersistence persistence)
     {
         _persistence = persistence;
     }
 
-    /// <summary>
-    /// Crea un nuevo médico asociado a una especialidad existente.
-    /// </summary>
     public async Task<DoctorModel.Response> Create(
         DoctorModel.Request request)
     {
@@ -56,10 +46,6 @@ public class DoctorService : IDoctorService
             createdDoctor);
     }
 
-    /// <summary>
-    /// Actualiza los datos principales y la especialidad
-    /// de un médico existente.
-    /// </summary>
     public async Task<DoctorModel.Response> UpdateDoctors(
         Guid id,
         DoctorModel.Request request)
@@ -79,10 +65,6 @@ public class DoctorService : IDoctorService
         var normalizedLicenseNumber =
             request.LicenseNumber.Trim();
 
-        /*
-         * La matrícula puede conservarse durante la actualización.
-         * Solamente debe rechazarse cuando pertenece a otro médico.
-         */
         await EnsureLicenseNumberIsAvailableAsync(
             normalizedLicenseNumber,
             id);
@@ -103,14 +85,6 @@ public class DoctorService : IDoctorService
             updatedDoctor);
     }
 
-    /// <summary>
-    /// Obtiene una página de médicos activos,
-    /// con filtro opcional por nombre.
-    ///
-    /// Los médicos continúan visibles cuando su especialidad
-    /// fue eliminada lógicamente. En ese caso, la respuesta
-    /// contiene specialty con valor null.
-    /// </summary>
     public async Task<Pagination<DoctorModel.Response>> GetAll(
         int pageSize,
         int pageIndex,
@@ -124,13 +98,6 @@ public class DoctorService : IDoctorService
         var normalizedName =
             name?.Trim();
 
-        /*
-         * La navegación Specialty no se incluye en esta consulta.
-         *
-         * Un Include aplicaría el query filter de Specialty y
-         * ocultaría también al médico cuando su especialidad
-         * estuviera eliminada.
-         */
         var doctorsPage =
             await _persistence.Paginate<Doctor, string>(
                 pageSize,
@@ -148,13 +115,6 @@ public class DoctorService : IDoctorService
         var doctors =
             doctorsPage.Data.ToList();
 
-        /*
-         * Se obtienen en una única consulta las especialidades
-         * activas utilizadas por los médicos de esta página.
-         *
-         * El query filter de Specialty excluye automáticamente
-         * las especialidades eliminadas.
-         */
         var specialtyIds = doctors
             .Select(doctor =>
                 doctor.SpecialityId)
@@ -180,11 +140,6 @@ public class DoctorService : IDoctorService
                 specialty =>
                     specialty.Id);
 
-        /*
-         * Si el diccionario no contiene la especialidad,
-         * significa que fue eliminada lógicamente.
-         * El mapper devolverá specialty con valor null.
-         */
         var responses = doctors
             .Select(doctor =>
             {
@@ -204,13 +159,6 @@ public class DoctorService : IDoctorService
             doctorsPage.Total,
             responses);
     }
-    /// <summary>
-    /// Obtiene los bloques de disponibilidad del médico
-    /// correspondientes al mes actual.
-    /// 
-    /// Cada elemento representa un slot real almacenado,
-    /// con su propio identificador y duración de treinta minutos.
-    /// </summary>
     public async Task<List<DoctorModel.AvailabilityResponse>> GetById(
         Guid id)
     {
@@ -258,9 +206,6 @@ public class DoctorService : IDoctorService
             .ToList();
     }
 
-    /// <summary>
-    /// Elimina lógicamente un médico existente.
-    /// </summary>
     public async Task DeleteDoctor(
         Guid id)
     {
@@ -280,10 +225,6 @@ public class DoctorService : IDoctorService
             doctor);
     }
 
-    /// <summary>
-    /// Comprueba que la matrícula no pertenezca
-    /// a otro médico registrado.
-    /// </summary>
     private async Task EnsureLicenseNumberIsAvailableAsync(
         string licenseNumber,
         Guid? excludedDoctorId = null)
@@ -305,10 +246,6 @@ public class DoctorService : IDoctorService
         }
     }
 
-    /// <summary>
-    /// Obtiene la especialidad solicitada o informa
-    /// que no existe.
-    /// </summary>
     private async Task<Specialty> GetSpecialtyAsync(
         Guid specialtyId)
     {

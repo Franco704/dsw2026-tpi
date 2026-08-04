@@ -2,28 +2,16 @@
 
 namespace Dsw2026Tpi.Domain.Entities;
 
-/// <summary>
-/// Representa una especialidad médica.
-/// </summary>
 public class Specialty : DeletedEntity
 {
-    /// <summary>
-    /// Nombre de la especialidad.
-    /// </summary>
     public string Name { get; private set; }
 
-    /// <summary>
-    /// Descripción de la especialidad.
-    /// </summary>
     public string Description { get; private set; }
 
     #region Constructor for EF
 
 #pragma warning disable CS8618
 
-    /// <summary>
-    /// Constructor requerido por Entity Framework Core.
-    /// </summary>
     private Specialty()
     {
     }
@@ -32,9 +20,6 @@ public class Specialty : DeletedEntity
 
     #endregion
 
-    /// <summary>
-    /// Crea una especialidad con información válida y normalizada.
-    /// </summary>
     public Specialty(
         string name,
         string description,
@@ -46,17 +31,11 @@ public class Specialty : DeletedEntity
             description);
     }
 
-    /// <summary>
-    /// Desactiva la especialidad mediante eliminación lógica.
-    /// </summary>
     public void Deactivate()
     {
         Delete();
     }
 
-    /// <summary>
-    /// Actualiza la información principal de la especialidad.
-    /// </summary>
     public void UpdateInfo(
         string name,
         string description)
@@ -68,10 +47,6 @@ public class Specialty : DeletedEntity
         MarkAsUpdated();
     }
 
-    /// <summary>
-    /// Valida, normaliza y asigna la información
-    /// principal de la especialidad.
-    /// </summary>
     private void SetInformation(
         string name,
         string description)
@@ -115,10 +90,6 @@ public class Specialty : DeletedEntity
                 nameof(description));
         }
 
-        /*
-         * La asignación se realiza después de validar ambos valores
-         * para evitar actualizar parcialmente la entidad.
-         */
         Name = normalizedName;
         Description = normalizedDescription;
     }

@@ -4,16 +4,10 @@ using System.Text.Json;
 namespace Dsw2026Tpi.Api.Responses;
 
 
-/// Escribe respuestas HTTP de error utilizando
-/// el contrato JSON definido para toda la API.
 
 public static class ErrorResponseWriter
 {
-    /*
-     
-Mantiene las propiedades C# en PascalCase,
-pero las serializa en camelCase para respetar
-el contrato HTTP.*/
+
     private static readonly JsonSerializerOptions SerializerOptions =
         new()
         {
@@ -22,8 +16,6 @@ el contrato HTTP.*/
         };
 
     
-    /// Limpia la respuesta actual y escribe el error
-    /// con el status HTTP y formato JSON correspondientes.
     
     public static async Task WriteAsync(
         HttpContext context,
@@ -33,10 +25,7 @@ el contrato HTTP.*/
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(error);
 
-        /*
-         
-Una respuesta que ya comenzó a enviarse no puede
-reemplazarse de manera segura.*/
+
         if (context.Response.HasStarted)
         {
             return;

@@ -4,16 +4,8 @@ using Dsw2026Tpi.Domain.Entities;
 
 namespace Dsw2026Tpi.Application.Mappers;
 
-/// <summary>
-/// Centraliza la conversión de médicos y sus disponibilidades
-/// a los contratos públicos de respuesta.
-/// </summary>
 public static class DoctorMapper
 {
-    /// <summary>
-    /// Convierte un médico al response contractual utilizando
-    /// la especialidad que ya se encuentra cargada en la entidad.
-    /// </summary>
     public static DoctorModel.Response ToResponse(
         Doctor doctor)
     {
@@ -25,12 +17,6 @@ public static class DoctorMapper
             doctor.Speciality);
     }
 
-    /// <summary>
-    /// Convierte un médico al response contractual.
-    ///
-    /// La especialidad puede ser nula cuando fue eliminada
-    /// lógicamente, sin que eso elimine u oculte al médico.
-    /// </summary>
     public static DoctorModel.Response ToResponse(
         Doctor doctor,
         Specialty? specialty)
@@ -59,10 +45,6 @@ public static class DoctorMapper
                             specialty.Name));
     }
 
-    /// <summary>
-    /// Convierte un slot de disponibilidad al formato
-    /// expuesto por la consulta de médicos.
-    /// </summary>
     public static DoctorModel.AvailabilityResponse
         ToAvailabilityResponse(
             Availability availability)

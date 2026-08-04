@@ -4,16 +4,8 @@ using System.Globalization;
 
 namespace Dsw2026Tpi.Application.Mappers;
 
-/// <summary>
-/// Centraliza la conversión de entidades Appointment
-/// a los contratos públicos de respuesta.
-/// </summary>
 public static class AppointmentMapper
 {
-    /// <summary>
-    /// Convierte un turno al response utilizado
-    /// por la reserva y las consultas del paciente.
-    /// </summary>
     public static AppointmentModel.Response ToResponse(
         Appointment appointment)
     {
@@ -43,10 +35,6 @@ public static class AppointmentMapper
                 appointment.Status.ToString());
     }
 
-    /// <summary>
-    /// Convierte un turno al response contractual
-    /// de las búsquedas administrativas.
-    /// </summary>
     public static AppointmentModel.SearchResponse ToSearchResponse(
         Appointment appointment)
     {

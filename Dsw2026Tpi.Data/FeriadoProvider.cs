@@ -20,7 +20,7 @@ namespace Dsw2026Tpi.Data
             var ruta = Path.Combine(AppContext.BaseDirectory, "Sources", "Feriados.json");
             var json = File.ReadAllText(ruta);
             var listaFeriados = JsonSerializer.Deserialize<List<Feriado>>(json
-                , new JsonSerializerOptions() { PropertyNameCaseInsensitive = true }) 
+                , new JsonSerializerOptions() { PropertyNameCaseInsensitive = true })
                 ?? new List<Feriado>();
             _feriados = listaFeriados.Select(f => f.Fecha.Date).ToHashSet();
         }

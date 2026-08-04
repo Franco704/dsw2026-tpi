@@ -55,6 +55,6 @@ public class SpecialtiesController : AppController
         await _service.DeleteSpecialitiy(
             id);
 
-        return Ok("ok"); //Antes era un 204 no content, corrijo eso segun las responses actuales. 
+        return Ok("ok");
     }
 }

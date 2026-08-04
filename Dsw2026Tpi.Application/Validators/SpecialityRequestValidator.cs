@@ -4,16 +4,8 @@ using Dsw2026Tpi.Domain.Rules;
 
 namespace Dsw2026Tpi.Application.Validators;
 
-/// <summary>
-/// Valida los datos utilizados en las operaciones
-/// relacionadas con especialidades.
-/// </summary>
 public static class SpecialityRequestValidator
 {
-    /// <summary>
-    /// Valida el body utilizado para crear
-    /// o actualizar una especialidad.
-    /// </summary>
     public static void Validate(
         SpecialtyModel.Request? request)
     {
@@ -40,10 +32,6 @@ public static class SpecialityRequestValidator
         ThrowIfInvalid(validation);
     }
 
-    /// <summary>
-    /// Valida los parámetros utilizados para consultar
-    /// la lista paginada de especialidades.
-    /// </summary>
     public static void ValidateGetAll(
         int pageSize,
         int pageIndex,
@@ -64,10 +52,6 @@ public static class SpecialityRequestValidator
         ThrowIfInvalid(validation);
     }
 
-    /// <summary>
-    /// Valida el nombre según sea obligatorio
-    /// o corresponda a un filtro opcional.
-    /// </summary>
     private static void ValidateName(
         string? name,
         ValidationException validation,
@@ -97,10 +81,6 @@ public static class SpecialityRequestValidator
         }
     }
 
-    /// <summary>
-    /// Valida la descripción utilizada al crear
-    /// o actualizar una especialidad.
-    /// </summary>
     private static void ValidateDescription(
         string? description,
         ValidationException validation)
@@ -126,10 +106,6 @@ public static class SpecialityRequestValidator
         }
     }
 
-    /// <summary>
-    /// Lanza la excepción acumulada únicamente
-    /// cuando se encontraron errores.
-    /// </summary>
     private static void ThrowIfInvalid(
         ValidationException validation)
     {

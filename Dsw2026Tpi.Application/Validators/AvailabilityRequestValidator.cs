@@ -5,33 +5,16 @@ using Dsw2026Tpi.Domain.Rules;
 
 namespace Dsw2026Tpi.Application.Validators;
 
-/// <summary>
-/// Valida los datos recibidos al crear o actualizar
-/// la disponibilidad mensual de un médico.
-///
-/// Este validador controla únicamente el contenido de la request.
-/// La existencia del médico y los conflictos con registros almacenados
-/// son responsabilidades del servicio.
-/// </summary>
 public static class AvailabilityRequestValidator
 {
     
 
-    /// <summary>
-    /// Representa internamente un rango que superó
-    /// las validaciones individuales.
-    /// </summary>
     private sealed record ValidatedSchedule(
         int Index,
         DayOfWeek Day,
         TimeSpan StartTime,
         TimeSpan EndTime);
 
-    /// <summary>
-    /// Valida el médico y los rangos horarios informados.
-    /// Acumula todos los errores encontrados antes de lanzar
-    /// una ValidationException.
-    /// </summary>
     public static void Validate(AvailabilityModel.Request? request)
     {
         var validation = new ValidationException();
@@ -59,11 +42,6 @@ public static class AvailabilityRequestValidator
         }
     }
 
-    /// <summary>
-    /// Comprueba que la request identifique un médico.
-    /// La existencia del médico se verifica posteriormente
-    /// mediante persistencia.
-    /// </summary>
     private static void ValidateDoctorId(
         Guid doctorId,
         ValidationException validation)
@@ -76,13 +54,6 @@ public static class AvailabilityRequestValidator
         }
     }
 
-    /// <summary>
-    /// Valida cada rango informado y posteriormente comprueba
-    /// que los horarios de un mismo día no se solapen.
-    ///
-    /// Un día puede aparecer varias veces para permitir
-    /// horarios partidos.
-    /// </summary>
     private static void ValidateDays(
         IReadOnlyCollection<AvailabilityModel.DaySchedule>? days,
         ValidationException validation)
@@ -119,11 +90,6 @@ public static class AvailabilityRequestValidator
             validation);
     }
 
-    /// <summary>
-    /// Valida el día y el rango horario de una configuración.
-    /// Devuelve un rango normalizado solamente cuando sus datos
-    /// son válidos.
-    /// </summary>
     private static ValidatedSchedule? ValidateSchedule(
         AvailabilityModel.DaySchedule? schedule,
         int index,
@@ -163,10 +129,6 @@ public static class AvailabilityRequestValidator
             schedule.EndTime);
     }
 
-    /// <summary>
-    /// Comprueba que el nombre corresponda a un día válido.
-    /// Admite nombres en español o inglés.
-    /// </summary>
     private static DayOfWeek? ValidateDay(
         string? day,
         string fieldPrefix,
@@ -193,10 +155,6 @@ public static class AvailabilityRequestValidator
         return parsedDay;
     }
 
-    /// <summary>
-    /// Comprueba que el horario tenga una duración válida
-    /// y pueda dividirse completamente en bloques de 30 minutos.
-    /// </summary>
     private static bool ValidateTimeRange(
         TimeSpan startTime,
         TimeSpan endTime,
@@ -227,13 +185,6 @@ public static class AvailabilityRequestValidator
         return true;
     }
 
-    /// <summary>
-    /// Detecta solapamientos entre rangos correspondientes
-    /// al mismo día.
-    ///
-    /// Los rangos consecutivos son válidos porque el fin de uno
-    /// puede coincidir con el comienzo del siguiente.
-    /// </summary>
     private static void ValidateOverlappingRanges(
         IReadOnlyCollection<ValidatedSchedule> schedules,
         ValidationException validation)

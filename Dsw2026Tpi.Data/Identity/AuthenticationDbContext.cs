@@ -4,10 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dsw2026Tpi.Data.Identity;
 
-/// <summary>
-/// Contexto encargado de persistir usuarios, roles,
-/// claims, tokens y demás componentes de Identity.
-/// </summary>
 public class AuthenticationDbContext
     : IdentityDbContext<ApplicationUser>
 {
@@ -20,10 +16,8 @@ public class AuthenticationDbContext
     protected override void OnModelCreating(
         ModelBuilder builder)
     {
-        // Aplica primero la configuración interna de Identity.
         base.OnModelCreating(builder);
 
-        // Configura la tabla principal de usuarios.
         builder.Entity<ApplicationUser>(user =>
         {
             user.ToTable("Users");
@@ -44,7 +38,6 @@ public class AuthenticationDbContext
                 .HasColumnType("datetime2");
         });
 
-        // Configura las tablas auxiliares utilizadas por Identity.
         builder.Entity<IdentityRole>()
             .ToTable("Roles");
 
@@ -64,12 +57,4 @@ public class AuthenticationDbContext
             .ToTable("UsersTokens");
     }
 }
-
-/*
- * CONSIDERACIONES:
- *
- * - ApplicationUser es el usuario real de Identity y se guarda en Users.
- * - No debe mapearse IdentityUser y ApplicationUser en tablas separadas.
- * - Deleted debe comprobarse durante autenticación y autorización.
- * - CreatedAt y UpdatedAt deben inicializarse al crear o modificar usuarios.
- */
+

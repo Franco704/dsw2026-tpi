@@ -13,14 +13,12 @@ public static class SecurityConfigurationExtensions
 {
     public static IServiceCollection AddAppAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        //Obtener parámetros para creación del JWT desde appsettings.json
         var jwtConfig = configuration.GetSection("Jwt");
         var keyText = jwtConfig["Key"] ?? throw new ArgumentNullException("JWT Key");
         var issuer = jwtConfig["Issuer"] ?? throw new ArgumentNullException("JWT Issuer");
         var audience = jwtConfig["Audience"] ?? throw new ArgumentNullException("JWT Audience");
         var key = Encoding.UTF8.GetBytes(keyText);
 
-        //Agregar autenticación
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -29,7 +27,6 @@ public static class SecurityConfigurationExtensions
         })
             .AddJwtBearer(options =>
             {
-                //Definir parámetros para la generación del token
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -40,21 +37,10 @@ public static class SecurityConfigurationExtensions
                     ValidAudience = audience,
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
-                /*
-     * El handler de JWT corta el pipeline sin lanzar excepciones,
-     * por lo que el middleware global no interviene.
-     * Estos eventos escriben el mismo contrato de error
-     * utilizado por el resto de la API.
-     */
                 options.Events = new JwtBearerEvents
                 {
-                    // 401: falta el token, expiró o no es válido.
                     OnChallenge = async context =>
                     {
-                        /*
-                         * Suprime el challenge por defecto, que responde
-                         * con un body vacío y una cabecera WWW-Authenticate.
-                         */
                         context.HandleResponse();
 
                         var error = new ErrorResponse(
@@ -67,7 +53,6 @@ public static class SecurityConfigurationExtensions
                             error);
                     },
 
-                    // 403: el token es válido pero el rol no habilita la operación.
                     OnForbidden = async context =>
                     {
                         var error = new ErrorResponse(
@@ -91,7 +76,6 @@ public static class SecurityConfigurationExtensions
 
     public static IServiceCollection AddAppCors(this IServiceCollection services, IConfiguration configuration)
     {
-        //Obtener configuración para CORS desde appsettings.json
         var allowedOrigins = configuration
                             .GetSection("Cors:AllowedOrigins")
                             .Get<string[]>()?
@@ -100,7 +84,6 @@ public static class SecurityConfigurationExtensions
                             .Distinct(StringComparer.OrdinalIgnoreCase)
                             .ToArray();
 
-        //Si no se definió configuración en el archivo, utilizar la que se define
         if (allowedOrigins is null || allowedOrigins.Length == 0)
         {
             allowedOrigins =
@@ -110,7 +93,6 @@ public static class SecurityConfigurationExtensions
             ];
         }
 
-        //Agregar CORS con la política por defecto a partir de las URLs definidas
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(policy =>
@@ -131,12 +113,12 @@ public static class SecurityConfigurationExtensions
         {
             options.Password = new PasswordOptions
             {
-                RequiredLength = 8, //modificamos el minimo de la contraseña que nos da identity (es 6) y lo llevamos a 8. 
+                RequiredLength = 8,
                 RequireLowercase = true,
                 RequireUppercase = true,
                 RequireDigit = true
             };
-            options.User.RequireUniqueEmail = true; //Agrego esta restriccion para que el email sea unico. 
+            options.User.RequireUniqueEmail = true;
 
         }).AddRoles<IdentityRole>()
           .AddEntityFrameworkStores<AuthenticationDbContext>()

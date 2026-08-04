@@ -9,17 +9,10 @@ using Dsw2026Tpi.Domain.Interfaces;
 
 namespace Dsw2026Tpi.Application.Services;
 
-/// <summary>
-/// Gestiona la creación y actualización de las disponibilidades
-/// mensuales de los médicos.
-/// </summary>
 public class AvailabilityService : IAvailabilitiesService
 {
     private readonly IPersistence _persistence;
     private readonly IFeriadoProvider _feriado;
-    /// <summary>
-    /// Inicializa el servicio con la abstracción de persistencia.
-    /// </summary>
     public AvailabilityService(
         IPersistence persistence, IFeriadoProvider feriadoProvider)
     {
@@ -27,10 +20,6 @@ public class AvailabilityService : IAvailabilitiesService
         _feriado = feriadoProvider;
     }
 
-    /// <summary>
-    /// Crea las disponibilidades del médico desde la fecha actual
-    /// hasta el último día del mismo mes.
-    /// </summary>
     public async Task<IEnumerable<AvailabilityModel.Response>> Create(
         AvailabilityModel.Request request)
     {
@@ -39,13 +28,6 @@ public class AvailabilityService : IAvailabilitiesService
             false);
     }
 
-    /// <summary>
-    /// Reemplaza las disponibilidades libres del médico desde
-    /// la fecha actual hasta el último día del mismo mes.
-    ///
-    /// Las disponibilidades ocupadas se conservan y no pueden
-    /// ser reemplazadas.
-    /// </summary>
     public async Task<IEnumerable<AvailabilityModel.Response>>
         UpdateAvailability(
             AvailabilityModel.Request request)
@@ -55,19 +37,11 @@ public class AvailabilityService : IAvailabilitiesService
             true);
     }
 
-    /// <summary>
-    /// Ejecuta el flujo compartido por la creación
-    /// y la actualización de disponibilidades.
-    /// </summary>
     private async Task<IEnumerable<AvailabilityModel.Response>>
         ProcessAvailabilitiesAsync(
             AvailabilityModel.Request request,
             bool isUpdate)
     {
-        /*
-         * La request se valida completamente antes de consultar
-         * o modificar información almacenada.
-         */
         AvailabilityRequestValidator.Validate(
             request);
 
@@ -77,13 +51,6 @@ public class AvailabilityService : IAvailabilitiesService
         var currentDateTime = DateTime.Now;
         var today = currentDateTime.Date;
 
-        /*
-         * El generador se ocupa de calcular fechas y dividir
-         * los rangos validados en bloques de treinta minutos.
-         *
-         * Por el momento no se proporciona la colección
-         * de feriados nacionales.
-         */
         var generatedAvailabilities =
             AvailabilitySlotGenerator.Generate(
                     request.DoctorId,
@@ -98,14 +65,6 @@ public class AvailabilityService : IAvailabilitiesService
                 request.DoctorId,
                 today);
 
-        /*
-         * Durante una actualización, las disponibilidades libres
-         * serán reemplazadas. Por eso solamente los bloques ocupados
-         * deben impedir la generación del nuevo calendario.
-         *
-         * Durante una creación, cualquier bloque existente
-         * representa un conflicto.
-         */
         var protectedAvailabilities = isUpdate
             ? existingAvailabilities
                 .Where(availability =>
@@ -117,11 +76,6 @@ public class AvailabilityService : IAvailabilitiesService
             generatedAvailabilities,
             protectedAvailabilities);
 
-        /*
-         * La eliminación se realiza después de validar y generar
-         * todo el nuevo calendario para evitar modificaciones
-         * ante una request inválida o un conflicto conocido.
-         */
         if (isUpdate)
         {
             await SoftDeleteAvailableSlotsAsync(
@@ -135,10 +89,6 @@ public class AvailabilityService : IAvailabilitiesService
             generatedAvailabilities);
     }
 
-    /// <summary>
-    /// Comprueba que el médico exista y se encuentre visible
-    /// para las consultas normales de persistencia.
-    /// </summary>
     private async Task EnsureDoctorExistsAsync(
         Guid doctorId)
     {
@@ -152,13 +102,6 @@ public class AvailabilityService : IAvailabilitiesService
         }
     }
 
-    /// <summary>
-    /// Obtiene las disponibilidades activas comprendidas entre
-    /// la fecha actual y el comienzo del mes siguiente.
-    ///
-    /// No se incluyen fechas anteriores del mismo mes porque
-    /// ya no pueden ser modificadas ni generadas nuevamente.
-    /// </summary>
     private async Task<List<Availability>>
         GetExistingAvailabilitiesAsync(
             Guid doctorId,
@@ -180,10 +123,6 @@ public class AvailabilityService : IAvailabilitiesService
         return availabilities?.ToList() ?? [];
     }
 
-    /// <summary>
-    /// Verifica que los bloques generados no se solapen
-    /// con disponibilidades almacenadas que deben conservarse.
-    /// </summary>
     private static void EnsureNoStoredConflicts(
         IReadOnlyCollection<Availability> generatedAvailabilities,
         IReadOnlyCollection<Availability> storedAvailabilities)
@@ -204,12 +143,6 @@ public class AvailabilityService : IAvailabilitiesService
         }
     }
 
-    /// <summary>
-    /// Elimina lógicamente las disponibilidades que continúan libres.
-    ///
-    /// Los bloques ocupados se conservan porque pueden estar
-    /// relacionados con turnos existentes.
-    /// </summary>
     private async Task SoftDeleteAvailableSlotsAsync(
         IEnumerable<Availability> existingAvailabilities)
     {
@@ -227,9 +160,6 @@ public class AvailabilityService : IAvailabilitiesService
         }
     }
 
-    /// <summary>
-    /// Persiste los bloques generados para el nuevo calendario.
-    /// </summary>
     private async Task PersistGeneratedAvailabilitiesAsync(
         IEnumerable<Availability> generatedAvailabilities)
     {
@@ -240,10 +170,6 @@ public class AvailabilityService : IAvailabilitiesService
         }
     }
 
-    /// <summary>
-    /// Convierte las entidades generadas al contrato
-    /// de respuesta de la API.
-    /// </summary>
     private static IEnumerable<AvailabilityModel.Response>
         MapResponses(
             IEnumerable<Availability> availabilities)
@@ -258,10 +184,6 @@ public class AvailabilityService : IAvailabilitiesService
                     availability.EndTime));
     }
 
-    /// <summary>
-    /// Comprueba que las reglas recibidas produzcan al menos
-    /// una disponibilidad futura dentro del mes actual.
-    /// </summary>
     private static void EnsureFutureSlotsWereGenerated(
         IReadOnlyCollection<Availability> generatedAvailabilities)
     {

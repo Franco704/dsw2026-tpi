@@ -5,17 +5,8 @@ using System.Globalization;
 
 namespace Dsw2026Tpi.Application.Validators;
 
-/// <summary>
-/// Valida las solicitudes relacionadas con la creación
-/// y búsqueda de turnos.
-/// </summary>
 public static class AppointmentRequestValidator
 {
-    /// <summary>
-    /// Valida los datos necesarios para reservar un turno.
-    /// Acumula todos los errores antes de lanzar
-    /// una ValidationException.
-    /// </summary>
     public static void ValidateCreate(
         AppointmentModel.Request? request)
     {
@@ -99,10 +90,6 @@ public static class AppointmentRequestValidator
         }
     }
 
-    /// <summary>
-    /// Valida los filtros y parámetros de paginación
-    /// utilizados en la búsqueda de turnos.
-    /// </summary>
     public static void ValidateSearch(
         AppointmentModel.SearchRequest? request)
     {
@@ -118,10 +105,6 @@ public static class AppointmentRequestValidator
             throw validation;
         }
 
-        /*
-         * Los filtros son opcionales, pero cuando se informan
-         * no pueden contener identificadores vacíos.
-         */
         if (request.SpecialtyId == Guid.Empty)
         {
             validation.WithDetail(
@@ -151,10 +134,6 @@ public static class AppointmentRequestValidator
             }
         }
 
-        /*
-         * Las reglas comunes se comparten con médicos
-         * y especialidades.
-         */
         PaginationRequestValidator.AddValidationDetails(
             request.PageSize,
             request.PageIndex,
@@ -165,9 +144,6 @@ public static class AppointmentRequestValidator
             throw validation;
         }
     }
-    /// <summary>
-    /// Valida los parámetros recibidos al cancelar un turno.
-    /// </summary>
     public static void ValidateCancel(
         Guid appointmentId)
     {

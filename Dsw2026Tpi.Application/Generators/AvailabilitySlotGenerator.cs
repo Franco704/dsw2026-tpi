@@ -5,35 +5,8 @@ using Dsw2026Tpi.Domain.Rules;
 
 namespace Dsw2026Tpi.Application.Generators;
 
-/// <summary>
-/// Genera bloques concretos de disponibilidad a partir
-/// de las reglas semanales configuradas para un médico.
-///
-/// Esta clase no consulta ni modifica la base de datos.
-/// Las reglas recibidas deben haber sido comprobadas previamente
-/// mediante AvailabilityRequestValidator.
-/// </summary>
 public static class AvailabilitySlotGenerator
 {
-    /// <summary>
-    /// Genera las disponibilidades comprendidas entre el momento actual
-    /// y el último día del mismo mes.
-    ///
-    /// No genera bloques para días anteriores, meses posteriores
-    /// ni horarios cuyo comienzo ya haya pasado.
-    /// </summary>
-    /// <param name="doctorId">
-    /// Identificador del médico propietario de las disponibilidades.
-    /// </param>
-    /// <param name="schedules">
-    /// Reglas semanales previamente validadas.
-    /// Puede contener varios rangos para un mismo día.
-    /// </param>
-    /// <param name="currentDateTime">
-    /// Fecha y hora desde las cuales comienza la generación.
-    /// Se recibe como parámetro para no depender directamente
-    /// del reloj del sistema dentro del generador.
-    /// </param>
     public static IReadOnlyCollection<Availability> Generate(
         Guid doctorId,
         IReadOnlyCollection<AvailabilityModel.DaySchedule> schedules,
@@ -55,11 +28,6 @@ public static class AvailabilitySlotGenerator
 
         foreach (var schedule in schedules)
         {
-            /*
-             * El nombre del día ya fue validado.
-             * La conversión es necesaria para localizar las fechas
-             * correspondientes dentro del mes actual.
-             */
             var targetDayOfWeek = DateTimeHelpers.ParseDay(
                 schedule.Day);
 
@@ -79,10 +47,6 @@ public static class AvailabilitySlotGenerator
                 generatedAvailabilities);
         }
 
-        /*
-         * Las reglas pueden llegar en cualquier orden.
-         * Se devuelve un calendario ordenado por fecha y hora.
-         */
         return generatedAvailabilities
             .OrderBy(availability =>
                 availability.Date)
@@ -91,10 +55,6 @@ public static class AvailabilitySlotGenerator
             .ToList();
     }
 
-    /// <summary>
-    /// Busca dentro del período las fechas que coinciden
-    /// con el día semanal configurado.
-    /// </summary>
     private static void GenerateScheduleAvailabilities(
         Guid doctorId,
         AvailabilityModel.DaySchedule schedule,
@@ -124,13 +84,6 @@ public static class AvailabilitySlotGenerator
         }
     }
 
-    /// <summary>
-    /// Divide un rango diario en bloques consecutivos
-    /// de treinta minutos.
-    ///
-    /// Si la fecha corresponde al día actual, descarta los bloques
-    /// cuyo horario de inicio sea anterior al momento recibido.
-    /// </summary>
     private static void GenerateDailySlots(
         Guid doctorId,
         DateTime date,
@@ -153,11 +106,6 @@ public static class AvailabilitySlotGenerator
             var slotStartDateTime = date.Date.Add(
                 currentStart);
 
-            /*
-             * Se controla el inicio, no el final.
-             * Un bloque parcialmente transcurrido tampoco puede
-             * publicarse como una disponibilidad nueva.
-             */
             if (slotStartDateTime < currentDateTime)
             {
                 continue;

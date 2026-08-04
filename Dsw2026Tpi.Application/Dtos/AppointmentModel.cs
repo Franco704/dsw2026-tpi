@@ -26,10 +26,6 @@
         int PageSize = 10,
         int PageIndex = 1);
 
-    /*
-     * Los nombres AppointmentsId y AppointmentsStatus
-     * respetan literalmente el contrato 1.6.
-     */
     public record SearchResponse(
         Guid AppointmentsId,
         string AppointmentsStatus,

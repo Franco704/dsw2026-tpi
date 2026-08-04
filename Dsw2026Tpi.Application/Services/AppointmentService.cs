@@ -11,20 +11,12 @@ using System.Globalization;
 using Dsw2026Tpi.Application.Mappers;
 namespace Dsw2026Tpi.Application.Services;
 
-/// <summary>
-/// Gestiona los casos de uso relacionados con turnos,
-/// incluyendo reserva, consulta, cancelación y búsqueda.
-/// </summary>
 public class AppointmentService : IAppointmentService
 {
     private readonly IPersistence _persistence;
     private readonly IPatientAccessService _patientAccessService;
     private readonly ILogger<AppointmentService> _logger;
 
-    /// <summary>
-    /// Inicializa el servicio con las abstracciones necesarias
-    /// para persistir turnos, resolver pacientes y registrar eventos.
-    /// </summary>
     public AppointmentService(
         IPersistence persistence,
         IPatientAccessService patientAccessService,
@@ -35,9 +27,6 @@ public class AppointmentService : IAppointmentService
         _logger = logger;
     }
 
-    /// <summary>
-    /// Reserva un turno para el paciente autenticado.
-    /// </summary>
     public async Task<AppointmentModel.Response> CreateAsync(
         AppointmentModel.Request request,
         string authenticatedEmail)
@@ -83,17 +72,12 @@ public class AppointmentService : IAppointmentService
 
         availability.MarkAsUnavailable();
 
-        /*
-         * Appointment se agrega y Availability ya está trackeada.
-         * SaveChangesAsync persiste ambas modificaciones.
-         */
         try
         {
             await _persistence.Add(appointment);
         }
         catch (DbUpdateException ex)
         {
-            // Otro request reservó el mismo slot al mismo tiempo, el índice único lo frenó en config.
             _logger.LogWarning(ex,
                 "Reserva concurrente rechazada por el índice único. Disponibilidad {AvailabilityId}, paciente {PatientId}.",
                 availability.Id,
@@ -114,10 +98,6 @@ public class AppointmentService : IAppointmentService
         return AppointmentMapper.ToResponse(
             appointment);
     }
-    /// <summary>
-    /// Obtiene los turnos activos del paciente autenticado,
-    /// verificando que el DNI solicitado sea el propio.
-    /// </summary>
     public async Task<IReadOnlyCollection<AppointmentModel.Response>>
         GetActiveByPatientDniAsync(
             long dni,
@@ -150,10 +130,6 @@ public class AppointmentService : IAppointmentService
                 AppointmentMapper.ToResponse)
             .ToList();
     }
-    /// <summary>
-    /// Cancela un turno perteneciente al paciente autenticado
-    /// y libera la disponibilidad asociada.
-    /// </summary>
     public async Task CancelAsync(
         Guid appointmentId,
         string authenticatedEmail)
@@ -184,10 +160,6 @@ public class AppointmentService : IAppointmentService
         appointment.Cancel();
         availability.MarkAsAvailable();
 
-        /*
-         * Ambas entidades fueron obtenidas desde el mismo DbContext.
-         * Update confirma conjuntamente los cambios pendientes.
-         */
         await _persistence.Update(
             appointment);
 
@@ -198,15 +170,10 @@ public class AppointmentService : IAppointmentService
             availability.Id);
     }
 
-    /// <summary>
-    /// Busca turnos utilizando filtros opcionales
-    /// y devuelve los resultados paginados.
-    /// </summary>
     public async Task<Pagination<AppointmentModel.SearchResponse>>
         SearchAsync(
             AppointmentModel.SearchRequest request)
     {
-        // Valida los filtros y parámetros de paginación.
         AppointmentRequestValidator.ValidateSearch(
             request);
 
@@ -219,10 +186,6 @@ public class AppointmentService : IAppointmentService
         var dateTo =
             dateFrom?.AddDays(1);
 
-        /*
-         * Aplica únicamente los filtros que fueron informados
-         * y carga las navegaciones necesarias para la respuesta.
-         */
         var appointments =
             await _persistence.Paginate<Appointment, DateTime>(
                 request.PageSize,
@@ -266,10 +229,6 @@ public class AppointmentService : IAppointmentService
             AppointmentMapper.ToSearchResponse);
     }
 
-    /// <summary>
-    /// Comprueba que el DNI solicitado corresponda
-    /// al paciente autenticado.
-    /// </summary>
     private void EnsurePatientDniMatches(
         Patient patient,
         long requestedDni)
@@ -290,9 +249,6 @@ public class AppointmentService : IAppointmentService
         throw new AuthorizationException();
     }
 
-    /// <summary>
-    /// Obtiene un médico activo o informa que no existe.
-    /// </summary>
     private async Task<Doctor> GetRequiredDoctorAsync(
         Guid doctorId)
     {
@@ -311,9 +267,6 @@ public class AppointmentService : IAppointmentService
         return doctor;
     }
 
-    /// <summary>
-    /// Obtiene una disponibilidad o informa que no existe.
-    /// </summary>
     private async Task<Availability> GetRequiredAvailabilityAsync(
         Guid availabilityId)
     {
@@ -330,10 +283,6 @@ public class AppointmentService : IAppointmentService
         return availability;
     }
 
-    /// <summary>
-    /// Comprueba que la disponibilidad seleccionada
-    /// pertenezca al médico solicitado.
-    /// </summary>
     private static void EnsureAvailabilityBelongsToDoctor(
         Availability availability,
         Guid doctorId)
@@ -348,10 +297,6 @@ public class AppointmentService : IAppointmentService
             nameof(ErrorCodes.APPOINTMENT_CONFLICT));
     }
 
-    /// <summary>
-    /// Comprueba que el bloque pueda reservarse y devuelve
-    /// la fecha y hora concreta del turno.
-    /// </summary>
     private static DateTime GetBookableScheduledAt(
         Availability availability)
     {
@@ -376,10 +321,6 @@ public class AppointmentService : IAppointmentService
         return scheduledAt;
     }
 
-    /// <summary>
-    /// Comprueba que no exista otro turno reservado
-    /// para la misma disponibilidad.
-    /// </summary>
     private async Task EnsureNoBookedAppointmentExistsAsync(
         Guid availabilityId)
     {
@@ -397,10 +338,6 @@ public class AppointmentService : IAppointmentService
         }
     }
 
-    /// <summary>
-    /// Obtiene un turno mediante su identificador
-    /// o informa que no existe.
-    /// </summary>
     private async Task<Appointment> GetRequiredAppointmentAsync(
         Guid appointmentId)
     {
@@ -417,10 +354,6 @@ public class AppointmentService : IAppointmentService
         return appointment;
     }
 
-    /// <summary>
-    /// Comprueba que el turno pertenezca
-    /// al paciente autenticado.
-    /// </summary>
     private static void EnsureAppointmentBelongsToPatient(
         Appointment appointment,
         Patient patient)
@@ -433,9 +366,6 @@ public class AppointmentService : IAppointmentService
         throw new AuthorizationException();
     }
 
-    /// <summary>
-    /// Comprueba que el turno todavía pueda cancelarse.
-    /// </summary>
     private static void EnsureAppointmentCanBeCancelled(
         Appointment appointment)
     {

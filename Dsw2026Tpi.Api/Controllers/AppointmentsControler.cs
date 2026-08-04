@@ -158,9 +158,6 @@ public class AppointmentsController : AppController
         return Ok(appointments);
     }
 
-    /// <summary>
-    /// Obtiene del JWT el email del paciente autenticado.
-    /// </summary>
     private string GetAuthenticatedEmail()
     {
         var authenticatedEmail = User.Identity?.Name;

@@ -6,16 +6,8 @@ using System.Threading.RateLimiting;
 
 namespace Dsw2026Tpi.Api.Configurations;
 
-/// <summary>
-/// Configura las políticas de rate limiting utilizadas por la API.
-/// Los límites se obtienen desde appsettings.
-/// </summary>
 public static class RateLimitingConfigurationExtensions
 {
-    /// <summary>
-    /// Registra las políticas generales y específicas
-    /// requeridas por el contrato de la API.
-    /// </summary>
     public static IServiceCollection AddAppRateLimiting(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -23,10 +15,6 @@ public static class RateLimitingConfigurationExtensions
         ArgumentNullException.ThrowIfNull(
             configuration);
 
-        /*
-         * Obtiene la configuración completa y detiene
-         * el inicio si la sección no existe.
-         */
         var settings = configuration
             .GetRequiredSection(
                 RateLimitingSettings.SectionName)
@@ -34,10 +22,6 @@ public static class RateLimitingConfigurationExtensions
             ?? throw new InvalidOperationException(
                 "No se pudo obtener la configuración de rate limiting.");
 
-        /*
-         * Comprueba los límites antes de registrar
-         * las políticas en el contenedor.
-         */
         settings.Validate();
 
         services.AddRateLimiter(options =>
@@ -45,10 +29,6 @@ public static class RateLimitingConfigurationExtensions
             options.RejectionStatusCode =
                 StatusCodes.Status429TooManyRequests;
 
-            /*
-             * Los logins se limitan por dirección IP
-             * porque todavía no existe un usuario autenticado.
-             */
             AddIpPolicy(
                 options,
                 RateLimitPolicies.AdminLogin,
@@ -59,19 +39,11 @@ public static class RateLimitingConfigurationExtensions
                 RateLimitPolicies.PatientLogin,
                 settings.PatientLogin);
 
-            /*
-             * La política general utiliza el usuario autenticado.
-             * Para solicitudes anónimas utiliza la dirección IP.
-             */
             AddUserOrIpPolicy(
                 options,
                 RateLimitPolicies.General,
                 settings.General);
 
-            /*
-             * La reserva utiliza el usuario autenticado
-             * para mantener un contador independiente por paciente.
-             */
             AddUserOrIpPolicy(
                 options,
                 RateLimitPolicies.AppointmentBooking,
@@ -84,10 +56,6 @@ public static class RateLimitingConfigurationExtensions
         return services;
     }
 
-    /// <summary>
-    /// Registra una política de ventana fija
-    /// particionada por dirección IP.
-    /// </summary>
     private static void AddIpPolicy(
         RateLimiterOptions options,
         string policyName,
@@ -103,10 +71,6 @@ public static class RateLimitingConfigurationExtensions
                         settings)));
     }
 
-    /// <summary>
-    /// Registra una política particionada por usuario autenticado.
-    /// Si la solicitud es anónima, utiliza su dirección IP.
-    /// </summary>
     private static void AddUserOrIpPolicy(
         RateLimiterOptions options,
         string policyName,
@@ -122,10 +86,6 @@ public static class RateLimitingConfigurationExtensions
                         settings)));
     }
 
-    /// <summary>
-    /// Construye las opciones de una ventana fija
-    /// a partir de los valores obtenidos desde appsettings.
-    /// </summary>
     private static FixedWindowRateLimiterOptions
         CreateFixedWindowOptions(
             RateLimitPolicySettings settings)
@@ -150,10 +110,6 @@ public static class RateLimitingConfigurationExtensions
         };
     }
 
-    /// <summary>
-    /// Obtiene una clave estable a partir
-    /// de la dirección IP de la solicitud.
-    /// </summary>
     private static string GetIpPartitionKey(
         HttpContext context)
     {
@@ -164,10 +120,6 @@ public static class RateLimitingConfigurationExtensions
         return $"ip:{ipAddress ?? "unknown"}";
     }
 
-    /// <summary>
-    /// Obtiene una clave por usuario autenticado
-    /// o utiliza la IP cuando no existe identidad.
-    /// </summary>
     private static string GetUserOrIpPartitionKey(
         HttpContext context)
     {
@@ -190,10 +142,6 @@ public static class RateLimitingConfigurationExtensions
             context);
     }
 
-    /// <summary>
-    /// Registra el rechazo y devuelve el body
-    /// contractual con status HTTP 429.
-    /// </summary>
     private static async ValueTask
         HandleRejectedRequestAsync(
             OnRejectedContext context,

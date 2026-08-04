@@ -11,7 +11,6 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
-        // Inicializa un logger básico antes de construir la aplicación.
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
             .CreateBootstrapLogger();
@@ -24,7 +23,6 @@ public class Program
             var builder =
                 WebApplication.CreateBuilder(args);
 
-            // Configuraciones personalizadas de la aplicación.
             builder.AddSerilogConfiguration();
 
             builder.Services.AddAppIdentity();
@@ -78,13 +76,8 @@ public class Program
                 builder.Configuration);
             var app = builder.Build();
 
-            await app.SeedInitialAdminAsync();  // pagina 10: Las credenciales del Admin se inicializan en el momento de inicialización del sistema 
-                                                // por primera vez.
+            await app.SeedInitialAdminAsync();
 
-           /*
-           * Procesa primero la IP y el esquema originales
-           * enviados por proxies confiables como ngrok.
-           */
             app.UseForwardedHeaders();
 
             app.UseSerilogRequestLogging();
@@ -100,35 +93,18 @@ public class Program
                 app.UseSwaggerUI();
             }
 
-            /*
-             * El middleware de excepciones se registra antes
-             * de los componentes que ejecutan los endpoints.
-             */
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-            /*
-             * Resuelve el endpoint antes de aplicar CORS,
-             * autenticación y políticas específicas de rate limiting.
-             */
             app.UseRouting();
 
             app.UseCors();
 
-            /*
-             * La autenticación debe ejecutarse antes del rate limiter
-             * para que posteriormente puedan aplicarse límites
-             * utilizando la identidad del usuario.
-             */
             app.UseAuthentication();
 
             app.UseRateLimiter();
 
             app.UseAuthorization();
 
-            /*
-             * Aplica temporalmente la política general de
-             * cien solicitudes por minuto a los controladores.
-             */
             app.MapControllers();
             app.MapHealthChecks(
                     "/health-check")
