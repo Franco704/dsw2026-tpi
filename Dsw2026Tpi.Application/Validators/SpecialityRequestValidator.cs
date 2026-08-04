@@ -1,5 +1,6 @@
 ﻿using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.CrossCutting.Exceptions;
+using Dsw2026Tpi.Domain.Rules;
 
 namespace Dsw2026Tpi.Application.Validators;
 
@@ -16,8 +17,7 @@ public static class SpecialityRequestValidator
     public static void Validate(
         SpecialtyModel.Request? request)
     {
-        var validation =
-            new ValidationException();
+        var validation = new ValidationException();
 
         if (request is null)
         {
@@ -37,8 +37,7 @@ public static class SpecialityRequestValidator
             request.Description,
             validation);
 
-        ThrowIfInvalid(
-            validation);
+        ThrowIfInvalid(validation);
     }
 
     /// <summary>
@@ -50,8 +49,7 @@ public static class SpecialityRequestValidator
         int pageIndex,
         string? name)
     {
-        var validation =
-            new ValidationException();
+        var validation = new ValidationException();
 
         PaginationRequestValidator.AddValidationDetails(
             pageSize,
@@ -63,8 +61,7 @@ public static class SpecialityRequestValidator
             validation,
             isRequired: false);
 
-        ThrowIfInvalid(
-            validation);
+        ThrowIfInvalid(validation);
     }
 
     /// <summary>
@@ -76,20 +73,23 @@ public static class SpecialityRequestValidator
         ValidationException validation,
         bool isRequired)
     {
-        if (name is null)
+        if (string.IsNullOrWhiteSpace(name))
         {
             if (isRequired)
             {
                 validation.WithDetail(
                     "name",
-                    "El nombre debe tener entre 3 y 100 caracteres.");
+                    "required");
             }
 
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(name) ||
-            name.Trim().Length is < 3 or > 100)
+        var normalizedName = name.Trim();
+
+        if (normalizedName.Length is
+            < SpecialtyRules.MinimumNameLength
+            or > SpecialtyRules.MaximumNameLength)
         {
             validation.WithDetail(
                 "name",
@@ -105,8 +105,20 @@ public static class SpecialityRequestValidator
         string? description,
         ValidationException validation)
     {
-        if (string.IsNullOrWhiteSpace(description) ||
-            description.Trim().Length is < 10 or > 100)
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            validation.WithDetail(
+                "description",
+                "La descripción debe tener entre 10 y 100 caracteres.");
+
+            return;
+        }
+
+        var normalizedDescription = description.Trim();
+
+        if (normalizedDescription.Length is
+            < SpecialtyRules.MinimumDescriptionLength
+            or > SpecialtyRules.MaximumDescriptionLength)
         {
             validation.WithDetail(
                 "description",

@@ -36,7 +36,7 @@ public class AuthenticationController : AppController
         // Devuelve el email del administrador creado.
         return Ok(result.Email);
     }
-
+        
 
     [AllowAnonymous]
     [EnableRateLimiting(RateLimitPolicies.AdminLogin)]
@@ -73,3 +73,5 @@ public class AuthenticationController : AppController
         return Ok(result);
     }
 }
+//IActionResult permite devolver distintos resultados HTTP, como Ok(), BadRequest() o Unauthorized()
+//[FromBody] hace que ASP.NET Core deserialice el JSON y construya el DTO Request.

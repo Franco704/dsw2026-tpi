@@ -2,7 +2,7 @@
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Application.Validators;
 using Dsw2026Tpi.CrossCutting.Exceptions;
-using Dsw2026Tpi.CrossCutting.Helpers;
+using Dsw2026Tpi.Application.Mappers;
 using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
@@ -52,7 +52,7 @@ public class DoctorService : IDoctorService
         var createdDoctor =
             await _persistence.Add(doctor);
 
-        return MapResponse(
+        return DoctorMapper.ToResponse(
             createdDoctor);
     }
 
@@ -99,13 +99,17 @@ public class DoctorService : IDoctorService
         var updatedDoctor =
             await _persistence.Update(doctor);
 
-        return MapResponse(
+        return DoctorMapper.ToResponse(
             updatedDoctor);
     }
 
     /// <summary>
     /// Obtiene una página de médicos activos,
     /// con filtro opcional por nombre.
+    ///
+    /// Los médicos continúan visibles cuando su especialidad
+    /// fue eliminada lógicamente. En ese caso, la respuesta
+    /// contiene specialty con valor null.
     /// </summary>
     public async Task<Pagination<DoctorModel.Response>> GetAll(
         int pageSize,
@@ -120,23 +124,86 @@ public class DoctorService : IDoctorService
         var normalizedName =
             name?.Trim();
 
-        var doctors =
+        /*
+         * La navegación Specialty no se incluye en esta consulta.
+         *
+         * Un Include aplicaría el query filter de Specialty y
+         * ocultaría también al médico cuando su especialidad
+         * estuviera eliminada.
+         */
+        var doctorsPage =
             await _persistence.Paginate<Doctor, string>(
                 pageSize,
                 pageIndex,
                 doctor =>
                     doctor.IsActive &&
+                    !doctor.Deleted &&
                     (
                         string.IsNullOrWhiteSpace(normalizedName) ||
                         doctor.Name.Contains(normalizedName)
                     ),
-                doctor => doctor.Name,
-                nameof(Doctor.Speciality));
+                doctor =>
+                    doctor.Name);
 
-        return doctors.Map(
-            MapResponse);
+        var doctors =
+            doctorsPage.Data.ToList();
+
+        /*
+         * Se obtienen en una única consulta las especialidades
+         * activas utilizadas por los médicos de esta página.
+         *
+         * El query filter de Specialty excluye automáticamente
+         * las especialidades eliminadas.
+         */
+        var specialtyIds = doctors
+            .Select(doctor =>
+                doctor.SpecialityId)
+            .Distinct()
+            .ToList();
+
+        var activeSpecialties =
+            new List<Specialty>();
+
+        if (specialtyIds.Count > 0)
+        {
+            activeSpecialties =
+                (
+                    await _persistence.GetFiltered<Specialty>(
+                        specialty =>
+                            specialtyIds.Contains(
+                                specialty.Id))
+                )?.ToList() ?? [];
+        }
+
+        var specialtiesById =
+            activeSpecialties.ToDictionary(
+                specialty =>
+                    specialty.Id);
+
+        /*
+         * Si el diccionario no contiene la especialidad,
+         * significa que fue eliminada lógicamente.
+         * El mapper devolverá specialty con valor null.
+         */
+        var responses = doctors
+            .Select(doctor =>
+            {
+                specialtiesById.TryGetValue(
+                    doctor.SpecialityId,
+                    out var specialty);
+
+                return DoctorMapper.ToResponse(
+                    doctor,
+                    specialty);
+            })
+            .ToList();
+
+        return new Pagination<DoctorModel.Response>(
+            doctorsPage.PageSize,
+            doctorsPage.PageIndex,
+            doctorsPage.Total,
+            responses);
     }
-
     /// <summary>
     /// Obtiene los bloques de disponibilidad del médico
     /// correspondientes al mes actual.
@@ -180,17 +247,14 @@ public class DoctorService : IDoctorService
         }
 
         return availabilities
-            .OrderBy(availability =>
-                availability.Date)
-            .ThenBy(availability =>
-                availability.StartTime)
-            .Select(
+            .OrderBy(
                 availability =>
-                    new DoctorModel.AvailabilityResponse(
-                        availability.Id,
-                        availability.Date.DayOfWeek.ToSpanish(),
-                        availability.StartTime.ToTimeString(),
-                        availability.EndTime.ToTimeString()))
+                    availability.Date)
+            .ThenBy(
+                availability =>
+                    availability.StartTime)
+            .Select(
+                DoctorMapper.ToAvailabilityResponse)
             .ToList();
     }
 
@@ -261,19 +325,4 @@ public class DoctorService : IDoctorService
         return specialty;
     }
 
-    /// <summary>
-    /// Convierte una entidad Doctor al contrato
-    /// público de respuesta.
-    /// </summary>
-    private static DoctorModel.Response MapResponse(
-        Doctor doctor)
-    {
-        return new DoctorModel.Response(
-            doctor.Id,
-            doctor.Name,
-            doctor.LicenseNumber,
-            new DoctorModel.SpecialtyDto(
-                doctor.Speciality?.Id,
-                doctor.Speciality?.Name));
-    }
 }

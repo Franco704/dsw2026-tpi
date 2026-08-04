@@ -38,9 +38,6 @@ public class AppointmentService : IAppointmentService
     /// <summary>
     /// Reserva un turno para el paciente autenticado.
     /// </summary>
-    /// <summary>
-    /// Reserva un turno para el paciente autenticado.
-    /// </summary>
     public async Task<AppointmentModel.Response> CreateAsync(
         AppointmentModel.Request request,
         string authenticatedEmail)
@@ -121,10 +118,6 @@ public class AppointmentService : IAppointmentService
     /// Obtiene los turnos activos del paciente autenticado,
     /// verificando que el DNI solicitado sea el propio.
     /// </summary>
-    /// <summary>
-    /// Obtiene los turnos activos del paciente autenticado,
-    /// verificando que el DNI solicitado sea el propio.
-    /// </summary>
     public async Task<IReadOnlyCollection<AppointmentModel.Response>>
         GetActiveByPatientDniAsync(
             long dni,
@@ -157,10 +150,6 @@ public class AppointmentService : IAppointmentService
                 AppointmentMapper.ToResponse)
             .ToList();
     }
-    /// <summary>
-    /// Cancela un turno perteneciente al paciente autenticado
-    /// y libera la disponibilidad asociada.
-    /// </summary>
     /// <summary>
     /// Cancela un turno perteneciente al paciente autenticado
     /// y libera la disponibilidad asociada.

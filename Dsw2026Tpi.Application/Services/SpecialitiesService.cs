@@ -29,10 +29,6 @@ public class SpecialitiesService : ISpecialitiesService
     /// Obtiene una página de especialidades,
     /// con filtro opcional por nombre.
     /// </summary>
-    /// <summary>
-    /// Obtiene una página de especialidades,
-    /// con filtro opcional por nombre.
-    /// </summary>
     public async Task<Pagination<SpecialtyModel.Response>> GetAll(
         int pageSize,
         int pageIndex,
@@ -128,10 +124,12 @@ public class SpecialitiesService : ISpecialitiesService
         }
 
         // Comprueba que el nombre no pertenezca a otra especialidad.
+        var nameSpeciality = request.Name.Trim();
+        
         var sameName =
             await _persistence.First<Specialty>(
                 speciality =>
-                    speciality.Name == request.Name);
+                    speciality.Name == nameSpeciality);
 
         if (sameName is not null &&
             sameName.Id != id)
@@ -157,9 +155,6 @@ public class SpecialitiesService : ISpecialitiesService
             existing.Description);
     }
 
-    /// <summary>
-    /// Desactiva lógicamente una especialidad existente.
-    /// </summary>
     /// <summary>
     /// Elimina lógicamente una especialidad existente.
     /// </summary>

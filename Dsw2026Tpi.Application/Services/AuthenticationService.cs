@@ -155,12 +155,8 @@ public class AuthenticationService : IAuthenticationService
         RegisterModel.Request request)
     {
         // Valida el formato del email recibido.
-        if (!request.Email.IsEmailValid())
-        {
-            throw new ValidationException(
-                ErrorCodes.REGISTER_USER_INVALID,
-                nameof(ErrorCodes.REGISTER_USER_INVALID));
-        }
+        AuthenticationRequestValidator.ValidateEmail(
+            request.Email);
 
         var normalizedEmail = request.Email
             .Trim()
@@ -252,63 +248,3 @@ public class AuthenticationService : IAuthenticationService
             normalizedEmail);
     }
 }
-
-/*
- * DECISIONES TOMADAS:
- *
- * - Se mantuvo la estructura original de AuthenticationService.
- *
- * - UserManager continúa utilizándose únicamente en Register,
- *   ya que ese endpoint todavía se conserva de manera temporal.
- *
- * - LoginAdmin utiliza AuthenticationException cuando las
- *   credenciales, el rol o el UserName impiden completar el login.
- *
- * - AuthenticationException utiliza internamente el código
- *   AUTHENTICATION_FAILED y evita revelar información sensible.
- *
- * - LoginPatient delega la autenticación y creación del paciente
- *   en IPatientAccessService.
- *
- * - REGISTER_USER_INVALID se utiliza cuando los datos básicos
- *   del registro no son válidos.
- *
- * - REGISTER_USER_CONFLICT se utiliza cuando Identity no puede
- *   crear el usuario o asignarle el rol requerido.
- *
- * - ConflictException recibe primero el mensaje y luego
- *   el código de error.
- *
- * - Los errores detallados de Identity se agregan mediante
- *   WithDetail y también se registran mediante ILogger.
- *
- * - El email se normaliza antes de utilizarse en Identity,
- *   persistencia o generación del token.
- *
- * - Se utiliza DateTime.Now para mantener el criterio temporal
- *   definido para el proyecto.
- *
- * CONSIDERACIONES PARA REVISAR:
- *
- * - Según la consigna actual, el endpoint Register debería
- *   eliminarse cuando quede operativa la semilla del administrador.
- *
- * - Cuando Register sea eliminado, UserManager dejará de ser una
- *   dependencia directa de AuthenticationService.
- *
- * - La creación del usuario y la asignación del rol no forman
- *   una transacción atómica. DeleteAsync realiza una reversión
- *   compensatoria, pero la reversión también podría fallar.
- *
- * - Exponer las descripciones completas de Identity mediante
- *   WithDetail puede revelar reglas internas de seguridad.
- *   Debe decidirse si esos detalles se devuelven al cliente
- *   o solamente se conservan en los logs.
- *
- * - LoginAdmin genera el token con UserName, mientras LoginPatient
- *   lo genera con el email normalizado. Conviene confirmar que
- *   ambos valores representan de forma consistente el claim Name.
- *
- * - AuthenticationService no comprueba directamente Deleted;
- *   esa responsabilidad queda encapsulada en IdentityAccessService.
- */

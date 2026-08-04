@@ -1,6 +1,9 @@
 using Dsw2026Tpi.Api.Configurations;
 using Dsw2026Tpi.Api.Middlewares;
+using Microsoft.AspNetCore.Mvc;
 using Serilog;
+using Dsw2026Tpi.CrossCutting.Models;
+using Dsw2026Tpi.CrossCutting.Resources;
 
 namespace Dsw2026Tpi.Api;
 
@@ -40,17 +43,48 @@ public class Program
 
             builder.Services.AddAppDependencies();
             builder.Services.AddControllers();
+
+
+            builder.Services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.InvalidModelStateResponseFactory = context =>
+                {
+                    var error = new ErrorResponse(
+                        nameof(ErrorCodes.VALIDATION_ERROR),
+                        ErrorCodes.VALIDATION_ERROR);
+
+                    foreach (var entry in context.ModelState)
+                    {
+                        if (entry.Value.Errors.Count == 0)
+                        {
+                            continue;
+                        }
+                        var field = entry.Key.StartsWith("$.")
+                            ? entry.Key[2..]
+                            : entry.Key;
+                        if (string.IsNullOrWhiteSpace(field))
+                        {
+                            field = "request";
+                        }
+                        error.AddDetail(field, "invalid_format");
+                    }
+                    return new BadRequestObjectResult(error);
+                };
+            });
+
+
             builder.Services.AddHealthChecks();
             builder.Services.AddAppRateLimiting(
                 builder.Configuration);
             var app = builder.Build();
 
-            await app.SeedInitialAdminAsync();
+            await app.SeedInitialAdminAsync();  // pagina 10: Las credenciales del Admin se inicializan en el momento de inicialización del sistema 
+                                                // por primera vez.
 
-            /*
-             * Procesa primero la IP y el esquema originales
-             * enviados por proxies confiables como ngrok.
-             */
+           /*
+           * Procesa primero la IP y el esquema originales
+           * enviados por proxies confiables como ngrok.
+           */
             app.UseForwardedHeaders();
 
             app.UseSerilogRequestLogging();

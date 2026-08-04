@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace Dsw2026Tpi.Api.Controllers;
 
 [Route("api/appointments")]
-
 public class AppointmentsController : AppController
 {
     private readonly IAppointmentService _appointmentService;
@@ -24,8 +23,8 @@ public class AppointmentsController : AppController
     }
 
     [HttpPost]
-    [EnableRateLimiting(
-        RateLimitPolicies.AppointmentBooking)]
+    [Authorize(Policy = Policies.PatientPolicy)]
+    [EnableRateLimiting(RateLimitPolicies.AppointmentBooking)]
     [ProducesResponseType(
         typeof(AppointmentModel.Response),
         StatusCodes.Status201Created)]
@@ -41,19 +40,18 @@ public class AppointmentsController : AppController
     [ProducesResponseType(
         typeof(ErrorResponse),
         StatusCodes.Status404NotFound)]
-    //Entra en conflicto con el slot de la cita
     [ProducesResponseType(
         typeof(ErrorResponse),
         StatusCodes.Status409Conflict)]
-    [Authorize(Policy = Policies.PatientPolicy)]
     public async Task<IActionResult> Create(
         [FromBody] AppointmentModel.Request request)
     {
         var authenticatedEmail = GetAuthenticatedEmail();
 
-        var appointment = await _appointmentService.CreateAsync(
-            request,
-            authenticatedEmail);
+        var appointment =
+            await _appointmentService.CreateAsync(
+                request,
+                authenticatedEmail);
 
         return Created(
             $"/api/appointments/{appointment.Id}",
@@ -61,20 +59,20 @@ public class AppointmentsController : AppController
     }
 
     [HttpGet("patient")]
+    [Authorize(Policy = Policies.PatientPolicy)]
     [ProducesResponseType(
         typeof(IReadOnlyCollection<AppointmentModel.Response>),
         StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [Authorize(Policy = Policies.PatientPolicy)]
     public async Task<IActionResult> GetActiveByPatientDni(
         [FromQuery] long dni)
     {
         var authenticatedEmail = GetAuthenticatedEmail();
 
-        var appointments = await _appointmentService
-            .GetActiveByPatientDniAsync(
+        var appointments =
+            await _appointmentService.GetActiveByPatientDniAsync(
                 dni,
                 authenticatedEmail);
 
@@ -82,25 +80,19 @@ public class AppointmentsController : AppController
     }
 
     [HttpDelete("{appointmentId:guid}")]
+    [Authorize(Policy = Policies.PatientPolicy)]
     [ProducesResponseType(
         typeof(string),
         StatusCodes.Status200OK)]
-    [ProducesResponseType(
-        StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(
-        StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(
-        StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(
-        StatusCodes.Status404NotFound)]
-    [ProducesResponseType(
-        StatusCodes.Status409Conflict)]
-    [Authorize(Policy = Policies.PatientPolicy)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Cancel(
-        Guid appointmentId)
+        [FromRoute] Guid appointmentId)
     {
-        var authenticatedEmail =
-            GetAuthenticatedEmail();
+        var authenticatedEmail = GetAuthenticatedEmail();
 
         await _appointmentService.CancelAsync(
             appointmentId,
@@ -112,15 +104,15 @@ public class AppointmentsController : AppController
     [HttpGet]
     [Authorize(Policy = Policies.AdminPolicy)]
     [ProducesResponseType(
-    typeof(Pagination<AppointmentModel.SearchResponse>),
-    StatusCodes.Status200OK)]
+        typeof(Pagination<AppointmentModel.SearchResponse>),
+        StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetByDate(
-    [FromQuery] DateTime date,
-    [FromQuery] int pageSize = 10,
-    [FromQuery] int pageIndex = 1)
+        [FromQuery] DateTime date,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int pageIndex = 1)
     {
         var request = new AppointmentModel.SearchRequest(
             SpecialtyId: null,
@@ -135,38 +127,42 @@ public class AppointmentsController : AppController
 
         return Ok(appointments);
     }
+
     [HttpGet("search")]
     [Authorize(Policy = Policies.AdminPolicy)]
     [ProducesResponseType(
-    typeof(Pagination<AppointmentModel.SearchResponse>),
-    StatusCodes.Status200OK)]
+        typeof(Pagination<AppointmentModel.SearchResponse>),
+        StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Search(
-    [FromQuery] Guid? specialtyId,
-    [FromQuery] Guid? doctorId,
-    [FromQuery] long? dni,
-    [FromQuery] DateTime? date,
-    [FromQuery] int pageSize = 10,
-    [FromQuery] int pageIndex = 1)
+        [FromQuery] Guid? specialtyId,
+        [FromQuery] Guid? doctorId,
+        [FromQuery] long? dni,
+        [FromQuery] DateTime? date,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int pageIndex = 1)
     {
         var request = new AppointmentModel.SearchRequest(
-            specialtyId,
-            doctorId,
-            dni,
-            date,
-            pageSize,
-            pageIndex);
+            SpecialtyId: specialtyId,
+            DoctorId: doctorId,
+            Dni: dni,
+            Date: date,
+            PageSize: pageSize,
+            PageIndex: pageIndex);
 
         var appointments =
             await _appointmentService.SearchAsync(request);
 
         return Ok(appointments);
     }
+
+    /// <summary>
+    /// Obtiene del JWT el email del paciente autenticado.
+    /// </summary>
     private string GetAuthenticatedEmail()
     {
-        //Funcion para obtener el email del usuario autenticado desde el token JWT, si no esta autenticado devuelve una excepcion de autenticacion
         var authenticatedEmail = User.Identity?.Name;
 
         if (string.IsNullOrWhiteSpace(authenticatedEmail))
