@@ -65,4 +65,18 @@ public static class DoctorMapper
             EndTime:
                 availability.EndTime.ToTimeString());
     }
+    public static DoctorModel.SlotResponse 
+        ToSlotResponse(
+            Availability availability)
+    {
+        ArgumentNullException.ThrowIfNull(
+            availability);
+
+        return new DoctorModel.SlotResponse(
+            Id: availability.Id,
+            Date: availability.Date,
+            StartTime: availability.StartTime.ToTimeString(),
+            EndTime: availability.EndTime.ToTimeString(),
+            IsAvailable: availability.IsAvailable);
+    }
 }

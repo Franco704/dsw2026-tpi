@@ -106,6 +106,46 @@ namespace PruebasUnitarias
             Assert.True(pasa(medicoCardio));
             Assert.Equal(!filtrar, pasa(medicoTrauma));
         }
+        [Fact]
+        public async Task GetSlots_CuandoElRangoSupera31Dias_EntoncesLanzaValidationException()
+        {
+            var from = DateTime.Today;
 
+            await Assert.ThrowsAsync<ValidationException>(() =>
+                _service.GetDoctorSlotsAsync(Guid.NewGuid(), from, from.AddDays(40)));
+        }
+
+        [Fact]
+        public async Task GetSlots_CuandoElMedicoNoExiste_EntoncesLanzaEntityNotFoundException()
+        {
+            _persistence.GetById<Doctor>(Arg.Any<Guid>(), Arg.Any<string[]>())
+                .Returns((Doctor?)null);
+
+            await Assert.ThrowsAsync<EntityNotFoundException>(() =>
+                _service.GetDoctorSlotsAsync(Guid.NewGuid(), DateTime.Today, DateTime.Today.AddDays(5)));
+        }
+
+        [Fact]
+        public async Task GetSlots_CuandoHayTurnosDeHoyYaPasados_EntoncesNoLosDevuelve()
+        {
+            var medico = new Doctor("Rusconi Mateo", "111",
+                new Specialty("Cardio", "descripcion de cardio", Guid.NewGuid()));
+            var turnoPasado = new Availability(medico.Id, DateTime.Today,
+                TimeSpan.Zero, TimeSpan.FromMinutes(30));
+            var turnoFuturo = new Availability(medico.Id, DateTime.Today.AddDays(1),
+                TimeSpan.FromHours(9), TimeSpan.FromHours(9.5));
+
+            _persistence.GetById<Doctor>(Arg.Any<Guid>(), Arg.Any<string[]>())
+                .Returns(medico);
+            _persistence.GetFiltered(Arg.Any<Expression<Func<Availability, bool>>>(), Arg.Any<string[]>())
+                .Returns([turnoPasado, turnoFuturo]);
+
+            var slots = await _service.GetDoctorSlotsAsync(
+                medico.Id, DateTime.Today, DateTime.Today.AddDays(5));
+
+            var slot = Assert.Single(slots);
+            Assert.Equal(turnoFuturo.Id, slot.Id);
+        }
     }
+    
 }

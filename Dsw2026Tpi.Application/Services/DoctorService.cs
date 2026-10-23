@@ -265,6 +265,42 @@ public class DoctorService : IDoctorService
  
         return specialty;
     }
+    
+    public async Task<List<DoctorModel.SlotResponse>> GetDoctorSlotsAsync(
+        Guid doctorId,
+        DateTime from,
+        DateTime to)
+    {
+        DoctorRequestValidator.ValidateSlotRange(from, to);
+
+        var doctor = await _persistence.GetById<Doctor>(doctorId);
+        
+        if (doctor is null || doctor.Deleted || !doctor.IsActive)
+        {
+            throw new EntityNotFoundException(nameof(Doctor));
+        }
+
+        var today = DateTime.Today;
+        var startDate = from.Date < today ? today : from.Date;
+        var endDate = to.Date;
+
+        var slots = await _persistence.GetFiltered<Availability>(
+            availability =>
+                availability.DoctorId == doctorId &&
+                !availability.Deleted &&
+                availability.IsAvailable &&
+                availability.Date >= startDate &&
+                availability.Date <= endDate);
+
+        var now = DateTime.Now;
+        
+        return (slots ?? [])
+            .Where(availability => availability.Date.Add(availability.StartTime) > now)
+            .OrderBy(availability => availability.Date)
+            .ThenBy(availability => availability.StartTime)
+            .Select(DoctorMapper.ToSlotResponse)
+            .ToList();
+    }
  
 }
  

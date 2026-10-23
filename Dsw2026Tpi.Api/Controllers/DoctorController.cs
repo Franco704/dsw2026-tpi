@@ -34,6 +34,20 @@ public class DoctorController : AppController
         var doctor = await _service.GetDoctorAvailabilitiesAsync(id);
         return Ok(doctor);
     }
+    
+    [HttpGet("{id}/slots")]
+    [Authorize]
+    [ProducesResponseType(typeof(List<DoctorModel.SlotResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSlots(
+        [FromRoute] Guid id,
+        [FromQuery] DateTime from,
+        [FromQuery] DateTime to)
+    {
+        var slots = await _service.GetDoctorSlotsAsync(id, from, to);
+        return Ok(slots);
+    }
 
     [HttpPost]
     [Authorize(Policy = Policies.AdminPolicy)]
