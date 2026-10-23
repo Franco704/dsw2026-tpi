@@ -7,10 +7,13 @@ namespace Dsw2026Tpi.Application.Mappers;
 public static class AppointmentMapper
 {
     public static AppointmentModel.Response ToResponse(
-        Appointment appointment)
+        Appointment appointment,
+        Doctor doctor)
     {
         ArgumentNullException.ThrowIfNull(
             appointment);
+        ArgumentNullException.ThrowIfNull(
+            doctor);
 
         return new AppointmentModel.Response(
             Id:
@@ -30,6 +33,11 @@ public static class AppointmentMapper
 
             Reason:
                 appointment.Reason,
+            DoctorName:
+                doctor.Name,
+
+            SpecialtyName:
+                doctor.Speciality?.Name ?? string.Empty,
 
             Status:
                 appointment.Status.ToString());
@@ -47,6 +55,9 @@ public static class AppointmentMapper
 
             AppointmentsStatus:
                 appointment.Status.ToString(),
+            
+            ScheduledAt:
+                appointment.ScheduledAt,
 
             Patient:
                 new AppointmentModel.SearchPatientResponse(

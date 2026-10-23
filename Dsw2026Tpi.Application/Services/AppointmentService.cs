@@ -99,7 +99,7 @@ public class AppointmentService : IAppointmentService
             availability.Id);
 
         return AppointmentMapper.ToResponse(
-            appointment);
+            appointment, doctor);
     }
     public async Task<IReadOnlyCollection<AppointmentModel.Response>>
         GetActiveAppointmentsByPatientDniAsync(
@@ -123,14 +123,17 @@ public class AppointmentService : IAppointmentService
                 appointment =>
                     appointment.PatientId == patient.Id &&
                     appointment.Status == AppointmentStatus.BOOKED &&
-                    appointment.ScheduledAt >= DateTime.Now);
+                    appointment.ScheduledAt >= DateTime.Now,
+                    nameof(Appointment.Doctor),
+                        $"{nameof(Appointment.Doctor)}.{nameof(Doctor.Speciality)}");
 
         return (appointments ?? [])
             .OrderBy(
                 appointment =>
                     appointment.ScheduledAt)
             .Select(
-                AppointmentMapper.ToResponse)
+                appointment =>
+                    AppointmentMapper.ToResponse(appointment, appointment.Doctor))
             .ToList();
     }
     public async Task CancelAppointmentAsync(
@@ -257,7 +260,7 @@ public class AppointmentService : IAppointmentService
     {
         var doctor =
             await _persistence.GetById<Doctor>(
-                doctorId);
+                doctorId, nameof(Doctor.Speciality));
 
         if (doctor is null ||
             doctor.Deleted ||
