@@ -15,7 +15,8 @@ public interface IDoctorService
     Task<Pagination<DoctorModel.Response>> GetAllDoctorsAsync(
         int pageSize,
         int pageIndex,
-        string? name = null);
+        string? name = null,
+        Guid? specialtyId = null);
 
     Task<List<DoctorModel.AvailabilityResponse>>
         GetDoctorAvailabilitiesAsync(

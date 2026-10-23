@@ -80,6 +80,32 @@ namespace PruebasUnitarias
             Assert.Equal(request.LicenseNumber, response.LicenseNumber);
             await _persistence.Received(1).Add(Arg.Any<Doctor>());
         }
+        
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task GetAll_CuandoSeFiltraONoPorEspecialidad_EntoncesElFiltroDejaPasarLosMedicosCorrectos(bool filtrar)
+        {
+            var cardio = new Specialty("Cardio", "descripcion de cardio", Guid.NewGuid());
+            var trauma = new Specialty("Trauma", "descripcion de trauma", Guid.NewGuid());
+            var medicoCardio = new Doctor("Rusconi Mateo", "111", cardio);
+            var medicoTrauma = new Doctor("Martinez Franco", "222", trauma);
+            Expression<Func<Doctor, bool>>? filtro = null;
+ 
+            _persistence.Paginate(
+                    Arg.Any<int>(),
+                    Arg.Any<int>(),
+                    Arg.Do<Expression<Func<Doctor, bool>>>(f => filtro = f),
+                    Arg.Any<Expression<Func<Doctor, string>>>(),
+                    Arg.Any<string[]>())
+                .Returns(new Pagination<Doctor>(10, 1, 0, []));
+ 
+            await _service.GetAllDoctorsAsync(10, 1, specialtyId: filtrar ? cardio.Id : null);
+ 
+            var pasa = filtro!.Compile();
+            Assert.True(pasa(medicoCardio));
+            Assert.Equal(!filtrar, pasa(medicoTrauma));
+        }
 
     }
 }
