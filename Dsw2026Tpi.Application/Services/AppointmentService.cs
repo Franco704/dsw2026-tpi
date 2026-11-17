@@ -74,10 +74,12 @@ public class AppointmentService : IAppointmentService
                 request.Reason!);
 
         availability.MarkAsUnavailable();
+        
+        await _persistence.Add(appointment);
 
         try
         {
-            await _persistence.Add(appointment);
+            await _persistence.SaveChangesAsync();
         }
         catch (DbUpdateException ex)
         {
@@ -166,9 +168,10 @@ public class AppointmentService : IAppointmentService
         appointment.Cancel();
         availability.MarkAsAvailable();
 
-        await _persistence.Update(
-            appointment);
-
+        await _persistence.Update(appointment);
+        await _persistence.Update(availability);
+        await _persistence.SaveChangesAsync();
+        
         _logger.LogInformation(
             "Turno {AppointmentId} cancelado correctamente " +
             "y disponibilidad {AvailabilityId} liberada.",

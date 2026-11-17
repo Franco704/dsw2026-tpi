@@ -71,6 +71,9 @@ public class SpecialitiesService : ISpecialitiesService
 
         var created =
             await _persistence.Add(speciality);
+        
+        await _persistence.SaveChangesAsync();
+
 
         return new SpecialtyModel.Response(
             created.Id,
@@ -113,7 +116,9 @@ public class SpecialitiesService : ISpecialitiesService
             request.Description);
 
         await _persistence.Update(existing);
-
+        
+        await _persistence.SaveChangesAsync();
+        
         return new SpecialtyModel.Response(
             existing.Id,
             existing.Name,
@@ -137,5 +142,7 @@ public class SpecialitiesService : ISpecialitiesService
 
         await _persistence.Update(
             speciality);
+        await _persistence.SaveChangesAsync();
+
     }
 }
