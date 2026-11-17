@@ -15,12 +15,18 @@ public interface IDoctorService
     Task<Pagination<DoctorModel.Response>> GetAllDoctorsAsync(
         int pageSize,
         int pageIndex,
-        string? name = null);
+        string? name = null,
+        Guid? specialtyId = null);
 
     Task<List<DoctorModel.AvailabilityResponse>>
         GetDoctorAvailabilitiesAsync(
             Guid doctorId);
-
+    
+    Task<List<DoctorModel.SlotResponse>> GetDoctorSlotsAsync(
+        Guid doctorId,
+        DateTime from,
+        DateTime to);
+    
     Task DeleteDoctorAsync(
         Guid doctorId);
 }

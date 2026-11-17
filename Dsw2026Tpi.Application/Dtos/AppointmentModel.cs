@@ -16,7 +16,9 @@
         Guid PatientId,
         DateTime ScheduledAt,
         string Reason,
-        string Status);
+        string Status,
+        string DoctorName,
+        string SpecialtyName);
 
     public record SearchRequest(
         Guid? SpecialtyId,
@@ -29,6 +31,7 @@
     public record SearchResponse(
         Guid AppointmentsId,
         string AppointmentsStatus,
+        DateTime ScheduledAt,
         SearchPatientResponse Patient,
         SearchDoctorResponse Doctor);
 

@@ -22,4 +22,11 @@ public record DoctorModel
         string Day,
         string StartTime,
         string EndTime);
+    
+    public record SlotResponse(
+        Guid Id,
+        DateTime Date,
+        string StartTime,
+        string EndTime,
+        bool IsAvailable);
 }
