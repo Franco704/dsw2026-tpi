@@ -36,10 +36,7 @@ public static class AvailabilityRequestValidator
             request.Days,
             validation);
 
-        if (validation.Error.Details.Any())
-        {
-            throw validation;
-        }
+        validation.ThrowIfAny();
     }
 
     private static void ValidateDoctorId(

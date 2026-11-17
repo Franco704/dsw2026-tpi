@@ -1,4 +1,6 @@
 ﻿using Dsw2026Tpi.Domain.Rules;
+using Dsw2026Tpi.CrossCutting.Exceptions;
+using Dsw2026Tpi.CrossCutting.Resources;
 namespace Dsw2026Tpi.Domain.Entities;
 
 public class Appointment : EntityBase
@@ -99,12 +101,13 @@ public class Appointment : EntityBase
     {
         if (Status != AppointmentStatus.BOOKED)
         {
-            throw new InvalidOperationException(
-                "Solo puede cancelarse un turno reservado.");
+            throw new ConflictException(
+                ErrorCodes.APPOINTMENT_INVALID_STATE,
+                nameof(ErrorCodes.APPOINTMENT_INVALID_STATE));
         }
 
         Status = AppointmentStatus.CANCELLED;
         MarkAsUpdated();
     }
 }
-
+

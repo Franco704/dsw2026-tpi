@@ -283,7 +283,7 @@ public class DoctorService : IDoctorService
 
         var doctor = await _persistence.GetById<Doctor>(doctorId);
         
-        if (doctor is null || doctor.Deleted || !doctor.IsActive)
+        if (doctor is null || !doctor.IsBookable)
         {
             throw new EntityNotFoundException(nameof(Doctor));
         }
@@ -303,7 +303,7 @@ public class DoctorService : IDoctorService
         var now = DateTime.Now;
         
         return (slots ?? [])
-            .Where(availability => availability.Date.Add(availability.StartTime) > now)
+            .Where(availability => availability.StartsAt > now)
             .OrderBy(availability => availability.Date)
             .ThenBy(availability => availability.StartTime)
             .Select(DoctorMapper.ToSlotResponse)

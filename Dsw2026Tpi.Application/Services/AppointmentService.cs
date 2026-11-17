@@ -158,9 +158,7 @@ public class AppointmentService : IAppointmentService
             appointment,
             patient);
 
-        EnsureAppointmentCanBeCancelled(
-            appointment);
-
+        
         var availability =
             await GetRequiredAvailabilityAsync(
                 appointment.AvailabilityId);
@@ -266,8 +264,7 @@ public class AppointmentService : IAppointmentService
                 doctorId, nameof(Doctor.Speciality));
 
         if (doctor is null ||
-            doctor.Deleted ||
-            !doctor.IsActive)
+            !doctor.IsBookable)
         {
             throw new EntityNotFoundException(
                 nameof(Doctor));
@@ -316,18 +313,14 @@ public class AppointmentService : IAppointmentService
                 nameof(ErrorCodes.APPOINTMENT_CONFLICT));
         }
 
-        var scheduledAt =
-            availability.Date.Date.Add(
-                availability.StartTime);
-
-        if (scheduledAt <= DateTime.Now)
+        if (availability.StartsAt <= DateTime.Now)
         {
             throw new ConflictException(
                 ErrorCodes.APPOINTMENT_PAST_DATE,
                 nameof(ErrorCodes.APPOINTMENT_PAST_DATE));
         }
 
-        return scheduledAt;
+        return availability.StartsAt;
     }
 
     private async Task EnsureNoBookedAppointmentExistsAsync(
@@ -374,18 +367,5 @@ public class AppointmentService : IAppointmentService
 
         throw new AuthorizationException();
     }
-
-    private static void EnsureAppointmentCanBeCancelled(
-        Appointment appointment)
-    {
-        if (appointment.Status == AppointmentStatus.BOOKED)
-        {
-            return;
-        }
-
-        throw new ConflictException(
-            ErrorCodes.APPOINTMENT_INVALID_STATE,
-            nameof(ErrorCodes.APPOINTMENT_INVALID_STATE));
-    }
-
+    
 }

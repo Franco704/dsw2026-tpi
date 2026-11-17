@@ -1,4 +1,5 @@
 namespace Dsw2026Tpi.CrossCutting.Exceptions;
+using System.Net;
 
 public class ConflictException : AppException
 {
@@ -7,4 +8,5 @@ public class ConflictException : AppException
     {
 
     }
+    public override int StatusCode => (int)HttpStatusCode.Conflict;
 }
