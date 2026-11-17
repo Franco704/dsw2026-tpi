@@ -1,11 +1,12 @@
 using Dsw2026Tpi.CrossCutting.Models;
+using System.Net;
 
 namespace Dsw2026Tpi.CrossCutting.Exceptions;
 
 public abstract class AppException : Exception
 {
     public ErrorResponse Error { get; }
-
+    public abstract int StatusCode { get; }
 
     public Dictionary<string, object>? AdditionalData { get; set; }
 

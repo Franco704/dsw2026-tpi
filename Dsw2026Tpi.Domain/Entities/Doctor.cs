@@ -7,6 +7,8 @@ public class Doctor : DeletedEntity
     public string LicenseNumber { get; private set; }
 
     public bool IsActive { get; private set; }
+    
+    public bool IsBookable => IsActive && !Deleted;
 
     public Guid SpecialityId { get; private set; }
 

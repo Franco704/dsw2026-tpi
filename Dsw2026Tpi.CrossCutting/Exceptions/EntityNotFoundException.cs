@@ -1,4 +1,5 @@
 using Dsw2026Tpi.CrossCutting.Resources;
+using System.Net;
 
 namespace Dsw2026Tpi.CrossCutting.Exceptions;
 
@@ -9,4 +10,6 @@ public class EntityNotFoundException : AppException
             nameof(ErrorCodes.ENTITY_NOTFOUND))
     {
     }
+    
+    public override int StatusCode => (int)HttpStatusCode.NotFound;
 }

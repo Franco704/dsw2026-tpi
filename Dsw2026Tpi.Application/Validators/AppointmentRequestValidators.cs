@@ -84,10 +84,7 @@ public static class AppointmentRequestValidator
             }
         }
 
-        if (validation.Error.Details.Any())
-        {
-            throw validation;
-        }
+        validation.ThrowIfAny();
     }
 
     public static void ValidateSearch(
@@ -139,10 +136,7 @@ public static class AppointmentRequestValidator
             request.PageIndex,
             validation);
 
-        if (validation.Error.Details.Any())
-        {
-            throw validation;
-        }
+        validation.ThrowIfAny();
     }
     public static void ValidateCancel(
         Guid appointmentId)

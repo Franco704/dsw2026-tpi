@@ -13,6 +13,8 @@ public class Availability : DeletedEntity
     public TimeSpan EndTime { get; private set; }
 
     public bool IsAvailable { get; private set; }
+    
+    public DateTime StartsAt => Date.Add(StartTime);
 
     #region Constructor for EF
 
@@ -80,4 +82,4 @@ public class Availability : DeletedEntity
         MarkAsUpdated();
     }
 }
-
+

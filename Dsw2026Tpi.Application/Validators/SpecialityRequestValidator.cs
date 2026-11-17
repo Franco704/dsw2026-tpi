@@ -29,7 +29,7 @@ public static class SpecialityRequestValidator
             request.Description,
             validation);
 
-        ThrowIfInvalid(validation);
+        validation.ThrowIfAny();
     }
 
     public static void ValidateGetAll(
@@ -49,7 +49,7 @@ public static class SpecialityRequestValidator
             validation,
             isRequired: false);
 
-        ThrowIfInvalid(validation);
+        validation.ThrowIfAny();
     }
 
     private static void ValidateName(
@@ -103,15 +103,6 @@ public static class SpecialityRequestValidator
             validation.WithDetail(
                 "description",
                 "La descripción debe tener entre 10 y 100 caracteres.");
-        }
-    }
-
-    private static void ThrowIfInvalid(
-        ValidationException validation)
-    {
-        if (validation.Error.Details.Any())
-        {
-            throw validation;
         }
     }
 }

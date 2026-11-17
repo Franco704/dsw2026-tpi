@@ -68,31 +68,10 @@ public class ExceptionHandlingMiddleware
     {
         return exception switch
         {
-            ValidationException validationException =>
+            AppException appException =>
                 new ErrorResult(
-                    StatusCodes.Status400BadRequest,
-                    validationException.Error),
-
-
-            AuthenticationException authenticationException =>
-                new ErrorResult(
-                    StatusCodes.Status401Unauthorized,
-                    authenticationException.Error),
-
-            AuthorizationException authorizationException =>
-                new ErrorResult(
-                    StatusCodes.Status403Forbidden,
-                    authorizationException.Error),
-
-            EntityNotFoundException notFoundException =>
-                new ErrorResult(
-                    StatusCodes.Status404NotFound,
-                    notFoundException.Error),
-
-            ConflictException conflictException =>
-                new ErrorResult(
-                    StatusCodes.Status409Conflict,
-                    conflictException.Error),
+                    appException.StatusCode,
+                    appException.Error),
 
             _ =>
                 new ErrorResult(

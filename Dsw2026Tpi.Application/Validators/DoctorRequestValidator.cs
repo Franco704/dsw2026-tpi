@@ -33,8 +33,7 @@ public static class DoctorRequestValidator
             request.SpecialtyId,
             validation);
 
-        ThrowIfInvalid(
-            validation);
+        validation.ThrowIfAny();
     }
 
 
@@ -56,8 +55,7 @@ public static class DoctorRequestValidator
             validation,
             isRequired: false);
 
-        ThrowIfInvalid(
-            validation);
+        validation.ThrowIfAny();
     }
 
     private static void ValidateName(
@@ -138,15 +136,5 @@ public static class DoctorRequestValidator
             validation.WithDetail("to", "range_must_not_exceed_31_days");
         }
         
-        ThrowIfInvalid(validation);
-    }
-
-    private static void ThrowIfInvalid(
-        ValidationException validation)
-    {
-        if (validation.Error.Details.Any())
-        {
-            throw validation;
-        }
-    }
+        validation.ThrowIfAny();    }
 }
