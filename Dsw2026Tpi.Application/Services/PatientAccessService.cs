@@ -65,8 +65,9 @@ public class PatientAccessService : IPatientAccessService
                 user.Id,
                 dniText);
 
-            return await _persistence.Add(
-                newPatient);
+            await _persistence.Add(newPatient);
+            await _persistence.SaveChangesAsync();
+            return newPatient;
         }
 
         if (user.Deleted)
@@ -102,8 +103,9 @@ public class PatientAccessService : IPatientAccessService
                 user.Id,
                 dniText);
 
-            return await _persistence.Add(
-                newPatient);
+            await _persistence.Add(newPatient);
+            await _persistence.SaveChangesAsync();
+            return newPatient;
         }
 
         if (patientByUser.Deleted ||

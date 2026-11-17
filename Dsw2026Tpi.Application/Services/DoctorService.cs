@@ -40,6 +40,9 @@ public class DoctorService : IDoctorService
  
         var createdDoctor =
             await _persistence.Add(doctor);
+        
+        await _persistence.SaveChangesAsync();
+
  
         return DoctorMapper.ToResponse(
             createdDoctor);
@@ -79,7 +82,9 @@ public class DoctorService : IDoctorService
  
         var updatedDoctor =
             await _persistence.Update(doctor);
- 
+        
+        await _persistence.SaveChangesAsync();
+        
         return DoctorMapper.ToResponse(
             updatedDoctor);
     }
@@ -227,6 +232,9 @@ public class DoctorService : IDoctorService
  
         await _persistence.Update(
             doctor);
+        
+        await _persistence.SaveChangesAsync();
+
     }
  
     private async Task EnsureLicenseNumberIsAvailableAsync(

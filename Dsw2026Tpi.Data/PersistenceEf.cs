@@ -20,19 +20,17 @@ public class PersistenceEf : IPersistence
         where T : EntityBase
     {
         await _context.AddAsync(entity);
-        await _context.SaveChangesAsync();
 
         return entity;
     }
 
-    public async Task<T> Delete<T>(
+    public Task<T> Delete<T>(
         T entity)
         where T : EntityBase
     {
         _context.Remove(entity);
-        await _context.SaveChangesAsync();
 
-        return entity;
+        return Task.FromResult(entity);
     }
 
     public async Task<T?> First<T>(
@@ -80,14 +78,13 @@ public class PersistenceEf : IPersistence
             .ToListAsync();
     }
 
-    public async Task<T> Update<T>(
+    public Task<T> Update<T>(
         T entity)
         where T : EntityBase
     {
         _context.Update(entity);
-        await _context.SaveChangesAsync();
 
-        return entity;
+        return Task.FromResult(entity);
     }
 
     public async Task<Pagination<T>> Paginate<T, TKey>(
@@ -185,5 +182,10 @@ public class PersistenceEf : IPersistence
 
         return query;
     }
+    
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
 }
-
+

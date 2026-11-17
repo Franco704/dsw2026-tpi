@@ -79,6 +79,7 @@ namespace PruebasUnitarias
             Assert.Equal(request.Name, response.Name);
             Assert.Equal(request.LicenseNumber, response.LicenseNumber);
             await _persistence.Received(1).Add(Arg.Any<Doctor>());
+            await _persistence.Received(1).SaveChangesAsync();
         }
         
         [Theory]

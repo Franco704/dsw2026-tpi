@@ -84,7 +84,9 @@ public class AvailabilityService : IAvailabilitiesService
 
         await PersistGeneratedAvailabilitiesAsync(
             generatedAvailabilities);
-
+        
+        await _persistence.SaveChangesAsync();
+        
         return MapResponses(
             generatedAvailabilities);
     }
