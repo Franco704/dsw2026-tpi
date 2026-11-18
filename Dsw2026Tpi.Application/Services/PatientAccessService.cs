@@ -5,6 +5,7 @@ using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
+using Dsw2026Tpi.CrossCutting.Helpers;
 
 namespace Dsw2026Tpi.Application.Services;
 
@@ -29,9 +30,7 @@ public class PatientAccessService : IPatientAccessService
         string email,
         long dni)
     {
-        var normalizedEmail = email
-            .Trim()
-            .ToLowerInvariant();
+        var normalizedEmail = email.NormalizeEmail();
 
         var dniText = dni.ToString(
             CultureInfo.InvariantCulture);
@@ -57,7 +56,7 @@ public class PatientAccessService : IPatientAccessService
 
             user =
                 await _identityAccessService
-                    .CreateUserWithoutPasswordAsync(
+                                        .CreateUserAsync(
                         normalizedEmail,
                         Roles.Patient);
 
@@ -124,9 +123,7 @@ public class PatientAccessService : IPatientAccessService
     public async Task<Patient> GetAuthenticatedPatientAsync(
         string email)
     {
-        var normalizedEmail = email
-            .Trim()
-            .ToLowerInvariant();
+        var normalizedEmail = email.NormalizeEmail();
 
         var user =
             await _identityAccessService.FindUserByEmailAsync(

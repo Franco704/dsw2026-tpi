@@ -15,7 +15,8 @@ public interface IIdentityAccessService
     Task<ApplicationUser?> FindUserByEmailAsync(
         string email);
 
-    Task<ApplicationUser> CreateUserWithoutPasswordAsync(
+    Task<ApplicationUser> CreateUserAsync(
         string email,
-        string role);
+        string role,
+        string? password = null);
 }
