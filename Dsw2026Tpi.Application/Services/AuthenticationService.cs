@@ -6,27 +6,23 @@ using Dsw2026Tpi.CrossCutting.Helpers;
 using Dsw2026Tpi.CrossCutting.Identity;
 using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Data.Identity;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
 namespace Dsw2026Tpi.Application.Services;
 
 public class AuthenticationService : IAuthenticationService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly JwtService _jwtService;
     private readonly ILogger<AuthenticationService> _logger;
     private readonly IIdentityAccessService _identityAccessService;
     private readonly IPatientAccessService _patientAccessService;
 
     public AuthenticationService(
-        UserManager<ApplicationUser> userManager,
         IIdentityAccessService identityAccessService,
         IPatientAccessService patientAccessService,
         JwtService jwtService,
         ILogger<AuthenticationService> logger)
     {
-        _userManager = userManager;
 
         _identityAccessService = identityAccessService;
 
@@ -86,10 +82,8 @@ public class AuthenticationService : IAuthenticationService
 
         AuthenticationRequestValidator.ValidatePatientDni(
             request.Dni);
-
-        var normalizedEmail = request.Email
-            .Trim()
-            .ToLowerInvariant();
+        
+        var normalizedEmail = request.Email.NormalizeEmail();
 
         var patient =
             await _patientAccessService
@@ -116,86 +110,17 @@ public class AuthenticationService : IAuthenticationService
         AuthenticationRequestValidator.ValidateEmail(
             request.Email);
 
-        var normalizedEmail = request.Email
-            .Trim()
-            .ToLowerInvariant();
-
-        var now = DateTime.Now;
-
-        var user = new ApplicationUser
-        {
-            UserName = normalizedEmail,
-            Email = normalizedEmail,
-            CreatedAt = now,
-            UpdatedAt = now,
-            Deleted = false
-        };
-
-        var creationResult =
-            await _userManager.CreateAsync(
-                user,
-                request.Password);
-
-        if (!creationResult.Succeeded)
-        {
-            _logger.LogWarning(
-                "No se pudo registrar el usuario {Email}. Errores: {Errors}",
-                normalizedEmail,
-                string.Join(
-                    ", ",
-                    creationResult.Errors.Select(
-                        error => error.Code)));
-
-            throw new ConflictException(
-                ErrorCodes.REGISTER_USER_CONFLICT,
-                nameof(ErrorCodes.REGISTER_USER_CONFLICT))
-                .WithDetail(
-                    creationResult.Errors.Select(
-                        error =>
-                            (
-                                error.Code,
-                                error.Description
-                            )));
-        }
-
-        var roleResult =
-            await _userManager.AddToRoleAsync(
-                user,
-                Roles.Administrator);
-
-        if (!roleResult.Succeeded)
-        {
-            var rollbackResult =
-                await _userManager.DeleteAsync(user);
-
-            _logger.LogError(
-                "No se pudo asignar el rol {Role} al usuario {Email}. " +
-                "Reversión exitosa: {RollbackSucceeded}. Errores: {Errors}",
+        var user =
+            await _identityAccessService.CreateUserAsync(
+                request.Email,
                 Roles.Administrator,
-                normalizedEmail,
-                rollbackResult.Succeeded,
-                string.Join(
-                    ", ",
-                    roleResult.Errors.Select(
-                        error => error.Code)));
-
-            throw new ConflictException(
-                ErrorCodes.REGISTER_USER_CONFLICT,
-                nameof(ErrorCodes.REGISTER_USER_CONFLICT))
-                .WithDetail(
-                    roleResult.Errors.Select(
-                        error =>
-                            (
-                                error.Code,
-                                error.Description
-                            )));
-        }
+                request.Password);
 
         _logger.LogInformation(
             "Usuario administrador registrado correctamente. UserId: {UserId}",
             user.Id);
 
         return new RegisterModel.Response(
-            normalizedEmail);
+            user.Email!);
     }
 }

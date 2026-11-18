@@ -1,5 +1,6 @@
 ﻿using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Exceptions;
+using Dsw2026Tpi.CrossCutting.Helpers;
 using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Data.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -29,9 +30,7 @@ public class IdentityAccessService : IIdentityAccessService
         string email,
         string password)
     {
-        var normalizedEmail = email
-            .Trim()
-            .ToLowerInvariant();
+        var normalizedEmail = email.NormalizeEmail();
 
         var user = await _userManager.FindByEmailAsync(
             normalizedEmail);
@@ -86,21 +85,18 @@ public class IdentityAccessService : IIdentityAccessService
     public async Task<ApplicationUser?> FindUserByEmailAsync(
         string email)
     {
-        var normalizedEmail = email
-            .Trim()
-            .ToLowerInvariant();
+        var normalizedEmail = email.NormalizeEmail();
 
         return await _userManager.FindByEmailAsync(
             normalizedEmail);
     }
 
-    public async Task<ApplicationUser> CreateUserWithoutPasswordAsync(
+    public async Task<ApplicationUser> CreateUserAsync(
         string email,
-        string role)
+        string role,
+        string? password = null)
     {
-        var normalizedEmail = email
-            .Trim()
-            .ToLowerInvariant();
+        var normalizedEmail = email.NormalizeEmail();
 
         var now = DateTime.Now;
 
@@ -113,31 +109,29 @@ public class IdentityAccessService : IIdentityAccessService
             CreatedAt = now,
             UpdatedAt = now
         };
-
-        var creationResult =
-            await _userManager.CreateAsync(user);
+        
+        var creationResult = password is null
+            ? await _userManager.CreateAsync(user)
+            : await _userManager.CreateAsync(user, password);
 
         if (!creationResult.Succeeded)
         {
-            _logger.LogError(
-                "No se pudo crear el usuario sin contraseña: {Email}. " +
-                "Errores: {Errors}",
+            _logger.LogWarning(
+                "No se pudo crear el usuario {Email}. Errores: {Errors}",
                 normalizedEmail,
                 string.Join(
                     ", ",
-                    creationResult.Errors.Select(
-                        error => error.Code)));
+                    creationResult.Errors.Select(error => error.Code)));
 
             throw new ConflictException(
-                ErrorCodes.REGISTER_USER_CONFLICT,
-                nameof(ErrorCodes.REGISTER_USER_CONFLICT))
+                    ErrorCodes.REGISTER_USER_CONFLICT,
+                    nameof(ErrorCodes.REGISTER_USER_CONFLICT))
                 .WithDetail(
-                    creationResult.Errors.Select(
-                        error =>
-                            (
-                                error.Code,
-                                error.Description
-                            )));
+                    creationResult.Errors.Select(error =>
+                    (
+                        error.Code,
+                        error.Description
+                    )));
         }
 
         var roleResult =
@@ -159,19 +153,17 @@ public class IdentityAccessService : IIdentityAccessService
                 rollbackResult.Succeeded,
                 string.Join(
                     ", ",
-                    roleResult.Errors.Select(
-                        error => error.Code)));
+                    roleResult.Errors.Select(error => error.Code)));
 
             throw new ConflictException(
-                ErrorCodes.REGISTER_USER_CONFLICT,
-                nameof(ErrorCodes.REGISTER_USER_CONFLICT))
+                    ErrorCodes.REGISTER_USER_CONFLICT,
+                    nameof(ErrorCodes.REGISTER_USER_CONFLICT))
                 .WithDetail(
-                    roleResult.Errors.Select(
-                        error =>
-                            (
-                                error.Code,
-                                error.Description
-                            )));
+                    roleResult.Errors.Select(error =>
+                    (
+                        error.Code,
+                        error.Description
+                    )));
         }
 
         return user;
