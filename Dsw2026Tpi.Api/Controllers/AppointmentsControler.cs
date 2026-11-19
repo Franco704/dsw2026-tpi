@@ -130,20 +130,28 @@ public class AppointmentsController : AppController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetByDate(
-        [FromQuery] DateTime date,
+        [FromQuery] DateTime? date,
+        [FromQuery] DateTime? dateFrom,
+        [FromQuery] DateTime? dateTo,
+        [FromQuery] string? status,
+        [FromQuery] string? patient,
         [FromQuery] int pageSize = 10,
         [FromQuery] int pageIndex = 1)
     {
         var request = new AppointmentModel.SearchRequest(
             SpecialtyId: null,
             DoctorId: null,
-            Dni: null,
+            Patient: patient,
+            Status: status,
             Date: date,
+            DateFrom: dateFrom,
+            DateTo: dateTo,
             PageSize: pageSize,
             PageIndex: pageIndex);
 
+        // Este listado exige fecha (o rango): sin ella responde 400
         var appointments =
-            await _appointmentService.SearchAppointmentsAsync(request);
+            await _appointmentService.SearchAppointmentsAsync(request, dateRequired: true);
 
         return Ok(appointments);
     }
@@ -160,15 +168,22 @@ public class AppointmentsController : AppController
         [FromQuery] Guid? specialtyId,
         [FromQuery] Guid? doctorId,
         [FromQuery] long? dni,
+        [FromQuery] string? patient,
+        [FromQuery] string? status,
         [FromQuery] DateTime? date,
+        [FromQuery] DateTime? dateFrom,
+        [FromQuery] DateTime? dateTo,
         [FromQuery] int pageSize = 10,
         [FromQuery] int pageIndex = 1)
     {
         var request = new AppointmentModel.SearchRequest(
             SpecialtyId: specialtyId,
             DoctorId: doctorId,
-            Dni: dni,
+            Patient: patient ?? dni?.ToString(),
+            Status: status,
             Date: date,
+            DateFrom: dateFrom,
+            DateTo: dateTo,
             PageSize: pageSize,
             PageIndex: pageIndex);
 

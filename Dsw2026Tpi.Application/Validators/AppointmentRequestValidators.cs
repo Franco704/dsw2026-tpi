@@ -1,5 +1,6 @@
 ﻿using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.CrossCutting.Exceptions;
+using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Rules;
 using System.Globalization;
 
@@ -88,7 +89,8 @@ public static class AppointmentRequestValidator
     }
 
     public static void ValidateSearch(
-        AppointmentModel.SearchRequest? request)
+        AppointmentModel.SearchRequest? request,
+        bool dateRequired = false)
     {
         var validation =
             new ValidationException();
@@ -116,19 +118,62 @@ public static class AppointmentRequestValidator
                 "invalid");
         }
 
-        if (request.Dni.HasValue)
-        {
-            var dniLength = request.Dni.Value
-                .ToString(CultureInfo.InvariantCulture)
-                .Length;
+        // Paciente: si son solo dígitos es un DNI, si no, parte del nombre
+        var patient = request.Patient?.Trim();
 
-            if (request.Dni.Value <= 0 ||
-                dniLength is < 7 or > 10)
+        if (!string.IsNullOrEmpty(patient))
+        {
+            if (patient.All(char.IsAsciiDigit))
+            {
+                if (patient.Length is < 7 or > 10)
+                {
+                    validation.WithDetail(
+                        "patient",
+                        "dni_must_have_between_7_and_10_digits");
+                }
+            }
+            else if (patient.Length > 100)
             {
                 validation.WithDetail(
-                    "dni",
-                    "must_have_between_7_and_10_digits");
+                    "patient",
+                    "maximum_length_100");
             }
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Status) &&
+            !Enum.GetNames<AppointmentStatus>().Contains(
+                request.Status.Trim().ToUpperInvariant()))
+        {
+            validation.WithDetail(
+                "status",
+                "must_be_booked_cancelled_attended_or_no_show");
+        }
+
+        var hasRange =
+            request.DateFrom.HasValue ||
+            request.DateTo.HasValue;
+
+        if (request.Date.HasValue && hasRange)
+        {
+            validation.WithDetail(
+                "date",
+                "use_date_or_date_range_not_both");
+        }
+
+        if (request.DateFrom > request.DateTo)
+        {
+            validation.WithDetail(
+                "dateTo",
+                "must_not_be_before_date_from");
+        }
+
+        if (dateRequired &&
+            !request.Date.HasValue &&
+            !hasRange)
+        {
+            validation.WithDetail(
+                "date",
+                "required");
         }
 
         PaginationRequestValidator.AddValidationDetails(

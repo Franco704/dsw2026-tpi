@@ -26,8 +26,11 @@
     public record SearchRequest(
         Guid? SpecialtyId,
         Guid? DoctorId,
-        long? Dni,
+        string? Patient,
+        string? Status,
         DateTime? Date,
+        DateTime? DateFrom,
+        DateTime? DateTo,
         int PageSize = 10,
         int PageIndex = 1);
 

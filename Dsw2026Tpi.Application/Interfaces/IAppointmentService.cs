@@ -24,6 +24,7 @@ public interface IAppointmentService
 
     Task<Pagination<AppointmentModel.SearchResponse>>
         SearchAppointmentsAsync(
-            AppointmentModel.SearchRequest request);
+            AppointmentModel.SearchRequest request,
+            bool dateRequired = false);
 }
 

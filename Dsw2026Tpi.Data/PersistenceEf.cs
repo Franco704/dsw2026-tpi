@@ -87,11 +87,21 @@ public class PersistenceEf : IPersistence
         return Task.FromResult(entity);
     }
 
+    public Task<Pagination<T>> Paginate<T, TKey>(
+        int pageSize,
+        int pageIndex,
+        Expression<Func<T, bool>> predicate,
+        Expression<Func<T, TKey>> sortOrder,
+        params string[] includes)
+        where T : EntityBase =>
+        Paginate(pageSize, pageIndex, predicate, sortOrder, false, includes);
+
     public async Task<Pagination<T>> Paginate<T, TKey>(
         int pageSize,
         int pageIndex,
         Expression<Func<T, bool>> predicate,
         Expression<Func<T, TKey>> sortOrder,
+        bool descending,
         params string[] includes)
         where T : EntityBase
     {
@@ -106,17 +116,20 @@ public class PersistenceEf : IPersistence
         var filtered = Include(
                 _context.Set<T>(),
                 includes)
-            .Where(predicate)
-            .OrderBy(sortOrder);
+            .Where(predicate);
 
-        var total = await filtered.CountAsync();
+        var ordered = descending
+            ? filtered.OrderByDescending(sortOrder)
+            : filtered.OrderBy(sortOrder);
+
+        var total = await ordered.CountAsync();
 
         async Task<Pagination<T>> GetPage(
             int skip,
             int take,
             int responsePageIndex)
         {
-            var data = await filtered
+            var data = await ordered
                 .Skip(skip)
                 .Take(take)
                 .ToListAsync();
