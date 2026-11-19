@@ -8,7 +8,8 @@ public interface ISpecialitiesService
     Task<Pagination<SpecialtyModel.Response>> GetAllSpecialtiesAsync(
         int pageSize,
         int pageIndex,
-        string? name = null);
+        string? name = null,
+        bool? isActive = null);
 
     Task<SpecialtyModel.Response> CreateSpecialtyAsync(
         SpecialtyModel.Request request);

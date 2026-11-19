@@ -19,9 +19,12 @@ public class SpecialtiesController : AppController
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] int pageSize, [FromQuery] int pageIndex, [FromQuery] string? name = null)
+    public async Task<IActionResult> GetAll([FromQuery] int pageSize, [FromQuery] int pageIndex, [FromQuery] string? name = null, [FromQuery] bool? active = null)
     {
-        var specialties = await _service.GetAllSpecialtiesAsync(pageSize, pageIndex, name);
+        // El paciente solo ve las activas, filtre lo que filtre
+        var isActive = User.IsInRole(Roles.Administrator) ? active : true;
+
+        var specialties = await _service.GetAllSpecialtiesAsync(pageSize, pageIndex, name, isActive);
         return Ok(specialties);
     }
 
