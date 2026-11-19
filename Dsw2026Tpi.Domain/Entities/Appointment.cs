@@ -1,6 +1,5 @@
 ﻿using Dsw2026Tpi.Domain.Rules;
-using Dsw2026Tpi.CrossCutting.Exceptions;
-using Dsw2026Tpi.CrossCutting.Resources;
+using Dsw2026Tpi.Domain.States;
 namespace Dsw2026Tpi.Domain.Entities;
 
 public class Appointment : EntityBase
@@ -97,17 +96,23 @@ public class Appointment : EntityBase
         Status = AppointmentStatus.BOOKED;
     }
 
-    public void Cancel()
-    {
-        if (Status != AppointmentStatus.BOOKED)
-        {
-            throw new ConflictException(
-                ErrorCodes.APPOINTMENT_INVALID_STATE,
-                nameof(ErrorCodes.APPOINTMENT_INVALID_STATE));
-        }
+    private AppointmentState State =>
+        Status == AppointmentStatus.BOOKED
+            ? BookedState.Instance
+            : ClosedState.Instance;
 
-        Status = AppointmentStatus.CANCELLED;
+    public void Cancel() =>
+        ChangeStatus(State.Cancel(this));
+
+    public void MarkAsAttended(DateTime now) =>
+        ChangeStatus(State.MarkAsAttended(this, now));
+
+    public void MarkAsNoShow(DateTime now) =>
+        ChangeStatus(State.MarkAsNoShow(this, now));
+
+    private void ChangeStatus(AppointmentStatus status)
+    {
+        Status = status;
         MarkAsUpdated();
     }
 }
-

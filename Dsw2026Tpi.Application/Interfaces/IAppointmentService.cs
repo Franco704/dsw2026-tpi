@@ -18,6 +18,10 @@ public interface IAppointmentService
         Guid appointmentId,
         string authenticatedEmail);
 
+    Task<AppointmentModel.Response> UpdateAppointmentStatusAsync(
+        Guid appointmentId,
+        AppointmentModel.StatusRequest request);
+
     Task<Pagination<AppointmentModel.SearchResponse>>
         SearchAppointmentsAsync(
             AppointmentModel.SearchRequest request);

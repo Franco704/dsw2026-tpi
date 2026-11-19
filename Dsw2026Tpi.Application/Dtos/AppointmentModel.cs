@@ -9,6 +9,9 @@
     public record PatientRequest(
         long Dni);
 
+    public record StatusRequest(
+        string? Status);
+
     public record Response(
         Guid Id,
         Guid DoctorId,
