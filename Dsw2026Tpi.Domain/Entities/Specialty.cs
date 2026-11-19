@@ -8,6 +8,8 @@ public class Specialty : DeletedEntity
 
     public string Description { get; private set; }
 
+    public bool IsActive { get; private set; }
+
     #region Constructor for EF
 
 #pragma warning disable CS8618
@@ -23,12 +25,15 @@ public class Specialty : DeletedEntity
     public Specialty(
         string name,
         string description,
-        Guid? id = null)
+        Guid? id = null,
+        bool isActive = true)
         : base(id)
     {
         SetInformation(
             name,
             description);
+
+        IsActive = isActive;
     }
 
     public void Deactivate()
@@ -38,11 +43,14 @@ public class Specialty : DeletedEntity
 
     public void UpdateInfo(
         string name,
-        string description)
+        string description,
+        bool? isActive = null)
     {
         SetInformation(
             name,
             description);
+
+        IsActive = isActive ?? IsActive;
 
         MarkAsUpdated();
     }

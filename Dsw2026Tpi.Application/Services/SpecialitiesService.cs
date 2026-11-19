@@ -1,5 +1,6 @@
 using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Interfaces;
+using Dsw2026Tpi.Application.Mappers;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Domain.Entities;
@@ -21,7 +22,8 @@ public class SpecialitiesService : ISpecialitiesService
     public async Task<Pagination<SpecialtyModel.Response>> GetAllSpecialtiesAsync(
         int pageSize,
         int pageIndex,
-        string? name = null)
+        string? name = null,
+        bool? isActive = null)
     {
         SpecialityRequestValidator.ValidateGetAll(
             pageSize,
@@ -36,17 +38,19 @@ public class SpecialitiesService : ISpecialitiesService
                 pageSize,
                 pageIndex,
                 speciality =>
-                    string.IsNullOrWhiteSpace(normalizedName) ||
-                    speciality.Name.Contains(normalizedName),
+                    (
+                        string.IsNullOrWhiteSpace(normalizedName) ||
+                        speciality.Name.Contains(normalizedName)
+                    ) &&
+                    (
+                        !isActive.HasValue ||
+                        speciality.IsActive == isActive.Value
+                    ),
                 speciality =>
                     speciality.Name);
 
         return page.Map(
-            speciality =>
-                new SpecialtyModel.Response(
-                    speciality.Id,
-                    speciality.Name,
-                    speciality.Description));
+            SpecialtyMapper.ToResponse);
     }
     public async Task<SpecialtyModel.Response> CreateSpecialtyAsync(
         SpecialtyModel.Request request)
@@ -67,7 +71,8 @@ public class SpecialitiesService : ISpecialitiesService
 
         var speciality = new Specialty(
             request.Name,
-            request.Description);
+            request.Description,
+            isActive: request.IsActive ?? true);
 
         var created =
             await _persistence.Add(speciality);
@@ -75,10 +80,8 @@ public class SpecialitiesService : ISpecialitiesService
         await _persistence.SaveChangesAsync();
 
 
-        return new SpecialtyModel.Response(
-            created.Id,
-            created.Name,
-            created.Description);
+        return SpecialtyMapper.ToResponse(
+            created);
     }
 
     public async Task<SpecialtyModel.Response> UpdateSpecialtyAsync(
@@ -113,16 +116,15 @@ public class SpecialitiesService : ISpecialitiesService
 
         existing.UpdateInfo(
             request.Name,
-            request.Description);
+            request.Description,
+            request.IsActive);
 
         await _persistence.Update(existing);
         
         await _persistence.SaveChangesAsync();
         
-        return new SpecialtyModel.Response(
-            existing.Id,
-            existing.Name,
-            existing.Description);
+        return SpecialtyMapper.ToResponse(
+            existing);
     }
 
     public async Task DeleteSpecialtyAsync(
