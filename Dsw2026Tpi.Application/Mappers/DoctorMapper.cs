@@ -47,23 +47,23 @@ public static class DoctorMapper
 
     public static DoctorModel.AvailabilityResponse
         ToAvailabilityResponse(
-            Availability availability)
+            AvailabilityRule rule)
     {
         ArgumentNullException.ThrowIfNull(
-            availability);
+            rule);
 
         return new DoctorModel.AvailabilityResponse(
             Id:
-                availability.Id,
+                rule.Id,
 
             Day:
-                availability.Date.DayOfWeek.ToSpanish(),
+                rule.DayOfWeek.ToSpanish(),
 
             StartTime:
-                availability.StartTime.ToTimeString(),
+                rule.StartTime.ToTimeString(),
 
             EndTime:
-                availability.EndTime.ToTimeString());
+                rule.EndTime.ToTimeString());
     }
     public static DoctorModel.SlotResponse 
         ToSlotResponse(

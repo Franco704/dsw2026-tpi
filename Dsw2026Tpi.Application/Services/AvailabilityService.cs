@@ -3,6 +3,7 @@ using Dsw2026Tpi.Application.Generators;
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Application.Validators;
 using Dsw2026Tpi.CrossCutting.Exceptions;
+using Dsw2026Tpi.CrossCutting.Helpers;
 using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
@@ -51,44 +52,127 @@ public class AvailabilityService : IAvailabilitiesService
         var currentDateTime = DateTime.Now;
         var today = currentDateTime.Date;
 
+        var rules = BuildMonthRules(
+            request,
+            today);
+
         var generatedAvailabilities =
             AvailabilitySlotGenerator.Generate(
-                    request.DoctorId,
-                    request.Days,
+                    rules,
                     currentDateTime)
-                    .Where(a => !_feriado.EsFeriado(a.Date))
+                .Where(a => !_feriado.EsFeriado(a.Date))
                 .ToList();
-        EnsureFutureSlotsWereGenerated (generatedAvailabilities);
+
+        EnsureFutureSlotsWereGenerated(
+            generatedAvailabilities);
 
         var existingAvailabilities =
             await GetExistingAvailabilitiesAsync(
                 request.DoctorId,
                 today);
 
-        var protectedAvailabilities = isUpdate
-            ? existingAvailabilities
-                .Where(availability =>
-                    !availability.IsAvailable)
-                .ToList()
-            : existingAvailabilities;
-
-        EnsureNoStoredConflicts(
-            generatedAvailabilities,
-            protectedAvailabilities);
+        var existingRules =
+            await GetMonthRulesAsync(
+                request.DoctorId,
+                today);
 
         if (isUpdate)
         {
+            // El PUT sobreescribe el mes, pero los turnos reservados se conservan
+            var bookedAvailabilities = existingAvailabilities
+                .Where(availability => !availability.IsAvailable)
+                .ToList();
+
+            generatedAvailabilities = generatedAvailabilities
+                .Where(generated =>
+                    !bookedAvailabilities.Any(
+                        generated.OverlapsWith))
+                .ToList();
+
             await SoftDeleteAvailableSlotsAsync(
                 existingAvailabilities);
+
+            await SoftDeleteRulesAsync(
+                existingRules);
+        }
+        else
+        {
+            EnsureMonthHasNoRules(
+                existingRules);
+
+            EnsureNoStoredConflicts(
+                generatedAvailabilities,
+                existingAvailabilities);
+        }
+
+        foreach (var rule in rules)
+        {
+            await _persistence.Add(
+                rule);
         }
 
         await PersistGeneratedAvailabilitiesAsync(
             generatedAvailabilities);
-        
+
         await _persistence.SaveChangesAsync();
-        
+
         return MapResponses(
             generatedAvailabilities);
+    }
+
+    private static List<AvailabilityRule> BuildMonthRules(
+        AvailabilityModel.Request request,
+        DateTime today)
+    {
+        return request.Days
+            .Select(schedule =>
+                new AvailabilityRule(
+                    request.DoctorId,
+                    today.Year,
+                    today.Month,
+                    // El día ya fue validado por AvailabilityRequestValidator
+                    DateTimeHelpers.ParseDay(schedule.Day)!.Value,
+                    schedule.StartTime,
+                    schedule.EndTime))
+            .ToList();
+    }
+
+    private async Task<List<AvailabilityRule>> GetMonthRulesAsync(
+        Guid doctorId,
+        DateTime today)
+    {
+        var rules =
+            await _persistence.GetFiltered<AvailabilityRule>(
+                rule =>
+                    rule.DoctorId == doctorId &&
+                    rule.Year == today.Year &&
+                    rule.Month == today.Month);
+
+        return rules?.ToList() ?? [];
+    }
+
+    private static void EnsureMonthHasNoRules(
+        IReadOnlyCollection<AvailabilityRule> existingRules)
+    {
+        // Si el mes ya tiene horario cargado, se modifica con el PUT
+        if (existingRules.Count > 0)
+        {
+            throw new ConflictException(
+                ErrorCodes.AVAILABILITY_CONFLICT,
+                nameof(ErrorCodes.AVAILABILITY_CONFLICT));
+        }
+    }
+
+    private async Task SoftDeleteRulesAsync(
+        IEnumerable<AvailabilityRule> existingRules)
+    {
+        foreach (var rule in existingRules)
+        {
+            rule.Delete();
+
+            await _persistence.Update(
+                rule);
+        }
     }
 
     private async Task EnsureDoctorExistsAsync(
@@ -132,10 +216,7 @@ public class AvailabilityService : IAvailabilitiesService
         var hasConflict = generatedAvailabilities.Any(
             generated =>
                 storedAvailabilities.Any(
-                    stored =>
-                        generated.Date == stored.Date &&
-                        generated.StartTime < stored.EndTime &&
-                        generated.EndTime > stored.StartTime));
+                    generated.OverlapsWith));
 
         if (hasConflict)
         {

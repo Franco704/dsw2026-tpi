@@ -1,6 +1,4 @@
-﻿using Dsw2026Tpi.Application.Dtos;
-using Dsw2026Tpi.CrossCutting.Helpers;
-using Dsw2026Tpi.Domain.Entities;
+﻿using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Rules;
 
 namespace Dsw2026Tpi.Application.Generators;
@@ -8,41 +6,18 @@ namespace Dsw2026Tpi.Application.Generators;
 public static class AvailabilitySlotGenerator
 {
     public static IReadOnlyCollection<Availability> Generate(
-        Guid doctorId,
-        IReadOnlyCollection<AvailabilityModel.DaySchedule> schedules,
+        IReadOnlyCollection<AvailabilityRule> rules,
         DateTime currentDateTime)
     {
-        ArgumentNullException.ThrowIfNull(schedules);
-
-        var today = currentDateTime.Date;
-
-        var lastDayOfMonth = new DateTime(
-            today.Year,
-            today.Month,
-            DateTime.DaysInMonth(
-                today.Year,
-                today.Month));
+        ArgumentNullException.ThrowIfNull(rules);
 
         var generatedAvailabilities =
             new List<Availability>();
 
-        foreach (var schedule in schedules)
+        foreach (var rule in rules)
         {
-            var targetDayOfWeek = DateTimeHelpers.ParseDay(
-                schedule.Day);
-
-            if (targetDayOfWeek is null)
-            {
-                throw new InvalidOperationException(
-                    $"El día '{schedule.Day}' no fue validado correctamente.");
-            }
-
-            GenerateScheduleAvailabilities(
-                doctorId,
-                schedule,
-                targetDayOfWeek.Value,
-                today,
-                lastDayOfMonth,
+            GenerateRuleAvailabilities(
+                rule,
                 currentDateTime,
                 generatedAvailabilities);
         }
@@ -55,40 +30,45 @@ public static class AvailabilitySlotGenerator
             .ToList();
     }
 
-    private static void GenerateScheduleAvailabilities(
-        Guid doctorId,
-        AvailabilityModel.DaySchedule schedule,
-        DayOfWeek targetDayOfWeek,
-        DateTime firstDate,
-        DateTime lastDate,
+    private static void GenerateRuleAvailabilities(
+        AvailabilityRule rule,
         DateTime currentDateTime,
         ICollection<Availability> generatedAvailabilities)
     {
+        var firstDayOfMonth = new DateTime(
+            rule.Year,
+            rule.Month,
+            1);
+
+        var firstDate = currentDateTime.Date > firstDayOfMonth
+            ? currentDateTime.Date
+            : firstDayOfMonth;
+
+        var lastDate = firstDayOfMonth
+            .AddMonths(1)
+            .AddDays(-1);
+
         for (
             var date = firstDate;
             date <= lastDate;
             date = date.AddDays(1))
         {
-            if (date.DayOfWeek != targetDayOfWeek)
+            if (date.DayOfWeek != rule.DayOfWeek)
             {
                 continue;
             }
 
             GenerateDailySlots(
-                doctorId,
+                rule,
                 date,
-                schedule.StartTime,
-                schedule.EndTime,
                 currentDateTime,
                 generatedAvailabilities);
         }
     }
 
     private static void GenerateDailySlots(
-        Guid doctorId,
+        AvailabilityRule rule,
         DateTime date,
-        TimeSpan startTime,
-        TimeSpan endTime,
         DateTime currentDateTime,
         ICollection<Availability> generatedAvailabilities)
     {
@@ -96,27 +76,22 @@ public static class AvailabilitySlotGenerator
             AvailabilityRules.SlotDuration;
 
         for (
-            var currentStart = startTime;
-            currentStart < endTime;
+            var currentStart = rule.StartTime;
+            currentStart < rule.EndTime;
             currentStart = currentStart.Add(slotDuration))
         {
-            var currentEnd = currentStart.Add(
-                slotDuration);
-
-            var slotStartDateTime = date.Date.Add(
-                currentStart);
-
-            if (slotStartDateTime < currentDateTime)
+            if (date.Add(currentStart) < currentDateTime)
             {
                 continue;
             }
 
             generatedAvailabilities.Add(
                 new Availability(
-                    doctorId,
+                    rule.DoctorId,
                     date,
                     currentStart,
-                    currentEnd));
+                    currentStart.Add(slotDuration),
+                    availabilityRuleId: rule.Id));
         }
     }
 }
