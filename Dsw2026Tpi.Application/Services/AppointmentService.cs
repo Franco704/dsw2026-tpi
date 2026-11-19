@@ -224,19 +224,41 @@ public class AppointmentService : IAppointmentService
 
     public async Task<Pagination<AppointmentModel.SearchResponse>>
         SearchAppointmentsAsync(
-            AppointmentModel.SearchRequest request)
+            AppointmentModel.SearchRequest request,
+            bool dateRequired = false)
     {
         AppointmentRequestValidator.ValidateSearch(
-            request);
+            request,
+            dateRequired);
 
-        var dni = request.Dni?.ToString(
-            CultureInfo.InvariantCulture);
+        var patient =
+            request.Patient?.Trim();
 
+        var dni =
+            !string.IsNullOrEmpty(patient) &&
+            patient.All(char.IsAsciiDigit)
+                ? patient
+                : null;
+
+        var patientName =
+            dni is null &&
+            !string.IsNullOrEmpty(patient)
+                ? patient
+                : null;
+
+        AppointmentStatus? status =
+            string.IsNullOrWhiteSpace(request.Status)
+                ? null
+                : Enum.Parse<AppointmentStatus>(
+                    request.Status.Trim(),
+                    ignoreCase: true);
+
+        // "date" es un solo día; "dateFrom"/"dateTo" un rango con ambos extremos incluidos
         var dateFrom =
-            request.Date?.Date;
+            (request.Date ?? request.DateFrom)?.Date;
 
         var dateTo =
-            dateFrom?.AddDays(1);
+            (request.Date ?? request.DateTo)?.Date.AddDays(1);
 
         var appointments =
             await _persistence.Paginate<Appointment, DateTime>(
@@ -264,14 +286,32 @@ public class AppointmentService : IAppointmentService
                     )
                     &&
                     (
+                        patientName == null
+                        ||
+                        appointment.Patient.FullName != null &&
+                        appointment.Patient.FullName.Contains(patientName)
+                    )
+                    &&
+                    (
+                        !status.HasValue
+                        ||
+                        appointment.Status == status.Value
+                    )
+                    &&
+                    (
                         !dateFrom.HasValue
                         ||
                         appointment.ScheduledAt >= dateFrom.Value
-                        &&
-                        appointment.ScheduledAt < dateTo!.Value
+                    )
+                    &&
+                    (
+                        !dateTo.HasValue
+                        ||
+                        appointment.ScheduledAt < dateTo.Value
                     ),
                 appointment =>
                     appointment.ScheduledAt,
+                true,
                 nameof(Appointment.Doctor),
                 $"{nameof(Appointment.Doctor)}.{nameof(Doctor.Speciality)}",
                 nameof(Appointment.Availability),
