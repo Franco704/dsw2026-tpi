@@ -138,6 +138,30 @@ public static class AppointmentRequestValidator
 
         validation.ThrowIfAny();
     }
+    public static void ValidateStatusChange(
+        Guid appointmentId,
+        AppointmentModel.StatusRequest? request)
+    {
+        var validation = new ValidationException();
+
+        if (appointmentId == Guid.Empty)
+        {
+            validation.WithDetail(
+                "appointmentId",
+                "required");
+        }
+
+        // El admin solo puede cerrar un turno: atendido o ausente
+        if (request?.Status?.Trim().ToUpperInvariant() is not ("ATTENDED" or "NO_SHOW"))
+        {
+            validation.WithDetail(
+                "status",
+                "must_be_attended_or_no_show");
+        }
+
+        validation.ThrowIfAny();
+    }
+
     public static void ValidateCancel(
         Guid appointmentId)
     {

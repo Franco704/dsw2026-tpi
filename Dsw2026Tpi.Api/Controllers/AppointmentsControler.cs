@@ -101,6 +101,26 @@ public class AppointmentsController : AppController
         return Ok("ok");
     }
 
+    [HttpPut("{appointmentId:guid}/status")]
+    [Authorize(Policy = Policies.AdminPolicy)]
+    [ProducesResponseType(
+        typeof(AppointmentModel.Response),
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateStatus(
+        [FromRoute] Guid appointmentId,
+        [FromBody] AppointmentModel.StatusRequest request)
+    {
+        var appointment =
+            await _appointmentService.UpdateAppointmentStatusAsync(
+                appointmentId,
+                request);
+
+        return Ok(appointment);
+    }
+
     [HttpGet]
     [Authorize(Policy = Policies.AdminPolicy)]
     [ProducesResponseType(

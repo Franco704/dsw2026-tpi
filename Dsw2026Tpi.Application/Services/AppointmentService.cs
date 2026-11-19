@@ -177,6 +177,51 @@ public class AppointmentService : IAppointmentService
             availability.Id);
     }
 
+    public async Task<AppointmentModel.Response> UpdateAppointmentStatusAsync(
+        Guid appointmentId,
+        AppointmentModel.StatusRequest request)
+    {
+        AppointmentRequestValidator.ValidateStatusChange(
+            appointmentId,
+            request);
+
+        var appointment =
+            await _persistence.GetById<Appointment>(
+                appointmentId,
+                nameof(Appointment.Doctor),
+                $"{nameof(Appointment.Doctor)}.{nameof(Doctor.Speciality)}");
+
+        if (appointment is null)
+        {
+            throw new EntityNotFoundException(
+                nameof(Appointment));
+        }
+
+        var now = DateTime.Now;
+
+        // Qué transiciones son válidas lo decide el estado actual del turno (patrón State)
+        if (request.Status!.Trim().ToUpperInvariant() == nameof(AppointmentStatus.ATTENDED))
+        {
+            appointment.MarkAsAttended(now);
+        }
+        else
+        {
+            appointment.MarkAsNoShow(now);
+        }
+
+        await _persistence.Update(appointment);
+        await _persistence.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Turno {AppointmentId} marcado como {Status}.",
+            appointment.Id,
+            appointment.Status);
+
+        return AppointmentMapper.ToResponse(
+            appointment,
+            appointment.Doctor);
+    }
+
     public async Task<Pagination<AppointmentModel.SearchResponse>>
         SearchAppointmentsAsync(
             AppointmentModel.SearchRequest request)
