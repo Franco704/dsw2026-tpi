@@ -20,7 +20,8 @@ public class AuthenticationController : AppController
 
 
 
-    [AllowAnonymous]
+    // Solo un admin crea admins; el primero lo crea SeedInitialAdminAsync al iniciar
+    [Authorize(Policy = Policies.AdminPolicy)]
     [HttpPost("admin/register")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
