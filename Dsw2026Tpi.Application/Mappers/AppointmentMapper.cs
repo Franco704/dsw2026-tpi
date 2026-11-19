@@ -22,7 +22,7 @@ public static class AppointmentMapper
             DoctorId:
                 appointment.DoctorId,
 
-            AvailabilitySlotId:
+                AvailabilityId:
                 appointment.AvailabilityId,
 
             PatientId:

@@ -52,7 +52,7 @@ public class AppointmentService : IAppointmentService
 
         var availability =
             await GetRequiredAvailabilityAsync(
-                request.AvailabilitySlotId);
+                request.AvailabilityId);;
 
         EnsureAvailabilityBelongsToDoctor(
             availability,
