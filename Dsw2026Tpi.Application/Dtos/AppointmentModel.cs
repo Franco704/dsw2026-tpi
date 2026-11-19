@@ -2,7 +2,7 @@
 {
     public record Request(
         Guid DoctorId,
-        Guid AvailabilitySlotId,
+        Guid AvailabilityId,
         PatientRequest? Patient,
         string? Reason);
 
@@ -12,7 +12,7 @@
     public record Response(
         Guid Id,
         Guid DoctorId,
-        Guid AvailabilitySlotId,
+        Guid AvailabilityId,
         Guid PatientId,
         DateTime ScheduledAt,
         string Reason,

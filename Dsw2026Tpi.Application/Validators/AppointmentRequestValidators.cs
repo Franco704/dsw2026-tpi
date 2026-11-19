@@ -29,10 +29,10 @@ public static class AppointmentRequestValidator
                 "required");
         }
 
-        if (request.AvailabilitySlotId == Guid.Empty)
+        if (request.AvailabilityId == Guid.Empty)
         {
             validation.WithDetail(
-                "availabilitySlotId",
+                "availabilityId",
                 "required");
         }
 
