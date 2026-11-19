@@ -16,6 +16,8 @@ public class Availability : DeletedEntity
     
     public DateTime StartsAt => Date.Add(StartTime);
 
+    public Guid? AvailabilityRuleId { get; private set; }
+
     #region Constructor for EF
 
     private Availability()
@@ -29,7 +31,8 @@ public class Availability : DeletedEntity
         DateTime date,
         TimeSpan startTime,
         TimeSpan endTime,
-        Guid? id = null)
+        Guid? id = null,
+        Guid? availabilityRuleId = null)
         : base(id)
     {
         if (doctorId == Guid.Empty)
@@ -58,7 +61,14 @@ public class Availability : DeletedEntity
         StartTime = startTime;
         EndTime = endTime;
         IsAvailable = true;
+        AvailabilityRuleId = availabilityRuleId;
     }
+
+    public bool OverlapsWith(Availability other) =>
+        DoctorId == other.DoctorId &&
+        Date == other.Date &&
+        StartTime < other.EndTime &&
+        EndTime > other.StartTime;
 
     public void MarkAsUnavailable()
     {

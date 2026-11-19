@@ -182,36 +182,19 @@ public class DoctorService : IDoctorService
         }
  
         var today = DateTime.Today;
- 
-        var firstDayOfMonth = new DateTime(
-            today.Year,
-            today.Month,
-            1);
- 
-        var firstDayOfNextMonth =
-            firstDayOfMonth.AddMonths(1);
- 
-        var availabilities =
-            await _persistence.GetFiltered<Availability>(
-                availability =>
-                    availability.DoctorId == id &&
-                    availability.Date >= firstDayOfMonth &&
-                    availability.Date < firstDayOfNextMonth);
- 
-        if (availabilities is null)
-        {
-            return [];
-        }
- 
-        return availabilities
-            .OrderBy(
-                availability =>
-                    availability.Date)
-            .ThenBy(
-                availability =>
-                    availability.StartTime)
-            .Select(
-                DoctorMapper.ToAvailabilityResponse)
+
+        var rules =
+            await _persistence.GetFiltered<AvailabilityRule>(
+                rule =>
+                    rule.DoctorId == id &&
+                    rule.Year == today.Year &&
+                    rule.Month == today.Month);
+
+        return (rules ?? [])
+            // DayOfWeek arranca en domingo (0); así el lunes queda primero
+            .OrderBy(rule => ((int)rule.DayOfWeek + 6) % 7)
+            .ThenBy(rule => rule.StartTime)
+            .Select(DoctorMapper.ToAvailabilityResponse)
             .ToList();
     }
  

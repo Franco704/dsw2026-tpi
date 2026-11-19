@@ -70,6 +70,14 @@ public class AvailabilityConfiguration
             .HasForeignKey(availability => availability.DoctorId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Property(availability => availability.AvailabilityRuleId)
+            .HasColumnName("availability_rule_id");
+
+        builder.HasOne<AvailabilityRule>()
+            .WithMany()
+            .HasForeignKey(availability => availability.AvailabilityRuleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(availability => new
         {
             availability.DoctorId,
