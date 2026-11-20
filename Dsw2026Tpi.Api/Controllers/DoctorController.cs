@@ -42,8 +42,8 @@ public class DoctorController : AppController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetSlots(
         [FromRoute] Guid id,
-        [FromQuery] DateTime from,
-        [FromQuery] DateTime to)
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to)
     {
         var slots = await _service.GetDoctorSlotsAsync(id, from, to);
         return Ok(slots);

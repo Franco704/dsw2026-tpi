@@ -120,21 +120,34 @@ public static class DoctorRequestValidator
     }
 
     public static void ValidateSlotRange(
-        DateTime from,
-        DateTime to)
+        DateTime? from,
+        DateTime? to)
     {
         var validation =
             new ValidationException();
 
-        if (from.Date > to.Date)
+        if (!from.HasValue)
         {
-            validation.WithDetail("to", "must_be_greater_or_equal_than_from"
-            );
+            validation.WithDetail("from", "required");
         }
-        else if ((to.Date - from.Date).TotalDays > 31)
+
+        if (!to.HasValue)
         {
-            validation.WithDetail("to", "range_must_not_exceed_31_days");
+            validation.WithDetail("to", "required");
         }
-        
-        validation.ThrowIfAny();    }
+
+        if (from.HasValue && to.HasValue)
+        {
+            if (from.Value.Date > to.Value.Date)
+            {
+                validation.WithDetail("to", "must_be_greater_or_equal_than_from");
+            }
+            else if ((to.Value.Date - from.Value.Date).TotalDays > 31)
+            {
+                validation.WithDetail("to", "range_must_not_exceed_31_days");
+            }
+        }
+
+        validation.ThrowIfAny();
+    }
 }

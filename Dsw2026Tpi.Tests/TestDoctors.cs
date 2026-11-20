@@ -178,7 +178,20 @@ namespace Dsw2026Tpi.Tests
             Assert.False(doctor.IsActive);
             await _persistence.Received(1).SaveChangesAsync();
         }
+
+        [Theory]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        public async Task GetSlots_WhenADateIsMissing_ThenThrowsValidationException(bool sendFrom, bool sendTo)
+        {
+            DateTime? from = sendFrom ? DateTime.Today : null;
+            DateTime? to = sendTo ? DateTime.Today.AddDays(5) : null;
+
+            await Assert.ThrowsAsync<ValidationException>(() =>
+                _service.GetDoctorSlotsAsync(Guid.NewGuid(), from, to));
+        }
     }
+
 
     
 }

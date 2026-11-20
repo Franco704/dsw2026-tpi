@@ -142,6 +142,15 @@ namespace Dsw2026Tpi.CrossCutting.Resources {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a La especialidad del médico no está activa.
+        /// </summary>
+        public static string SPECIALITY_INACTIVE {
+            get {
+                return ResourceManager.GetString("SPECIALITY_INACTIVE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a La entidad {0} no se encontró.
         /// </summary>
         public static string ENTITY_NOTFOUND {
