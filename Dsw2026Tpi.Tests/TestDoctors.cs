@@ -18,7 +18,7 @@ namespace Dsw2026Tpi.Tests
         public TestDoctors()
         {
             _persistence = Substitute.For<IPersistence>();
-            _service = new DoctorService(_persistence);
+            _service = new DoctorService(_persistence, TimeProvider.System);
         }
 
         private static DoctorModel.Request ValidRequest()

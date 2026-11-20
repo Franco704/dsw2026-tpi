@@ -20,7 +20,8 @@ namespace Dsw2026Tpi.Tests
             _service = new AppointmentService(
                 _persistence,
                 Substitute.For<IPatientAccessService>(),
-                Substitute.For<ILogger<AppointmentService>>());
+                Substitute.For<ILogger<AppointmentService>>(),
+                TimeProvider.System);
 
             _persistence.Paginate(
                     Arg.Any<int>(),

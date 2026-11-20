@@ -11,6 +11,7 @@ public static class DependencyInjectionConfigurationExtensions
     public static IServiceCollection AddAppDependencies(
       this IServiceCollection services)
     {
+        services.AddSingleton(TimeProvider.System);
         services.AddScoped<IPersistence, PersistenceEf>();
         services.AddScoped<IDoctorService, DoctorService>();
         services.AddScoped<ISpecialitiesService, SpecialitiesService>();
@@ -22,7 +23,7 @@ public static class DependencyInjectionConfigurationExtensions
         services.AddSingleton<IHolidayProvider, HolidayProvider>();
         services.AddScoped<IIdentityAccessService, IdentityAccessService>();
         services.AddScoped<IPatientAccessService, PatientAccessService>();
-        services.AddSingleton<JwtService>();
+        services.AddSingleton<IJwtService, JwtService>();
 
         return services;
 

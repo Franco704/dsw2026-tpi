@@ -115,6 +115,15 @@ namespace Dsw2026Tpi.CrossCutting.Resources {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a Los datos entran en conflicto con un registro existente.
+        /// </summary>
+        public static string DATA_CONFLICT {
+            get {
+                return ResourceManager.GetString("DATA_CONFLICT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Ya existe un médico con esa matrícula.
         /// </summary>
         public static string DOCTOR_LICENSE_CONFLICT {

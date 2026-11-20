@@ -1,4 +1,5 @@
 ﻿using Dsw2026Tpi.Api.Responses;
+using Dsw2026Tpi.Application.Settings;
 using Dsw2026Tpi.CrossCutting.Identity;
 using Dsw2026Tpi.CrossCutting.Models;
 using Dsw2026Tpi.CrossCutting.Resources;
@@ -13,11 +14,14 @@ public static class SecurityConfigurationExtensions
 {
     public static IServiceCollection AddAppAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        var jwtConfig = configuration.GetSection("Jwt");
-        var keyText = jwtConfig["Key"] ?? throw new ArgumentNullException("JWT Key");
-        var issuer = jwtConfig["Issuer"] ?? throw new ArgumentNullException("JWT Issuer");
-        var audience = jwtConfig["Audience"] ?? throw new ArgumentNullException("JWT Audience");
+        var jwtSection = configuration.GetSection(JwtSettings.SectionName);
+        var jwtSettings = jwtSection.Get<JwtSettings>() ?? throw new ArgumentNullException("JWT");
+        var keyText = string.IsNullOrWhiteSpace(jwtSettings.Key) ? throw new ArgumentNullException("JWT Key") : jwtSettings.Key;
+        var issuer = string.IsNullOrWhiteSpace(jwtSettings.Issuer) ? throw new ArgumentNullException("JWT Issuer") : jwtSettings.Issuer;
+        var audience = string.IsNullOrWhiteSpace(jwtSettings.Audience) ? throw new ArgumentNullException("JWT Audience") : jwtSettings.Audience;
         var key = Encoding.UTF8.GetBytes(keyText);
+
+        services.Configure<JwtSettings>(jwtSection);
 
         services.AddAuthentication(options =>
         {

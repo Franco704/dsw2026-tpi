@@ -6,7 +6,6 @@ using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Resources;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using Dsw2026Tpi.Application.Mappers;
@@ -17,15 +16,18 @@ public class AppointmentService : IAppointmentService
     private readonly IPersistence _persistence;
     private readonly IPatientAccessService _patientAccessService;
     private readonly ILogger<AppointmentService> _logger;
+    private readonly TimeProvider _timeProvider;
 
     public AppointmentService(
         IPersistence persistence,
         IPatientAccessService patientAccessService,
-        ILogger<AppointmentService> logger)
+        ILogger<AppointmentService> logger,
+        TimeProvider timeProvider)
     {
         _persistence = persistence;
         _patientAccessService = patientAccessService;
         _logger = logger;
+        _timeProvider = timeProvider;
     }
     //GetActiveAppointmentsByPatientDniAsync
     //CancelAppointmentAsync
@@ -82,9 +84,9 @@ public class AppointmentService : IAppointmentService
         {
             await _persistence.SaveChangesAsync();
         }
-        catch (DbUpdateException ex)
+        catch (ConflictException)
         {
-            _logger.LogWarning(ex,
+            _logger.LogWarning(
                 "Reserva concurrente rechazada por el índice único. Disponibilidad {AvailabilityId}, paciente {PatientId}.",
                 availability.Id,
                 patient.Id);
@@ -121,12 +123,14 @@ public class AppointmentService : IAppointmentService
             patient,
             dni);
 
+        var now = _timeProvider.GetLocalNow().DateTime;
+
         var appointments =
             await _persistence.GetFiltered<Appointment>(
                 appointment =>
                     appointment.PatientId == patient.Id &&
                     appointment.Status == AppointmentStatus.BOOKED &&
-                    appointment.ScheduledAt >= DateTime.Now,
+                    appointment.ScheduledAt >= now,
                     nameof(Appointment.Doctor),
                         $"{nameof(Appointment.Doctor)}.{nameof(Doctor.Speciality)}");
 
@@ -192,7 +196,7 @@ public class AppointmentService : IAppointmentService
                 nameof(Appointment.Doctor),
                 $"{nameof(Appointment.Doctor)}.{nameof(Doctor.Speciality)}");
 
-        var now = DateTime.Now;
+        var now = _timeProvider.GetLocalNow().DateTime;
 
         if (request.Status!.Trim().ToUpperInvariant() == nameof(AppointmentStatus.ATTENDED))
         {
@@ -382,7 +386,7 @@ public class AppointmentService : IAppointmentService
             nameof(ErrorCodes.APPOINTMENT_CONFLICT));
     }
 
-    private static DateTime GetBookableScheduledAt(
+    private DateTime GetBookableScheduledAt(
         Availability availability)
     {
         if (!availability.IsAvailable)
@@ -392,7 +396,7 @@ public class AppointmentService : IAppointmentService
                 nameof(ErrorCodes.APPOINTMENT_CONFLICT));
         }
 
-        if (availability.StartsAt <= DateTime.Now)
+        if (availability.StartsAt <= _timeProvider.GetLocalNow().DateTime)
         {
             throw new ConflictException(
                 ErrorCodes.APPOINTMENT_PAST_DATE,

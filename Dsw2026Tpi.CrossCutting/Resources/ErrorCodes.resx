@@ -147,6 +147,9 @@
   <data name="SPECIALITY_INACTIVE" xml:space="preserve">
     <value>La especialidad del médico no está activa</value>
   </data>
+  <data name="DATA_CONFLICT" xml:space="preserve">
+    <value>Los datos entran en conflicto con un registro existente</value>
+  </data>
   <data name="ENTITY_NOTFOUND" xml:space="preserve">
     <value>La entidad {0} no se encontró</value>
   </data>

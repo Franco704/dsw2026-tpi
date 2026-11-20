@@ -18,7 +18,8 @@ namespace Dsw2026Tpi.Tests
             var service = new AppointmentService(
                 persistence,
                 patientAccess,
-                Substitute.For<ILogger<AppointmentService>>());
+                Substitute.For<ILogger<AppointmentService>>(),
+                TimeProvider.System);
 
             var inactiveSpecialty = new Specialty("Dermatology", "dermatology description", isActive: false);
             var doctor = new Doctor("Rusconi Mateo", "111", inactiveSpecialty);

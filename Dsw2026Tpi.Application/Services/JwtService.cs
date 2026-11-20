@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Dsw2026Tpi.Application.Interfaces;
+using Dsw2026Tpi.Application.Settings;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -6,24 +8,29 @@ using System.Text;
 
 namespace Dsw2026Tpi.Application.Services;
 
-public class JwtService
+public class JwtService : IJwtService
 {
-    private readonly IConfiguration _config;
-    public JwtService(IConfiguration config)
+    private readonly JwtSettings _settings;
+    private readonly TimeProvider _timeProvider;
+
+    public JwtService(
+        IOptions<JwtSettings> settings,
+        TimeProvider timeProvider)
     {
-        _config = config;
+        _settings = settings.Value;
+        _timeProvider = timeProvider;
     }
 
-    public string GenerateToken(string username, string? role)
+    public string GenerateToken(
+        string username,
+        string? role)
     {
-        if (_config == null) throw new ArgumentNullException();
-        var jwtConfig = _config.GetSection("Jwt");
-        var keyText = jwtConfig["Key"] ?? throw new ArgumentNullException("Jwt Key");
-        var issuer = jwtConfig["Issuer"] ?? throw new ArgumentNullException("Jwt Issuer");
-        var audience = jwtConfig["Audience"] ?? throw new ArgumentNullException("Jwt Audience");
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyText));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expiresIn = int.Parse(jwtConfig["ExpiresInMinutes"] ?? "60");
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(_settings.Key));
+
+        var credentials = new SigningCredentials(
+            key,
+            SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
@@ -33,15 +40,12 @@ public class JwtService
         };
 
         var token = new JwtSecurityToken(
-            issuer: issuer,
-            audience: audience,
+            issuer: _settings.Issuer,
+            audience: _settings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expiresIn),
-            signingCredentials: creds
-            );
+            expires: _timeProvider.GetUtcNow().UtcDateTime.AddMinutes(_settings.ExpiresInMinutes),
+            signingCredentials: credentials);
 
-        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-        return tokenString;
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
