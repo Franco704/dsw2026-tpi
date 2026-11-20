@@ -228,7 +228,8 @@ namespace Dsw2026Tpi.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("LicenseNumber")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[deleted] = 0");
 
                     b.HasIndex("SpecialityId");
 

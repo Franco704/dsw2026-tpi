@@ -190,6 +190,14 @@ namespace Dsw2026Tpi.Tests
             await Assert.ThrowsAsync<ValidationException>(() =>
                 _service.GetDoctorSlotsAsync(Guid.NewGuid(), from, to));
         }
+
+        [Fact]
+        public async Task Create_WhenLicenseNumberExceeds50Characters_ThenThrowsValidationException()
+        {
+            var request = new DoctorModel.Request("Rusconi Mateo", new string('1', 51), Guid.NewGuid());
+
+            await Assert.ThrowsAsync<ValidationException>(() => _service.CreateDoctorAsync(request));
+        }
     }
 
 
