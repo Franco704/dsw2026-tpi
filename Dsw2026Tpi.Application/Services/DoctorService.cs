@@ -249,8 +249,8 @@ public class DoctorService : IDoctorService
     
     public async Task<List<DoctorModel.SlotResponse>> GetDoctorSlotsAsync(
         Guid doctorId,
-        DateTime from,
-        DateTime to)
+        DateTime? from,
+        DateTime? to)
     {
         DoctorRequestValidator.ValidateSlotRange(from, to);
 
@@ -262,8 +262,8 @@ public class DoctorService : IDoctorService
         }
 
         var today = DateTime.Today;
-        var startDate = from.Date < today ? today : from.Date;
-        var endDate = to.Date;
+        var startDate = from!.Value.Date < today ? today : from.Value.Date;
+        var endDate = to!.Value.Date;
 
         var slots = await _persistence.GetFiltered<Availability>(
             availability =>

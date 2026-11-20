@@ -144,6 +144,9 @@
   <data name="SPECIALITY_HAS_ACTIVE_DOCTORS" xml:space="preserve">
     <value>No se puede eliminar una especialidad que tiene médicos activos</value>
   </data>
+  <data name="SPECIALITY_INACTIVE" xml:space="preserve">
+    <value>La especialidad del médico no está activa</value>
+  </data>
   <data name="ENTITY_NOTFOUND" xml:space="preserve">
     <value>La entidad {0} no se encontró</value>
   </data>

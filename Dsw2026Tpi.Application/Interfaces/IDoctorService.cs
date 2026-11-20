@@ -24,8 +24,8 @@ public interface IDoctorService
     
     Task<List<DoctorModel.SlotResponse>> GetDoctorSlotsAsync(
         Guid doctorId,
-        DateTime from,
-        DateTime to);
+        DateTime? from,
+        DateTime? to);
     
     Task DeleteDoctorAsync(
         Guid doctorId);

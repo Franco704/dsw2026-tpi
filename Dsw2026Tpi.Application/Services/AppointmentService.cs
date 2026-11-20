@@ -348,6 +348,13 @@ public class AppointmentService : IAppointmentService
                 nameof(Doctor));
         }
 
+        if (doctor.Speciality is { IsActive: false })
+        {
+            throw new ConflictException(
+                ErrorCodes.SPECIALITY_INACTIVE,
+                nameof(ErrorCodes.SPECIALITY_INACTIVE));
+        }
+
         return doctor;
     }
 
