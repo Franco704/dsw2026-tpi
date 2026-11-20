@@ -199,7 +199,6 @@ public class AppointmentService : IAppointmentService
 
         var now = DateTime.Now;
 
-        // Qué transiciones son válidas lo decide el estado actual del turno (patrón State)
         if (request.Status!.Trim().ToUpperInvariant() == nameof(AppointmentStatus.ATTENDED))
         {
             appointment.MarkAsAttended(now);
@@ -253,7 +252,6 @@ public class AppointmentService : IAppointmentService
                     request.Status.Trim(),
                     ignoreCase: true);
 
-        // "date" es un solo día; "dateFrom"/"dateTo" un rango con ambos extremos incluidos
         var dateFrom =
             (request.Date ?? request.DateFrom)?.Date;
 

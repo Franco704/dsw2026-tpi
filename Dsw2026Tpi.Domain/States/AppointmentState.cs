@@ -4,8 +4,6 @@ using Dsw2026Tpi.Domain.Entities;
 
 namespace Dsw2026Tpi.Domain.States;
 
-// Patrón State (GoF): cada estado del turno decide qué transiciones permite.
-// Por defecto, ninguna: cada estado concreto habilita las suyas.
 public abstract class AppointmentState
 {
     public virtual AppointmentStatus Cancel(

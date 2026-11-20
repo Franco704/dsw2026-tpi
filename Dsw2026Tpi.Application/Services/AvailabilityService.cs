@@ -13,12 +13,12 @@ namespace Dsw2026Tpi.Application.Services;
 public class AvailabilityService : IAvailabilitiesService
 {
     private readonly IPersistence _persistence;
-    private readonly IFeriadoProvider _feriado;
+    private readonly IHolidayProvider _holidayProvider;
     public AvailabilityService(
-        IPersistence persistence, IFeriadoProvider feriadoProvider)
+        IPersistence persistence, IHolidayProvider holidayProvider)
     {
         _persistence = persistence;
-        _feriado = feriadoProvider;
+        _holidayProvider = holidayProvider;
     }
 
     public async Task<IEnumerable<AvailabilityModel.Response>> CreateAvailabilitiesAsync(
@@ -60,7 +60,7 @@ public class AvailabilityService : IAvailabilitiesService
             AvailabilitySlotGenerator.Generate(
                     rules,
                     currentDateTime)
-                .Where(a => !_feriado.EsFeriado(a.Date))
+                .Where(a => !_holidayProvider.IsHoliday(a.Date))
                 .ToList();
 
         EnsureFutureSlotsWereGenerated(
@@ -78,7 +78,6 @@ public class AvailabilityService : IAvailabilitiesService
 
         if (isUpdate)
         {
-            // El PUT sobreescribe el mes, pero los turnos reservados se conservan
             var bookedAvailabilities = existingAvailabilities
                 .Where(availability => !availability.IsAvailable)
                 .ToList();
@@ -130,7 +129,6 @@ public class AvailabilityService : IAvailabilitiesService
                     request.DoctorId,
                     today.Year,
                     today.Month,
-                    // El día ya fue validado por AvailabilityRequestValidator
                     DateTimeHelpers.ParseDay(schedule.Day)!.Value,
                     schedule.StartTime,
                     schedule.EndTime))
@@ -154,7 +152,6 @@ public class AvailabilityService : IAvailabilitiesService
     private static void EnsureMonthHasNoRules(
         IReadOnlyCollection<AvailabilityRule> existingRules)
     {
-        // Si el mes ya tiene horario cargado, se modifica con el PUT
         if (existingRules.Count > 0)
         {
             throw new ConflictException(

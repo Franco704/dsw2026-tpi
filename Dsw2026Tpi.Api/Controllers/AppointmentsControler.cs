@@ -149,7 +149,6 @@ public class AppointmentsController : AppController
             PageSize: pageSize,
             PageIndex: pageIndex);
 
-        // Este listado exige fecha (o rango): sin ella responde 400
         var appointments =
             await _appointmentService.SearchAppointmentsAsync(request, dateRequired: true);
 

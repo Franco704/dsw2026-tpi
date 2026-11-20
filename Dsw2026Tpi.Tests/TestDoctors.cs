@@ -7,7 +7,7 @@ using Dsw2026Tpi.Domain.Interfaces;
 using NSubstitute;
 using System.Linq.Expressions;
 
-namespace PruebasUnitarias
+namespace Dsw2026Tpi.Tests
 {
     public class TestDoctors
     {
@@ -21,13 +21,13 @@ namespace PruebasUnitarias
             _service = new DoctorService(_persistence);
         }
 
-        private static DoctorModel.Request RequestValido()
+        private static DoctorModel.Request ValidRequest()
         {
             return new DoctorModel.Request("Rusconi Mateo", "12345", Guid.NewGuid());
         }
 
         [Fact]
-        public async Task Create_CuandoInstanciamosConNombreInvalido_EntoncesLanzaValidationException()
+        public async Task Create_WhenNameIsInvalid_ThenThrowsValidationException()
         {
             var request = new DoctorModel.Request("Gr", "M-4021", Guid.NewGuid());
 
@@ -35,22 +35,22 @@ namespace PruebasUnitarias
         }
 
         [Fact]
-        public async Task Create_CuandoInstanciamosConMatriculaDuplicada_EntoncesLanzaConflictException()
+        public async Task Create_WhenLicenseNumberIsDuplicated_ThenThrowsConflictException()
         {
-            var request = RequestValido();
-            var doctorExistente = new Doctor("Otro", request.LicenseNumber,
-                new Specialty("Cardio", "descripcion de cardio"));
+            var request = ValidRequest();
+            var existingDoctor = new Doctor("Otro", request.LicenseNumber,
+                new Specialty("Cardio", "cardiology description"));
 
             _persistence.First<Doctor>(Arg.Any<Expression<Func<Doctor, bool>>>(), Arg.Any<string[]>())
-                        .Returns(doctorExistente);
+                        .Returns(existingDoctor);
 
             await Assert.ThrowsAsync<ConflictException>(() => _service.CreateDoctorAsync(request));
         }
 
         [Fact]
-        public async Task Create_CuandoInstanciamosConEspecialidadInexistente_EntoncesLanzaEntityNotFoundException()
+        public async Task Create_WhenSpecialtyDoesNotExist_ThenThrowsEntityNotFoundException()
         {
-            var request = RequestValido();
+            var request = ValidRequest();
             _persistence.First<Doctor>(Arg.Any<Expression<Func<Doctor, bool>>>(), Arg.Any<string[]>())
                         .Returns((Doctor?)null);
             _persistence.GetById<Specialty>(Arg.Any<Guid>(), Arg.Any<string[]>())
@@ -60,15 +60,15 @@ namespace PruebasUnitarias
         }
 
         [Fact]
-        public async Task Create_CuandoInstanciamosConDatosValidos_EntoncesCreaYDevuelveResponse()
+        public async Task Create_WhenDataIsValid_ThenCreatesAndReturnsResponse()
         {
-            var request = RequestValido();
-            var especialidad = new Specialty("Cardio", "descripcion de cardio", request.SpecialtyId);
+            var request = ValidRequest();
+            var specialty = new Specialty("Cardio", "cardiology description", request.SpecialtyId);
 
             _persistence.First<Doctor>(Arg.Any<Expression<Func<Doctor, bool>>>(), Arg.Any<string[]>())
                         .Returns((Doctor?)null);
             _persistence.GetById<Specialty>(Arg.Any<Guid>(), Arg.Any<string[]>())
-                        .Returns(especialidad);
+                        .Returns(specialty);
 
             _persistence.Add(Arg.Any<Doctor>())
                 .Returns(callInfo => callInfo.Arg<Doctor>());
@@ -85,30 +85,30 @@ namespace PruebasUnitarias
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async Task GetAll_CuandoSeFiltraONoPorEspecialidad_EntoncesElFiltroDejaPasarLosMedicosCorrectos(bool filtrar)
+        public async Task GetAll_WhenFilteringBySpecialtyOrNot_ThenFilterLetsTheRightDoctorsThrough(bool filterBySpecialty)
         {
-            var cardio = new Specialty("Cardio", "descripcion de cardio", Guid.NewGuid());
-            var trauma = new Specialty("Trauma", "descripcion de trauma", Guid.NewGuid());
-            var medicoCardio = new Doctor("Rusconi Mateo", "111", cardio);
-            var medicoTrauma = new Doctor("Martinez Franco", "222", trauma);
-            Expression<Func<Doctor, bool>>? filtro = null;
+            var cardiology = new Specialty("Cardio", "cardiology description", Guid.NewGuid());
+            var traumatology = new Specialty("Trauma", "traumatology description", Guid.NewGuid());
+            var cardiologyDoctor = new Doctor("Rusconi Mateo", "111", cardiology);
+            var traumatologyDoctor = new Doctor("Martinez Franco", "222", traumatology);
+            Expression<Func<Doctor, bool>>? filter = null;
  
             _persistence.Paginate(
                     Arg.Any<int>(),
                     Arg.Any<int>(),
-                    Arg.Do<Expression<Func<Doctor, bool>>>(f => filtro = f),
+                    Arg.Do<Expression<Func<Doctor, bool>>>(f => filter = f),
                     Arg.Any<Expression<Func<Doctor, string>>>(),
                     Arg.Any<string[]>())
                 .Returns(new Pagination<Doctor>(10, 1, 0, []));
  
-            await _service.GetAllDoctorsAsync(10, 1, specialtyId: filtrar ? cardio.Id : null);
+            await _service.GetAllDoctorsAsync(10, 1, specialtyId: filterBySpecialty ? cardiology.Id : null);
  
-            var pasa = filtro!.Compile();
-            Assert.True(pasa(medicoCardio));
-            Assert.Equal(!filtrar, pasa(medicoTrauma));
+            var passes = filter!.Compile();
+            Assert.True(passes(cardiologyDoctor));
+            Assert.Equal(!filterBySpecialty, passes(traumatologyDoctor));
         }
         [Fact]
-        public async Task GetSlots_CuandoElRangoSupera31Dias_EntoncesLanzaValidationException()
+        public async Task GetSlots_WhenRangeExceeds31Days_ThenThrowsValidationException()
         {
             var from = DateTime.Today;
 
@@ -117,7 +117,7 @@ namespace PruebasUnitarias
         }
 
         [Fact]
-        public async Task GetSlots_CuandoElMedicoNoExiste_EntoncesLanzaEntityNotFoundException()
+        public async Task GetSlots_WhenDoctorDoesNotExist_ThenThrowsEntityNotFoundException()
         {
             _persistence.GetById<Doctor>(Arg.Any<Guid>(), Arg.Any<string[]>())
                 .Returns((Doctor?)null);
@@ -127,25 +127,25 @@ namespace PruebasUnitarias
         }
 
         [Fact]
-        public async Task GetSlots_CuandoHayTurnosDeHoyYaPasados_EntoncesNoLosDevuelve()
+        public async Task GetSlots_WhenTodaySlotsAlreadyPassed_ThenDoesNotReturnThem()
         {
-            var medico = new Doctor("Rusconi Mateo", "111",
-                new Specialty("Cardio", "descripcion de cardio", Guid.NewGuid()));
-            var turnoPasado = new Availability(medico.Id, DateTime.Today,
+            var doctor = new Doctor("Rusconi Mateo", "111",
+                new Specialty("Cardio", "cardiology description", Guid.NewGuid()));
+            var pastSlot = new Availability(doctor.Id, DateTime.Today,
                 TimeSpan.Zero, TimeSpan.FromMinutes(30));
-            var turnoFuturo = new Availability(medico.Id, DateTime.Today.AddDays(1),
+            var futureSlot = new Availability(doctor.Id, DateTime.Today.AddDays(1),
                 TimeSpan.FromHours(9), TimeSpan.FromHours(9.5));
 
             _persistence.GetById<Doctor>(Arg.Any<Guid>(), Arg.Any<string[]>())
-                .Returns(medico);
+                .Returns(doctor);
             _persistence.GetFiltered(Arg.Any<Expression<Func<Availability, bool>>>(), Arg.Any<string[]>())
-                .Returns([turnoPasado, turnoFuturo]);
+                .Returns([pastSlot, futureSlot]);
 
             var slots = await _service.GetDoctorSlotsAsync(
-                medico.Id, DateTime.Today, DateTime.Today.AddDays(5));
+                doctor.Id, DateTime.Today, DateTime.Today.AddDays(5));
 
             var slot = Assert.Single(slots);
-            Assert.Equal(turnoFuturo.Id, slot.Id);
+            Assert.Equal(futureSlot.Id, slot.Id);
         }
     }
     

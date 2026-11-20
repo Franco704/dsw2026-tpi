@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using NSubstitute;
 using System.Linq.Expressions;
 
-namespace PruebasUnitarias
+namespace Dsw2026Tpi.Tests
 {
     public class TestAppointmentSearch
     {
@@ -32,7 +32,7 @@ namespace PruebasUnitarias
                 .Returns(new Pagination<Appointment>(10, 1, 0, []));
         }
 
-        private static AppointmentModel.SearchRequest Pedido(
+        private static AppointmentModel.SearchRequest BuildRequest(
             string? status = null,
             DateTime? date = null,
             DateTime? dateFrom = null,
@@ -41,32 +41,32 @@ namespace PruebasUnitarias
             new(null, null, patient, status, date, dateFrom, dateTo);
 
         [Fact]
-        public async Task Search_CuandoElListadoNoTraeFecha_EntoncesLanzaValidationException()
+        public async Task Search_WhenListHasNoDate_ThenThrowsValidationException()
         {
             await Assert.ThrowsAsync<ValidationException>(
-                () => _service.SearchAppointmentsAsync(Pedido(), dateRequired: true));
+                () => _service.SearchAppointmentsAsync(BuildRequest(), dateRequired: true));
         }
 
         [Fact]
-        public async Task Search_CuandoElEstadoNoExiste_EntoncesLanzaValidationException()
+        public async Task Search_WhenStatusDoesNotExist_ThenThrowsValidationException()
         {
             await Assert.ThrowsAsync<ValidationException>(
-                () => _service.SearchAppointmentsAsync(Pedido(status: "PENDIENTE", date: DateTime.Today)));
+                () => _service.SearchAppointmentsAsync(BuildRequest(status: "PENDING", date: DateTime.Today)));
         }
 
         [Fact]
-        public async Task Search_CuandoElRangoEstaInvertido_EntoncesLanzaValidationException()
+        public async Task Search_WhenRangeIsInverted_ThenThrowsValidationException()
         {
             await Assert.ThrowsAsync<ValidationException>(
                 () => _service.SearchAppointmentsAsync(
-                    Pedido(dateFrom: DateTime.Today, dateTo: DateTime.Today.AddDays(-1))));
+                    BuildRequest(dateFrom: DateTime.Today, dateTo: DateTime.Today.AddDays(-1))));
         }
 
         [Fact]
-        public async Task Search_CuandoLosFiltrosSonValidos_EntoncesOrdenaDescendente()
+        public async Task Search_WhenFiltersAreValid_ThenSortsDescending()
         {
             await _service.SearchAppointmentsAsync(
-                Pedido(status: "booked", dateFrom: DateTime.Today, dateTo: DateTime.Today.AddDays(6), patient: "Pérez"),
+                BuildRequest(status: "booked", dateFrom: DateTime.Today, dateTo: DateTime.Today.AddDays(6), patient: "Pérez"),
                 dateRequired: true);
 
             await _persistence.Received(1).Paginate(

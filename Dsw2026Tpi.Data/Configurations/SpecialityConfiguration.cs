@@ -29,7 +29,6 @@ public class SpecialityConfiguration
             .IsRequired()
             .HasColumnType("varchar(100)");
 
-        // Sin HasDefaultValue: con bool, EF no distingue false de "no asignado"
         builder.Property(speciality => speciality.IsActive)
             .IsRequired()
             .HasColumnName("is_active")
