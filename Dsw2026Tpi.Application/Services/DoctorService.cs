@@ -191,7 +191,6 @@ public class DoctorService : IDoctorService
                     rule.Month == today.Month);
 
         return (rules ?? [])
-            // DayOfWeek arranca en domingo (0); así el lunes queda primero
             .OrderBy(rule => ((int)rule.DayOfWeek + 6) % 7)
             .ThenBy(rule => rule.StartTime)
             .Select(DoctorMapper.ToAvailabilityResponse)

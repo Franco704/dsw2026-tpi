@@ -118,7 +118,6 @@ public static class AppointmentRequestValidator
                 "invalid");
         }
 
-        // Paciente: si son solo dígitos es un DNI, si no, parte del nombre
         var patient = request.Patient?.Trim();
 
         if (!string.IsNullOrEmpty(patient))
@@ -196,7 +195,6 @@ public static class AppointmentRequestValidator
                 "required");
         }
 
-        // El admin solo puede cerrar un turno: atendido o ausente
         if (request?.Status?.Trim().ToUpperInvariant() is not ("ATTENDED" or "NO_SHOW"))
         {
             validation.WithDetail(

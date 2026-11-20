@@ -74,7 +74,6 @@ public class AvailabilityRuleConfiguration
             .HasForeignKey(rule => rule.DoctorId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Restricción única del modelo de datos del TPI
         builder.HasIndex(rule => new
         {
             rule.DoctorId,

@@ -9,8 +9,8 @@ namespace Dsw2026Tpi.Tests
     public class TestSpecialties
     {
         [Theory]
-        [InlineData(true, false)]   // filtro por activas: la inactiva no pasa
-        [InlineData(null, true)]    // sin filtro (admin): pasan las dos
+        [InlineData(true, false)]
+        [InlineData(null, true)]
         public async Task GetAll_WhenFilteringByStatus_ThenLetsTheRightOnesThrough(
             bool? onlyActive,
             bool inactivePasses)
