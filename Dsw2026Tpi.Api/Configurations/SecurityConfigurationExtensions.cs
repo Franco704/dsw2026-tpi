@@ -116,7 +116,8 @@ public static class SecurityConfigurationExtensions
                 RequiredLength = 8,
                 RequireLowercase = true,
                 RequireUppercase = true,
-                RequireDigit = true
+                RequireDigit = true,
+                RequireNonAlphanumeric = true
             };
             options.User.RequireUniqueEmail = true;
 
