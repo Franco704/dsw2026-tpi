@@ -1,4 +1,5 @@
 ﻿using Dsw2026Tpi.Application.Dtos;
+using Dsw2026Tpi.Application.Extensions;
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Application.Validators;
 using Dsw2026Tpi.CrossCutting.Exceptions;
@@ -186,16 +187,10 @@ public class AppointmentService : IAppointmentService
             request);
 
         var appointment =
-            await _persistence.GetById<Appointment>(
+            await _persistence.GetRequiredById<Appointment>(
                 appointmentId,
                 nameof(Appointment.Doctor),
                 $"{nameof(Appointment.Doctor)}.{nameof(Doctor.Speciality)}");
-
-        if (appointment is null)
-        {
-            throw new EntityNotFoundException(
-                nameof(Appointment));
-        }
 
         var now = DateTime.Now;
 
@@ -360,14 +355,8 @@ public class AppointmentService : IAppointmentService
         Guid availabilityId)
     {
         var availability =
-            await _persistence.GetById<Availability>(
+            await _persistence.GetRequiredById<Availability>(
                 availabilityId);
-
-        if (availability is null)
-        {
-            throw new EntityNotFoundException(
-                nameof(Availability));
-        }
 
         return availability;
     }
@@ -427,14 +416,8 @@ public class AppointmentService : IAppointmentService
         Guid appointmentId)
     {
         var appointment =
-            await _persistence.GetById<Appointment>(
+            await _persistence.GetRequiredById<Appointment>(
                 appointmentId);
-
-        if (appointment is null)
-        {
-            throw new EntityNotFoundException(
-                nameof(Appointment));
-        }
 
         return appointment;
     }

@@ -1,4 +1,5 @@
 using Dsw2026Tpi.Application.Services;
+using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
 using NSubstitute;
@@ -35,5 +36,38 @@ namespace Dsw2026Tpi.Tests
             Assert.True(passes(active));
             Assert.Equal(inactivePasses, passes(inactive));
         }
+    
+        [Fact]
+        public async Task Delete_WhenSpecialtyHasActiveDoctors_ThenThrowsConflictException()
+        {
+            var persistence = Substitute.For<IPersistence>();
+            var service = new SpecialitiesService(persistence);
+            var specialty = new Specialty("Cardiology", "cardiology description");
+
+            persistence.GetById<Specialty>(Arg.Any<Guid>(), Arg.Any<string[]>())
+                .Returns(specialty);
+            persistence.First<Doctor>(Arg.Any<Expression<Func<Doctor, bool>>>(), Arg.Any<string[]>())
+                .Returns(new Doctor("Rusconi Mateo", "111", specialty));
+
+            await Assert.ThrowsAsync<ConflictException>(() => service.DeleteSpecialtyAsync(specialty.Id));
+            await persistence.DidNotReceive().SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task Delete_WhenSpecialtyHasNoActiveDoctors_ThenDeletesIt()
+        {
+            var persistence = Substitute.For<IPersistence>();
+            var service = new SpecialitiesService(persistence);
+            var specialty = new Specialty("Cardiology", "cardiology description");
+
+            persistence.GetById<Specialty>(Arg.Any<Guid>(), Arg.Any<string[]>())
+                .Returns(specialty);
+
+            await service.DeleteSpecialtyAsync(specialty.Id);
+
+            Assert.True(specialty.Deleted);
+            await persistence.Received(1).SaveChangesAsync();
+        }
     }
+
 }

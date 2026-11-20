@@ -147,6 +147,38 @@ namespace Dsw2026Tpi.Tests
             var slot = Assert.Single(slots);
             Assert.Equal(futureSlot.Id, slot.Id);
         }
+    
+        [Fact]
+        public async Task Delete_WhenDoctorHasFutureAppointments_ThenThrowsConflictException()
+        {
+            var doctor = new Doctor("Rusconi Mateo", "111",
+                new Specialty("Cardiology", "cardiology description", Guid.NewGuid()));
+
+            _persistence.GetById<Doctor>(Arg.Any<Guid>(), Arg.Any<string[]>())
+                .Returns(doctor);
+            _persistence.First<Appointment>(Arg.Any<Expression<Func<Appointment, bool>>>(), Arg.Any<string[]>())
+                .Returns(new Appointment(doctor.Id, Guid.NewGuid(), Guid.NewGuid(),
+                    DateTime.Now.AddDays(1), "Annual checkup"));
+
+            await Assert.ThrowsAsync<ConflictException>(() => _service.DeleteDoctorAsync(doctor.Id));
+            Assert.True(doctor.IsActive);
+        }
+
+        [Fact]
+        public async Task Delete_WhenDoctorHasNoFutureAppointments_ThenDeactivatesIt()
+        {
+            var doctor = new Doctor("Rusconi Mateo", "111",
+                new Specialty("Cardiology", "cardiology description", Guid.NewGuid()));
+
+            _persistence.GetById<Doctor>(Arg.Any<Guid>(), Arg.Any<string[]>())
+                .Returns(doctor);
+
+            await _service.DeleteDoctorAsync(doctor.Id);
+
+            Assert.False(doctor.IsActive);
+            await _persistence.Received(1).SaveChangesAsync();
+        }
     }
+
     
 }

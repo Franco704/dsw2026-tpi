@@ -1,4 +1,5 @@
 using Dsw2026Tpi.Application.Dtos;
+using Dsw2026Tpi.Application.Extensions;
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Application.Mappers;
 using Dsw2026Tpi.CrossCutting.Exceptions;
@@ -91,13 +92,7 @@ public class SpecialitiesService : ISpecialitiesService
         SpecialityRequestValidator.Validate(request);
 
         var existing =
-            await _persistence.GetById<Specialty>(id);
-
-        if (existing is null)
-        {
-            throw new EntityNotFoundException(
-                nameof(Specialty));
-        }
+            await _persistence.GetRequiredById<Specialty>(id);
 
         var nameSpeciality = request.Name.Trim();
         
@@ -131,13 +126,21 @@ public class SpecialitiesService : ISpecialitiesService
         Guid id)
     {
         var speciality =
-            await _persistence.GetById<Specialty>(
+            await _persistence.GetRequiredById<Specialty>(
                 id);
 
-        if (speciality is null)
+        var activeDoctor =
+            await _persistence.First<Doctor>(
+                doctor =>
+                    doctor.SpecialityId == id &&
+                    doctor.IsActive &&
+                    !doctor.Deleted);
+
+        if (activeDoctor is not null)
         {
-            throw new EntityNotFoundException(
-                nameof(Specialty));
+            throw new ConflictException(
+                ErrorCodes.SPECIALITY_HAS_ACTIVE_DOCTORS,
+                nameof(ErrorCodes.SPECIALITY_HAS_ACTIVE_DOCTORS));
         }
 
         speciality.Deactivate();
