@@ -28,7 +28,8 @@ public class DoctorConfiguration
             .HasColumnType("varchar(50)");
 
         builder.HasIndex(doctor => doctor.LicenseNumber)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("[deleted] = 0");
 
         builder.Property(doctor => doctor.SpecialityId)
             .HasColumnName("speciality_id")

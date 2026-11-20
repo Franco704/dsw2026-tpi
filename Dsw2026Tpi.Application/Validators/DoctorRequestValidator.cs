@@ -105,6 +105,12 @@ public static class DoctorRequestValidator
                 "licenseNumber",
                 "required");
         }
+        else if (licenseNumber.Trim().Length > 50)
+        {
+            validation.WithDetail(
+                "licenseNumber",
+                "maximum_length_50");
+        }
     }
 
     private static void ValidateSpecialtyId(
