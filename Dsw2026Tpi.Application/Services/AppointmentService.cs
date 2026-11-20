@@ -29,9 +29,6 @@ public class AppointmentService : IAppointmentService
         _logger = logger;
         _timeProvider = timeProvider;
     }
-    //GetActiveAppointmentsByPatientDniAsync
-    //CancelAppointmentAsync
-    // SearchAppointmentsAsync
 
     public async Task<AppointmentModel.Response> CreateAppointmentAsync(
         AppointmentModel.Request request,
@@ -55,7 +52,7 @@ public class AppointmentService : IAppointmentService
 
         var availability =
             await GetRequiredAvailabilityAsync(
-                request.AvailabilityId);;
+                request.AvailabilityId);
 
         EnsureAvailabilityBelongsToDoctor(
             availability,

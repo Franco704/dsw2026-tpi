@@ -1,4 +1,5 @@
 ﻿using Dsw2026Tpi.Domain.Rules;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Dsw2026Tpi.Domain.Entities;
 
@@ -55,6 +56,7 @@ public class Specialty : DeletedEntity
         MarkAsUpdated();
     }
 
+    [MemberNotNull(nameof(Name), nameof(Description))]
     private void SetInformation(
         string name,
         string description)

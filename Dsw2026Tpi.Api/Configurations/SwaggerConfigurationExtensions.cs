@@ -11,7 +11,7 @@ public static class SwaggerConfigurationExtensions
             const string schemeId = "Bearer";
             o.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "Desarollo de Software 2026",
+                Title = "Desarrollo de Software 2026",
                 Version = "v1",
             });
             o.AddSecurityDefinition(schemeId, new OpenApiSecurityScheme

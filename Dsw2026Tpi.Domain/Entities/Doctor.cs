@@ -1,4 +1,6 @@
-﻿namespace Dsw2026Tpi.Domain.Entities;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Dsw2026Tpi.Domain.Entities;
 
 public class Doctor : DeletedEntity
 {
@@ -57,6 +59,7 @@ public class Doctor : DeletedEntity
         Delete();
     }
 
+    [MemberNotNull(nameof(Name), nameof(LicenseNumber))]
     private void SetInformation(
         string name,
         string licenseNumber,
