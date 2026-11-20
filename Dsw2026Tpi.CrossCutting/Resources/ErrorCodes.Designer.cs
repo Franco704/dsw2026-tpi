@@ -124,6 +124,24 @@ namespace Dsw2026Tpi.CrossCutting.Resources {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a No se puede eliminar un médico con turnos futuros reservados.
+        /// </summary>
+        public static string DOCTOR_HAS_FUTURE_APPOINTMENTS {
+            get {
+                return ResourceManager.GetString("DOCTOR_HAS_FUTURE_APPOINTMENTS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a No se puede eliminar una especialidad que tiene médicos activos.
+        /// </summary>
+        public static string SPECIALITY_HAS_ACTIVE_DOCTORS {
+            get {
+                return ResourceManager.GetString("SPECIALITY_HAS_ACTIVE_DOCTORS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a La entidad {0} no se encontró.
         /// </summary>
         public static string ENTITY_NOTFOUND {

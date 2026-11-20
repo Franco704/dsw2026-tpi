@@ -138,6 +138,12 @@
   <data name="DOCTOR_LICENSE_CONFLICT" xml:space="preserve">
     <value>Ya existe un médico con esa matrícula</value>
   </data>
+  <data name="DOCTOR_HAS_FUTURE_APPOINTMENTS" xml:space="preserve">
+    <value>No se puede eliminar un médico con turnos futuros reservados</value>
+  </data>
+  <data name="SPECIALITY_HAS_ACTIVE_DOCTORS" xml:space="preserve">
+    <value>No se puede eliminar una especialidad que tiene médicos activos</value>
+  </data>
   <data name="ENTITY_NOTFOUND" xml:space="preserve">
     <value>La entidad {0} no se encontró</value>
   </data>

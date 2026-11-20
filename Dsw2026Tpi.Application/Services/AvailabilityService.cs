@@ -1,4 +1,5 @@
 using Dsw2026Tpi.Application.Dtos;
+using Dsw2026Tpi.Application.Extensions;
 using Dsw2026Tpi.Application.Generators;
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Application.Validators;
@@ -175,14 +176,8 @@ public class AvailabilityService : IAvailabilitiesService
     private async Task EnsureDoctorExistsAsync(
         Guid doctorId)
     {
-        var doctor = await _persistence.GetById<Doctor>(
+        await _persistence.GetRequiredById<Doctor>(
             doctorId);
-
-        if (doctor is null)
-        {
-            throw new EntityNotFoundException(
-                nameof(Doctor));
-        }
     }
 
     private async Task<List<Availability>>

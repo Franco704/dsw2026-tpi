@@ -1,4 +1,5 @@
 ﻿using Dsw2026Tpi.Application.Dtos;
+using Dsw2026Tpi.Application.Extensions;
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Application.Validators;
 using Dsw2026Tpi.CrossCutting.Exceptions;
@@ -55,14 +56,8 @@ public class DoctorService : IDoctorService
         DoctorRequestValidator.Validate(request);
  
         var doctor =
-            await _persistence.GetById<Doctor>(
+            await _persistence.GetRequiredById<Doctor>(
                 id);
- 
-        if (doctor is null)
-        {
-            throw new EntityNotFoundException(
-                nameof(Doctor));
-        }
  
         var normalizedLicenseNumber =
             request.LicenseNumber.Trim();
@@ -172,14 +167,8 @@ public class DoctorService : IDoctorService
         Guid id)
     {
         var doctor =
-            await _persistence.GetById<Doctor>(
+            await _persistence.GetRequiredById<Doctor>(
                 id);
- 
-        if (doctor is null)
-        {
-            throw new EntityNotFoundException(
-                nameof(Doctor));
-        }
  
         var today = DateTime.Today;
 
@@ -201,15 +190,23 @@ public class DoctorService : IDoctorService
         Guid id)
     {
         var doctor =
-            await _persistence.GetById<Doctor>(
+            await _persistence.GetRequiredById<Doctor>(
                 id);
  
-        if (doctor is null)
+        var futureAppointment =
+            await _persistence.First<Appointment>(
+                appointment =>
+                    appointment.DoctorId == id &&
+                    appointment.Status == AppointmentStatus.BOOKED &&
+                    appointment.ScheduledAt >= DateTime.Now);
+
+        if (futureAppointment is not null)
         {
-            throw new EntityNotFoundException(
-                nameof(Doctor));
+            throw new ConflictException(
+                ErrorCodes.DOCTOR_HAS_FUTURE_APPOINTMENTS,
+                nameof(ErrorCodes.DOCTOR_HAS_FUTURE_APPOINTMENTS));
         }
- 
+
         doctor.Deactivate();
  
         await _persistence.Update(
@@ -244,14 +241,8 @@ public class DoctorService : IDoctorService
         Guid specialtyId)
     {
         var specialty =
-            await _persistence.GetById<Specialty>(
+            await _persistence.GetRequiredById<Specialty>(
                 specialtyId);
- 
-        if (specialty is null)
-        {
-            throw new EntityNotFoundException(
-                nameof(Specialty));
-        }
  
         return specialty;
     }
