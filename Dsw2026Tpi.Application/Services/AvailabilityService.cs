@@ -15,11 +15,16 @@ public class AvailabilityService : IAvailabilitiesService
 {
     private readonly IPersistence _persistence;
     private readonly IHolidayProvider _holidayProvider;
+    private readonly TimeProvider _timeProvider;
+
     public AvailabilityService(
-        IPersistence persistence, IHolidayProvider holidayProvider)
+        IPersistence persistence,
+        IHolidayProvider holidayProvider,
+        TimeProvider timeProvider)
     {
         _persistence = persistence;
         _holidayProvider = holidayProvider;
+        _timeProvider = timeProvider;
     }
 
     public async Task<IEnumerable<AvailabilityModel.Response>> CreateAvailabilitiesAsync(
@@ -50,7 +55,7 @@ public class AvailabilityService : IAvailabilitiesService
         await EnsureDoctorExistsAsync(
             request.DoctorId);
 
-        var currentDateTime = DateTime.Now;
+        var currentDateTime = _timeProvider.GetLocalNow().DateTime;
         var today = currentDateTime.Date;
 
         var rules = BuildMonthRules(

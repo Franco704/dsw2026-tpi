@@ -1,4 +1,5 @@
-﻿using Dsw2026Tpi.Application.Interfaces;
+﻿using Dsw2026Tpi.Application.Dtos;
+using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Helpers;
 using Dsw2026Tpi.CrossCutting.Resources;
@@ -13,20 +14,24 @@ public class IdentityAccessService : IIdentityAccessService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ISignInService _signInService;
     private readonly ILogger<IdentityAccessService> _logger;
+    private readonly TimeProvider _timeProvider;
 
     public IdentityAccessService(
         UserManager<ApplicationUser> userManager,
         ISignInService signInService,
-        ILogger<IdentityAccessService> logger)
+        ILogger<IdentityAccessService> logger,
+        TimeProvider timeProvider)
     {
         _userManager = userManager;
 
         _signInService = signInService;
 
         _logger = logger;
+
+        _timeProvider = timeProvider;
     }
 
-    public async Task<ApplicationUser> AuthenticateUserWithPasswordAsync(
+    public async Task<UserInfo> AuthenticateUserWithPasswordAsync(
         string email,
         string password)
     {
@@ -59,16 +64,21 @@ public class IdentityAccessService : IIdentityAccessService
             throw new AuthenticationException();
         }
 
-        return user;
+        return ToUserInfo(user);
     }
 
     public async Task EnsureUserHasRoleAsync(
-        ApplicationUser user,
+        UserInfo user,
         string requiredRole)
     {
+        var applicationUser =
+            await _userManager.FindByIdAsync(
+                user.Id);
+
         var hasRequiredRole =
+            applicationUser is not null &&
             await _userManager.IsInRoleAsync(
-                user,
+                applicationUser,
                 requiredRole);
 
         if (!hasRequiredRole)
@@ -82,23 +92,28 @@ public class IdentityAccessService : IIdentityAccessService
         }
     }
 
-    public async Task<ApplicationUser?> FindUserByEmailAsync(
+    public async Task<UserInfo?> FindUserByEmailAsync(
         string email)
     {
         var normalizedEmail = email.NormalizeEmail();
 
-        return await _userManager.FindByEmailAsync(
-            normalizedEmail);
+        var user =
+            await _userManager.FindByEmailAsync(
+                normalizedEmail);
+
+        return user is null
+            ? null
+            : ToUserInfo(user);
     }
 
-    public async Task<ApplicationUser> CreateUserAsync(
+    public async Task<UserInfo> CreateUserAsync(
         string email,
         string role,
         string? password = null)
     {
         var normalizedEmail = email.NormalizeEmail();
 
-        var now = DateTime.Now;
+        var now = _timeProvider.GetLocalNow().DateTime;
 
         var user = new ApplicationUser
         {
@@ -166,6 +181,14 @@ public class IdentityAccessService : IIdentityAccessService
                     )));
         }
 
-        return user;
+        return ToUserInfo(user);
     }
+
+    private static UserInfo ToUserInfo(
+        ApplicationUser user) =>
+        new(
+            user.Id,
+            user.Email,
+            user.UserName,
+            user.Deleted);
 }

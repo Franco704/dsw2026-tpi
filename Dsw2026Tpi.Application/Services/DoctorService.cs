@@ -13,10 +13,14 @@ namespace Dsw2026Tpi.Application.Services;
 public class DoctorService : IDoctorService
 {
     private readonly IPersistence _persistence;
+    private readonly TimeProvider _timeProvider;
+
     public DoctorService(
-        IPersistence persistence)
+        IPersistence persistence,
+        TimeProvider timeProvider)
     {
         _persistence = persistence;
+        _timeProvider = timeProvider;
     }
  
     public async Task<DoctorModel.Response> CreateDoctorAsync(
@@ -170,7 +174,7 @@ public class DoctorService : IDoctorService
             await _persistence.GetRequiredById<Doctor>(
                 id);
  
-        var today = DateTime.Today;
+        var today = _timeProvider.GetLocalNow().Date;
 
         var rules =
             await _persistence.GetFiltered<AvailabilityRule>(
@@ -193,12 +197,14 @@ public class DoctorService : IDoctorService
             await _persistence.GetRequiredById<Doctor>(
                 id);
  
+        var now = _timeProvider.GetLocalNow().DateTime;
+
         var futureAppointment =
             await _persistence.First<Appointment>(
                 appointment =>
                     appointment.DoctorId == id &&
                     appointment.Status == AppointmentStatus.BOOKED &&
-                    appointment.ScheduledAt >= DateTime.Now);
+                    appointment.ScheduledAt >= now);
 
         if (futureAppointment is not null)
         {
@@ -261,7 +267,7 @@ public class DoctorService : IDoctorService
             throw new EntityNotFoundException(nameof(Doctor));
         }
 
-        var today = DateTime.Today;
+        var today = _timeProvider.GetLocalNow().Date;
         var startDate = from!.Value.Date < today ? today : from.Value.Date;
         var endDate = to!.Value.Date;
 
@@ -273,7 +279,7 @@ public class DoctorService : IDoctorService
                 availability.Date >= startDate &&
                 availability.Date <= endDate);
 
-        var now = DateTime.Now;
+        var now = _timeProvider.GetLocalNow().DateTime;
         
         return (slots ?? [])
             .Where(availability => availability.StartsAt > now)

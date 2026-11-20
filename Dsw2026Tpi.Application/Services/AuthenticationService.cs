@@ -5,14 +5,13 @@ using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Helpers;
 using Dsw2026Tpi.CrossCutting.Identity;
 using Dsw2026Tpi.CrossCutting.Resources;
-using Dsw2026Tpi.Data.Identity;
 using Microsoft.Extensions.Logging;
 
 namespace Dsw2026Tpi.Application.Services;
 
 public class AuthenticationService : IAuthenticationService
 {
-    private readonly JwtService _jwtService;
+    private readonly IJwtService _jwtService;
     private readonly ILogger<AuthenticationService> _logger;
     private readonly IIdentityAccessService _identityAccessService;
     private readonly IPatientAccessService _patientAccessService;
@@ -20,7 +19,7 @@ public class AuthenticationService : IAuthenticationService
     public AuthenticationService(
         IIdentityAccessService identityAccessService,
         IPatientAccessService patientAccessService,
-        JwtService jwtService,
+        IJwtService jwtService,
         ILogger<AuthenticationService> logger)
     {
 
