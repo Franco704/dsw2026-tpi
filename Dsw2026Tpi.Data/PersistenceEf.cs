@@ -196,6 +196,11 @@ public class PersistenceEf : IPersistence
         return query;
     }
     
+    public Task<int> Count<T>(
+        Expression<Func<T, bool>> predicate)
+        where T : EntityBase =>
+        _context.Set<T>().CountAsync(predicate);
+
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();
