@@ -4,8 +4,8 @@ using System.Text;
 
 namespace Dsw2026Tpi.Domain.Interfaces
 {
-    public interface IFeriadoProvider
+    public interface IHolidayProvider
     {
-        bool EsFeriado(DateTime feriado);
+        bool IsHoliday(DateTime date);
     }
 }

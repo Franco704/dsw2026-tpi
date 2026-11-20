@@ -2,7 +2,7 @@ namespace Dsw2026Tpi.CrossCutting.Helpers;
 
 public static class DateTimeHelpers
 {
-    private static readonly Dictionary<DayOfWeek, string> DaysEspaniol = new()
+    private static readonly Dictionary<DayOfWeek, string> SpanishDayNames = new()
     {
         { DayOfWeek.Monday, "LUNES" },
         { DayOfWeek.Tuesday, "MARTES" },
@@ -16,14 +16,14 @@ public static class DateTimeHelpers
     
     public static string ToSpanish(this DayOfWeek day)
     {
-        return DaysEspaniol.TryGetValue(day, out var dayName) ? dayName : day.ToString();
+        return SpanishDayNames.TryGetValue(day, out var dayName) ? dayName : day.ToString();
     }
 
     
     public static DayOfWeek? ParseSpanish(string day)
     {
         var norm = day.Trim().ToUpperInvariant();
-        var e = DaysEspaniol.FirstOrDefault(x => x.Value == norm);
+        var e = SpanishDayNames.FirstOrDefault(x => x.Value == norm);
         return e.Value != null ? e.Key : null;
     }
 
