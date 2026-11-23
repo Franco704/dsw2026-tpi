@@ -28,5 +28,13 @@ public record DoctorModel
         DateTime Date,
         string StartTime,
         string EndTime,
-        bool IsAvailable);
+        bool IsAvailable,
+        string Status);
+
+    // Estado de cada bloque en GET /doctors/{id}/slots
+    public static class SlotStatus
+    {
+        public const string Available = "AVAILABLE";
+        public const string Occupied = "OCCUPIED";
+    }
 }

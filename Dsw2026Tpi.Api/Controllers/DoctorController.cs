@@ -43,9 +43,10 @@ public class DoctorController : AppController
     public async Task<IActionResult> GetSlots(
         [FromRoute] Guid id,
         [FromQuery] DateTime? from,
-        [FromQuery] DateTime? to)
+        [FromQuery] DateTime? to,
+        [FromQuery] bool includeOccupied = false)
     {
-        var slots = await _service.GetDoctorSlotsAsync(id, from, to);
+        var slots = await _service.GetDoctorSlotsAsync(id, from, to, includeOccupied);
         return Ok(slots);
     }
 

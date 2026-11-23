@@ -77,6 +77,9 @@ public static class DoctorMapper
             Date: availability.Date,
             StartTime: availability.StartTime.ToTimeString(),
             EndTime: availability.EndTime.ToTimeString(),
-            IsAvailable: availability.IsAvailable);
+            IsAvailable: availability.IsAvailable,
+            Status: availability.IsAvailable
+                ? DoctorModel.SlotStatus.Available
+                : DoctorModel.SlotStatus.Occupied);
     }
 }

@@ -256,7 +256,8 @@ public class DoctorService : IDoctorService
     public async Task<List<DoctorModel.SlotResponse>> GetDoctorSlotsAsync(
         Guid doctorId,
         DateTime? from,
-        DateTime? to)
+        DateTime? to,
+        bool includeOccupied = false)
     {
         DoctorRequestValidator.ValidateSlotRange(from, to);
 
@@ -275,14 +276,17 @@ public class DoctorService : IDoctorService
             availability =>
                 availability.DoctorId == doctorId &&
                 !availability.Deleted &&
-                availability.IsAvailable &&
                 availability.Date >= startDate &&
                 availability.Date <= endDate);
 
         var now = _timeProvider.GetLocalNow().DateTime;
-        
+
+        // Sin includeOccupied se mantiene la respuesta de siempre (solo libres).
+        // Con includeOccupied también vuelven los reservados, marcados como OCCUPIED,
+        // para que el paciente los vea en gris y no pueda elegirlos.
         return (slots ?? [])
             .Where(availability => availability.StartsAt > now)
+            .Where(availability => includeOccupied || availability.IsAvailable)
             .OrderBy(availability => availability.Date)
             .ThenBy(availability => availability.StartTime)
             .Select(DoctorMapper.ToSlotResponse)
