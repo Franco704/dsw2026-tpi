@@ -147,6 +147,55 @@ namespace Dsw2026Tpi.Tests
             var slot = Assert.Single(slots);
             Assert.Equal(futureSlot.Id, slot.Id);
         }
+
+        [Fact]
+        public async Task GetSlots_WhenIncludeOccupiedIsFalse_ThenReturnsOnlyAvailableSlots()
+        {
+            var doctor = new Doctor("Rusconi Mateo", "111",
+                new Specialty("Cardio", "cardiology description", Guid.NewGuid()));
+            var freeSlot = new Availability(doctor.Id, DateTime.Today.AddDays(1),
+                TimeSpan.FromHours(9), TimeSpan.FromHours(9.5));
+            var bookedSlot = new Availability(doctor.Id, DateTime.Today.AddDays(1),
+                TimeSpan.FromHours(9.5), TimeSpan.FromHours(10));
+            bookedSlot.MarkAsUnavailable();
+
+            _persistence.GetById<Doctor>(Arg.Any<Guid>(), Arg.Any<string[]>())
+                .Returns(doctor);
+            _persistence.GetFiltered(Arg.Any<Expression<Func<Availability, bool>>>(), Arg.Any<string[]>())
+                .Returns([freeSlot, bookedSlot]);
+
+            var slots = await _service.GetDoctorSlotsAsync(
+                doctor.Id, DateTime.Today, DateTime.Today.AddDays(5));
+
+            var slot = Assert.Single(slots);
+            Assert.Equal(freeSlot.Id, slot.Id);
+            Assert.Equal(DoctorModel.SlotStatus.Available, slot.Status);
+        }
+
+        [Fact]
+        public async Task GetSlots_WhenIncludeOccupiedIsTrue_ThenReturnsBookedSlotsAsOccupied()
+        {
+            var doctor = new Doctor("Rusconi Mateo", "111",
+                new Specialty("Cardio", "cardiology description", Guid.NewGuid()));
+            var freeSlot = new Availability(doctor.Id, DateTime.Today.AddDays(1),
+                TimeSpan.FromHours(9), TimeSpan.FromHours(9.5));
+            var bookedSlot = new Availability(doctor.Id, DateTime.Today.AddDays(1),
+                TimeSpan.FromHours(9.5), TimeSpan.FromHours(10));
+            bookedSlot.MarkAsUnavailable();
+
+            _persistence.GetById<Doctor>(Arg.Any<Guid>(), Arg.Any<string[]>())
+                .Returns(doctor);
+            _persistence.GetFiltered(Arg.Any<Expression<Func<Availability, bool>>>(), Arg.Any<string[]>())
+                .Returns([freeSlot, bookedSlot]);
+
+            var slots = await _service.GetDoctorSlotsAsync(
+                doctor.Id, DateTime.Today, DateTime.Today.AddDays(5), includeOccupied: true);
+
+            Assert.Equal(2, slots.Count);
+            Assert.Equal(DoctorModel.SlotStatus.Available, slots[0].Status);
+            Assert.Equal(DoctorModel.SlotStatus.Occupied, slots[1].Status);
+            Assert.Equal(bookedSlot.Id, slots[1].Id);
+        }
     
         [Fact]
         public async Task Delete_WhenDoctorHasFutureAppointments_ThenThrowsConflictException()
